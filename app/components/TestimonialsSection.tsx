@@ -1,238 +1,114 @@
 "use client";
-
-const testimonials = [
-  {
-    name: "Budi Santoso",
-    role: "Full-stack Developer",
-    avatar: "👨‍💻",
-    avatarBg: "linear-gradient(135deg, #6c63ff, #8b5cf6)",
-    rating: 5,
-    text: "Freetrack benar-benar mengubah cara saya bekerja. Sistem milestone dan commitment fee bikin saya tenang. Tidak ada lagi klien kabur setelah proyek selesai!",
-    stats: "42 proyek · Rp 180jt earned",
-    verified: true,
-  },
-  {
-    name: "Siti Rahayu",
-    role: "UI/UX Designer",
-    avatar: "👩‍🎨",
-    avatarBg: "linear-gradient(135deg, #ec4899, #f59e0b)",
-    rating: 5,
-    text: "Dashboard progress tracker-nya luar biasa. Klien saya bisa pantau progress real-time, jadi tidak ada miscommunication. Evidence submission juga memudahkan review hasil kerja.",
-    stats: "28 proyek · Rating 5.0",
-    verified: true,
-  },
-  {
-    name: "PT Kreasi Digital",
-    role: "Client · Tech Startup",
-    avatar: "🏢",
-    avatarBg: "linear-gradient(135deg, #00d4aa, #3b82f6)",
-    rating: 5,
-    text: "Kami sudah hire 15+ freelancer lewat freetrack. Change request system-nya sangat membantu — semua revisi tercatat rapi, tidak ada yang saling menyalahkan.",
-    stats: "15+ proyek dikelola",
-    verified: true,
-  },
-  {
-    name: "Rizky Pratama",
-    role: "Mobile Developer",
-    avatar: "👨‍🔬",
-    avatarBg: "linear-gradient(135deg, #10b981, #6c63ff)",
-    rating: 5,
-    text: "Fitur rating dan review terverifikasi sangat membantu reputasi saya. Setelah 3 bulan di freetrack, income saya naik 3x lipat karena portfolio yang terpercaya.",
-    stats: "19 proyek · Top Freelancer",
-    verified: true,
-  },
-  {
-    name: "Dewi Kusuma",
-    role: "Client · E-commerce Owner",
-    avatar: "👩‍💼",
-    avatarBg: "linear-gradient(135deg, #f59e0b, #ef4444)",
-    rating: 5,
-    text: "Milestone planning yang terstruktur membuat proyek website toko online saya selesai tepat waktu. Transparan dari awal, tidak ada biaya tersembunyi.",
-    stats: "6 proyek diselesaikan",
-    verified: true,
-  },
-  {
-    name: "Andre Wijaya",
-    role: "Copywriter & Content Creator",
-    avatar: "✍️",
-    avatarBg: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-    rating: 5,
-    text: "Sebagai freelancer konten, saya sering bingung soal revisi tanpa batas. Di freetrack, setiap change request jelas dan ada batasannya. Profesioanl banget!",
-    stats: "31 proyek · Top Rated",
-    verified: true,
-  },
-];
+import { Target, Users, GraduationCap, TrendingUp, Heart, Globe } from "lucide-react";
 
 export default function TestimonialsSection() {
   return (
-    <section
-      id="testimonials"
-      style={{
-        padding: "100px 24px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        className="orb"
-        style={{
-          width: "400px",
-          height: "400px",
-          background: "#ec4899",
-          top: "20%",
-          right: "-150px",
-          opacity: 0.06,
-        }}
-      />
+    <section id="mission" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+      <div className="orb" style={{ width: "500px", height: "500px", background: "#10B981", top: "-100px", left: "50%", transform: "translateX(-50%)", opacity: 0.06 }} />
 
-      <div style={{ maxWidth: "1280px", margin: "0 auto", position: "relative" }}>
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "64px" }}>
-          <span className="section-badge">✦ Testimoni</span>
-          <h2
-            style={{
-              fontSize: "clamp(32px, 4vw, 52px)",
-              fontWeight: "800",
-              lineHeight: "1.2",
-              letterSpacing: "-1px",
-              marginBottom: "16px",
-            }}
-          >
-            Dipercaya Ribuan{" "}
-            <span className="gradient-text">Pengguna Aktif</span>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
+        <div style={{ textAlign: "center", marginBottom: "72px" }}>
+          <span className="section-badge">✦ Misi Kami</span>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
+            Membantu{" "}
+            <span className="gradient-text-emerald">5.000 Freelancer Mahasiswa</span>
+            <br />
+            di Indonesia
           </h2>
-          <p
-            style={{
-              fontSize: "18px",
-              color: "rgba(226,232,240,0.55)",
-              maxWidth: "480px",
-              margin: "0 auto",
-            }}
-          >
-            Dengarkan langsung dari freelancer dan client yang telah merasakan manfaatnya.
+          <p style={{ fontSize: "17px", color: "rgba(226,232,240,0.5)", maxWidth: "560px", margin: "0 auto" }}>
+            Kami percaya setiap mahasiswa dan profesional muda berhak mendapatkan bayaran yang adil atas kerja kerasnya — tanpa takut ditipu.
           </p>
         </div>
 
-        {/* Testimonials Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: "20px",
-          }}
-        >
-          {testimonials.map((t, i) => (
-            <div
-              key={i}
-              className="glass-card"
-              style={{ padding: "28px", display: "flex", flexDirection: "column", gap: "16px" }}
-            >
-              {/* Stars */}
-              <div style={{ display: "flex", gap: "3px" }}>
-                {Array.from({ length: t.rating }).map((_, s) => (
-                  <span key={s} style={{ color: "#f59e0b", fontSize: "16px" }}>★</span>
-                ))}
+        {/* Mission Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", marginBottom: "80px" }}>
+          {[
+            { icon: <GraduationCap size={22} />, value: "3.200+", label: "Freelancer Mahasiswa Terdaftar", color: "#10B981" },
+            { icon: <TrendingUp size={22} />, value: "Rp 2.8M+", label: "Total Dana Diamankan", color: "#06B6D4" },
+            { icon: <Target size={22} />, value: "97%", label: "Proyek Selesai Tepat Waktu", color: "#1A36F0" },
+            { icon: <Heart size={22} />, value: "4.9/5", label: "Rating Kepuasan Pengguna", color: "#F59E0B" },
+          ].map((stat) => (
+            <div key={stat.label} className="glass-card" style={{ padding: "28px", textAlign: "center" }}>
+              <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: `${stat.color}15`, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", color: stat.color }}>
+                {stat.icon}
               </div>
-
-              {/* Text */}
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: "rgba(226,232,240,0.7)",
-                  lineHeight: "1.75",
-                  fontStyle: "italic",
-                  flex: 1,
-                }}
-              >
-                &ldquo;{t.text}&rdquo;
-              </p>
-
-              {/* Author */}
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                <div
-                  style={{
-                    width: "44px",
-                    height: "44px",
-                    borderRadius: "50%",
-                    background: t.avatarBg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "20px",
-                    flexShrink: 0,
-                  }}
-                >
-                  {t.avatar}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "14px", fontWeight: "700" }}>{t.name}</span>
-                    {t.verified && (
-                      <span
-                        style={{
-                          background: "rgba(16,185,129,0.12)",
-                          color: "#10b981",
-                          fontSize: "10px",
-                          fontWeight: "700",
-                          padding: "2px 7px",
-                          borderRadius: "10px",
-                        }}
-                      >
-                        ✓ Verified
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.45)", marginTop: "2px" }}>
-                    {t.role}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", marginTop: "1px" }}>
-                    {t.stats}
-                  </div>
-                </div>
-              </div>
+              <div style={{ fontSize: "28px", fontWeight: "900", color: "#E2E8F0", marginBottom: "4px" }}>{stat.value}</div>
+              <div style={{ fontSize: "13px", color: "rgba(226,232,240,0.4)", lineHeight: "1.4" }}>{stat.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Overall Rating */}
-        <div
-          style={{
-            marginTop: "56px",
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: "40px",
-            padding: "40px",
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.05)",
-            borderRadius: "20px",
-          }}
-        >
-          {[
-            { value: "4.9/5", label: "Rating rata-rata", icon: "⭐" },
-            { value: "98%", label: "Client puas", icon: "😍" },
-            { value: "12K+", label: "Ulasan terverifikasi", icon: "✅" },
-            { value: "99%", label: "Proyek selesai tepat waktu", icon: "⏰" },
-          ].map((item) => (
-            <div key={item.label} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "28px", marginBottom: "4px" }}>{item.icon}</div>
-              <div
-                style={{
-                  fontSize: "32px",
-                  fontWeight: "800",
-                  background: "linear-gradient(135deg, #6c63ff, #00d4aa)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                {item.value}
+        {/* Testimonials */}
+        <div style={{ marginBottom: "64px" }}>
+          <h3 style={{ fontSize: "22px", fontWeight: "800", textAlign: "center", marginBottom: "36px", color: "#E2E8F0" }}>
+            Cerita dari Mereka yang Sudah Merasakan
+          </h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "20px" }}>
+            {[
+              {
+                name: "Nadia Putri",
+                role: "Mahasiswi Desain · Universitas Indonesia",
+                text: "Dulu klien minta tambah 3 halaman tanpa bayar extra. Sekarang lewat FreeTrack, setiap tambahan otomatis masuk Change Request. Saya nggak rugi lagi.",
+                avatar: "NP",
+                color: "#10B981",
+              },
+              {
+                name: "Raka Mahardika",
+                role: "Junior Web Developer · ITS Surabaya",
+                text: "Fitur escrow benar-benar bikin tenang. DP sudah masuk sebelum saya mulai ngoding. Kalau klien ghosting, uang tetap aman di FreeTrack.",
+                avatar: "RM",
+                color: "#1A36F0",
+              },
+              {
+                name: "Sari Dewi",
+                role: "Copywriter Freelance · UGM",
+                text: "Invoice otomatis setiap milestone selesai — nggak perlu lagi bikin sendiri di Canva. Profesional banget, klien juga lebih percaya.",
+                avatar: "SD",
+                color: "#06B6D4",
+              },
+            ].map((t) => (
+              <div key={t.name} className="glass-card" style={{ padding: "28px" }}>
+                <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.65)", lineHeight: "1.75", fontStyle: "italic", marginBottom: "20px" }}>
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "10px",
+                    background: `${t.color}20`, display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "14px", fontWeight: "800", color: t.color,
+                  }}>
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: "700", color: "#E2E8F0" }}>{t.name}</div>
+                    <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>{t.role}</div>
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: "13px", color: "rgba(226,232,240,0.45)", marginTop: "4px" }}>
-                {item.label}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Vision statement */}
+        <div style={{
+          background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05))",
+          border: "1px solid rgba(16,185,129,0.15)", borderRadius: "20px",
+          padding: "48px 40px", textAlign: "center", position: "relative", overflow: "hidden",
+        }}>
+          <div className="orb" style={{ width: "300px", height: "300px", background: "#10B981", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.06 }} />
+          <div style={{ position: "relative" }}>
+            <Globe size={32} style={{ color: "#10B981", margin: "0 auto 16px", display: "block" }} />
+            <h3 style={{ fontSize: "clamp(20px, 3vw, 28px)", fontWeight: "800", marginBottom: "12px", lineHeight: "1.3" }}>
+              &ldquo;Setiap freelancer muda di Indonesia berhak bekerja dengan aman.&rdquo;
+            </h3>
+            <p style={{ fontSize: "15px", color: "rgba(226,232,240,0.45)", maxWidth: "520px", margin: "0 auto 28px", lineHeight: "1.7" }}>
+              Kami sedang membangun ekosistem di mana mahasiswa bisa membangun karier freelance tanpa takut. Target kami: 5.000 freelancer terlindungi di akhir 2026.
+            </p>
+            <a href="#" className="btn-emerald" style={{ padding: "14px 36px" }}>
+              <Users size={16} />
+              Bergabung dengan Misi Kami
+            </a>
+          </div>
         </div>
       </div>
     </section>

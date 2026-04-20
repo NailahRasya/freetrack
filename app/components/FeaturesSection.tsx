@@ -1,253 +1,270 @@
 "use client";
-
-const features = [
-  {
-    id: "project-initiation",
-    icon: "🚀",
-    title: "Project Initiation",
-    description:
-      "Mulai proyek dengan mudah — definisikan scope, timeline, dan anggaran. Sistem kami membantu menyusun brief proyek yang jelas antara freelancer dan client.",
-    color: "#6c63ff",
-    gradient: "108,99,255",
-    tag: "Untuk Client & Freelancer",
-  },
-  {
-    id: "commitment-fee",
-    icon: "💳",
-    title: "Commitment Fee",
-    description:
-      "Lindungi kedua belah pihak dengan sistem commitment fee. Freelancer serius, client terjamin. Dana disimpan aman di escrow hingga proyek selesai.",
-    color: "#f59e0b",
-    gradient: "245,158,11",
-    tag: "Keamanan Finansial",
-  },
-  {
-    id: "milestone-planning",
-    icon: "🎯",
-    title: "Milestone Planning",
-    description:
-      "Pecah proyek besar menjadi milestone yang terukur. Setiap milestone memiliki deadline, deliverable, dan pembayaran parsial yang jelas.",
-    color: "#00d4aa",
-    gradient: "0,212,170",
-    tag: "Manajemen Proyek",
-  },
-  {
-    id: "evidence-submission",
-    icon: "📎",
-    title: "Evidence Submission",
-    description:
-      "Freelancer kirim bukti pekerjaan langsung di platform — foto, video, file, atau link. Semua tersimpan rapi dan mudah diakses kapan saja.",
-    color: "#8b5cf6",
-    gradient: "139,92,246",
-    tag: "Pengiriman Hasil",
-  },
-  {
-    id: "review-approval",
-    icon: "✅",
-    title: "Review & Approval",
-    description:
-      "Client review hasil pekerjaan dan beri approval langsung di dashboard. Ada sistem notifikasi real-time agar tidak ada yang terlewat.",
-    color: "#10b981",
-    gradient: "16,185,129",
-    tag: "Quality Control",
-  },
-  {
-    id: "change-request",
-    icon: "🔄",
-    title: "Change Request",
-    description:
-      "Revisi? Tidak masalah. Sistem change request kami mencatat semua perubahan secara transparan, termasuk dampak terhadap timeline dan biaya.",
-    color: "#ef4444",
-    gradient: "239,68,68",
-    tag: "Fleksibilitas",
-  },
-  {
-    id: "dashboard-progress",
-    icon: "📊",
-    title: "Dashboard Progress Tracker",
-    description:
-      "Pantau semua proyek dalam satu tampilan. Grafik progres, status milestone, dan riwayat aktivitas tersedia real-time di dashboard intuitif.",
-    color: "#3b82f6",
-    gradient: "59,130,246",
-    tag: "Monitoring Real-time",
-  },
-  {
-    id: "rating-review",
-    icon: "⭐",
-    title: "Rating & Review",
-    description:
-      "Bangun reputasi yang kuat. Setelah proyek selesai, client dan freelancer saling memberikan rating dan ulasan yang jujur dan terverifikasi.",
-    color: "#ec4899",
-    gradient: "236,72,153",
-    tag: "Reputasi Terverifikasi",
-  },
-];
+import {
+  GitBranch, Calendar, DollarSign, AlertTriangle,
+  PlusCircle, FileText, CheckCircle2, ArrowRight,
+  Clock, Receipt
+} from "lucide-react";
 
 export default function FeaturesSection() {
   return (
-    <section
-      id="features"
-      style={{
-        padding: "100px 24px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* Background Orb */}
-      <div
-        className="orb"
-        style={{
-          width: "500px",
-          height: "500px",
-          background: "#6c63ff",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          opacity: 0.04,
-        }}
-      />
+    <section id="features" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+      <div className="orb" style={{ width: "500px", height: "500px", background: "#10B981", top: "-100px", right: "-200px", opacity: 0.06 }} />
 
-      <div style={{ maxWidth: "1280px", margin: "0 auto", position: "relative" }}>
-        {/* Section Header */}
-        <div style={{ textAlign: "center", marginBottom: "64px" }}>
-          <span className="section-badge">✦ Fitur Unggulan</span>
-          <h2
-            style={{
-              fontSize: "clamp(32px, 4vw, 52px)",
-              fontWeight: "800",
-              lineHeight: "1.2",
-              letterSpacing: "-1px",
-              marginBottom: "16px",
-            }}
-          >
-            Semua yang Kamu Butuhkan{" "}
-            <span className="gradient-text">dalam Satu Platform</span>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: "80px" }}>
+          <span className="section-badge">✦ Feature Showcase</span>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
+            Tiga Pilar{" "}
+            <span className="gradient-text-emerald">Perlindunganmu</span>
           </h2>
-          <p
-            style={{
-              fontSize: "18px",
-              color: "rgba(226,232,240,0.55)",
-              maxWidth: "540px",
-              margin: "0 auto",
-              lineHeight: "1.7",
-            }}
-          >
-            Dari awal proyek hingga pembayaran akhir, freetrack menjaga setiap
-            langkah kolaborasimu tetap aman dan terstruktur.
+          <p style={{ fontSize: "17px", color: "rgba(226,232,240,0.5)", maxWidth: "520px", margin: "0 auto" }}>
+            Setiap fitur dirancang spesifik untuk mengatasi masalah yang paling sering dialami freelancer.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "20px",
-          }}
-        >
-          {features.map((feature, i) => (
-            <div
-              key={feature.id}
-              id={feature.id}
-              className="glass-card"
-              style={{
-                padding: "28px",
-                position: "relative",
-                overflow: "hidden",
-                animationDelay: `${i * 0.08}s`,
-              }}
-            >
-              {/* Corner Accent */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  right: 0,
-                  width: "80px",
-                  height: "80px",
-                  background: `radial-gradient(circle at top right, rgba(${feature.gradient}, 0.15), transparent)`,
-                  borderRadius: "0 16px 0 0",
-                }}
-              />
+        {/* === FEATURE 1: Milestone Planning === */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center", marginBottom: "120px" }} className="feature-row">
+          {/* Left: Copy */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}>
+                <GitBranch size={20} />
+              </div>
+              <span style={{ fontSize: "12px", fontWeight: "700", color: "#10B981", letterSpacing: "1px", textTransform: "uppercase" }}>Milestone Planning</span>
+            </div>
+            <h3 style={{ fontSize: "clamp(24px, 3vw, 32px)", fontWeight: "800", letterSpacing: "-0.5px", marginBottom: "16px", lineHeight: "1.2" }}>
+              Pecah proyek jadi tahapan jelas,{" "}
+              <span className="gradient-text-emerald">bayar per milestone.</span>
+            </h3>
+            <p style={{ fontSize: "16px", color: "rgba(226,232,240,0.5)", lineHeight: "1.8", marginBottom: "24px" }}>
+              Setiap tahap punya deadline, deliverable, dan harga yang disepakati. Freelancer tahu persis apa yang dikerjakan. Klien tahu persis apa yang dibayar.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {[
+                "Deadline per milestone — tidak ada kerjaan open-ended",
+                "Harga per tahap — transparan sejak awal",
+                "Progress visual — klien bisa pantau real-time",
+              ].map((text) => (
+                <div key={text} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "14px", color: "rgba(226,232,240,0.55)" }}>
+                  <CheckCircle2 size={16} style={{ color: "#10B981", flexShrink: 0, marginTop: "2px" }} />
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
 
-              {/* Icon */}
-              <div
-                style={{
-                  width: "52px",
-                  height: "52px",
-                  background: `rgba(${feature.gradient}, 0.12)`,
-                  border: `1px solid rgba(${feature.gradient}, 0.25)`,
-                  borderRadius: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "24px",
-                  marginBottom: "16px",
-                }}
-              >
-                {feature.icon}
+          {/* Right: Visual — Milestone Timeline */}
+          <div className="feature-visual" style={{ padding: "28px" }}>
+            <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "20px", fontWeight: "600" }}>
+              ↳ Preview Milestone
+            </div>
+            {[
+              { name: "Research & Wireframe", deadline: "7 Jan", price: "Rp 500k", status: "done", pct: 100 },
+              { name: "Desain UI High-Fidelity", deadline: "14 Jan", price: "Rp 1.2jt", status: "active", pct: 60 },
+              { name: "Frontend Development", deadline: "28 Jan", price: "Rp 2jt", status: "pending", pct: 0 },
+              { name: "Testing & Handover", deadline: "5 Feb", price: "Rp 800k", status: "pending", pct: 0 },
+            ].map((ms, i) => (
+              <div key={i} style={{ display: "flex", gap: "16px", marginBottom: i < 3 ? "20px" : "0" }}>
+                {/* Timeline dot & line */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "20px" }}>
+                  <div style={{
+                    width: "12px", height: "12px", borderRadius: "50%",
+                    background: ms.status === "done" ? "#10B981" : ms.status === "active" ? "#1A36F0" : "rgba(255,255,255,0.1)",
+                    border: ms.status === "active" ? "2px solid rgba(26,54,240,0.4)" : "none",
+                    flexShrink: 0,
+                  }} />
+                  {i < 3 && <div style={{ width: "2px", flex: 1, background: ms.status === "done" ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.05)", marginTop: "4px" }} />}
+                </div>
+                {/* Content */}
+                <div style={{ flex: 1, paddingBottom: "4px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "14px", fontWeight: "600", color: ms.status === "pending" ? "rgba(226,232,240,0.3)" : "#E2E8F0" }}>{ms.name}</span>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: ms.status === "done" ? "#10B981" : ms.status === "active" ? "#06B6D4" : "rgba(226,232,240,0.2)" }}>{ms.price}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div style={{ height: "4px", flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: "2px" }}>
+                      <div style={{ width: `${ms.pct}%`, height: "100%", borderRadius: "2px", background: ms.status === "done" ? "#10B981" : "linear-gradient(90deg, #1A36F0, #06B6D4)" }} />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>
+                      <Calendar size={10} />
+                      {ms.deadline}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* === FEATURE 2: Smart Change Request === */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center", marginBottom: "120px" }} className="feature-row-reverse">
+          {/* Left: Visual */}
+          <div className="feature-visual" style={{ padding: "28px", order: 0 }}>
+            <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "20px", fontWeight: "600" }}>
+              ↳ Change Request Log
+            </div>
+
+            {/* Original scope */}
+            <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
+              <div style={{ fontSize: "11px", color: "#10B981", fontWeight: "700", marginBottom: "6px", display: "flex", alignItems: "center", gap: "5px" }}>
+                <CheckCircle2 size={12} /> Scope Awal (Terkunci)
+              </div>
+              <div style={{ fontSize: "13px", color: "rgba(226,232,240,0.6)", lineHeight: "1.6" }}>
+                ✓ 5 halaman UI · ✓ Responsive design · ✓ 2x revisi
+              </div>
+            </div>
+
+            {/* Change requests */}
+            {[
+              { title: "Tambah halaman admin dashboard", cost: "+Rp 600k", status: "approved", icon: <CheckCircle2 size={14} /> },
+              { title: "Tambah animasi micro-interaction", cost: "+Rp 300k", status: "pending", icon: <Clock size={14} /> },
+            ].map((cr, i) => (
+              <div key={i} style={{
+                background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)",
+                borderRadius: "10px", padding: "14px", marginBottom: i === 0 ? "10px" : "0",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ color: cr.status === "approved" ? "#10B981" : "#F59E0B" }}>{cr.icon}</div>
+                  <div>
+                    <div style={{ fontSize: "13px", fontWeight: "600", color: "#E2E8F0" }}>{cr.title}</div>
+                    <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.4)" }}>
+                      {cr.status === "approved" ? "Disetujui klien" : "Menunggu approval"}
+                    </div>
+                  </div>
+                </div>
+                <span style={{ fontSize: "13px", fontWeight: "700", color: cr.status === "approved" ? "#10B981" : "#F59E0B" }}>{cr.cost}</span>
+              </div>
+            ))}
+
+            {/* Divider */}
+            <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "16px 0" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>Total nilai proyek sekarang</span>
+              <span style={{ fontSize: "16px", fontWeight: "800", color: "#34D399" }}>Rp 5.4jt</span>
+            </div>
+          </div>
+
+          {/* Right: Copy */}
+          <div style={{ order: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F59E0B" }}>
+                <AlertTriangle size={20} />
+              </div>
+              <span style={{ fontSize: "12px", fontWeight: "700", color: "#F59E0B", letterSpacing: "1px", textTransform: "uppercase" }}>Smart Change Request</span>
+            </div>
+            <h3 style={{ fontSize: "clamp(24px, 3vw, 32px)", fontWeight: "800", letterSpacing: "-0.5px", marginBottom: "16px", lineHeight: "1.2" }}>
+              Klien minta tambah fitur?{" "}
+              <span style={{ color: "#F59E0B" }}>Bukan masalah.</span>
+            </h3>
+            <p style={{ fontSize: "16px", color: "rgba(226,232,240,0.5)", lineHeight: "1.8", marginBottom: "24px" }}>
+              Setiap permintaan di luar kontrak awal dicatat sebagai Change Request — lengkap dengan estimasi biaya tambahan. Klien harus approve dan bayar sebelum kamu mulai.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {[
+                "Scope awal terkunci — tidak bisa diubah diam-diam",
+                "Biaya tambahan otomatis dihitung sistem",
+                "Klien wajib approve sebelum kamu kerja extra",
+              ].map((text) => (
+                <div key={text} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "14px", color: "rgba(226,232,240,0.55)" }}>
+                  <CheckCircle2 size={16} style={{ color: "#F59E0B", flexShrink: 0, marginTop: "2px" }} />
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* === FEATURE 3: Auto-Invoicing === */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center" }} className="feature-row">
+          {/* Left: Copy */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#06B6D4" }}>
+                <Receipt size={20} />
+              </div>
+              <span style={{ fontSize: "12px", fontWeight: "700", color: "#06B6D4", letterSpacing: "1px", textTransform: "uppercase" }}>Auto-Invoicing</span>
+            </div>
+            <h3 style={{ fontSize: "clamp(24px, 3vw, 32px)", fontWeight: "800", letterSpacing: "-0.5px", marginBottom: "16px", lineHeight: "1.2" }}>
+              Invoice terbit otomatis,{" "}
+              <span className="gradient-text">tanpa ribet.</span>
+            </h3>
+            <p style={{ fontSize: "16px", color: "rgba(226,232,240,0.5)", lineHeight: "1.8", marginBottom: "24px" }}>
+              Setiap milestone yang disetujui langsung men-generate invoice PDF profesional. Tidak perlu buat sendiri, tidak perlu kirim manual lewat WA.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {[
+                "PDF profesional dengan branding FreeTrack",
+                "Terbit otomatis saat milestone approved",
+                "Riwayat invoice tersimpan rapi di dashboard",
+              ].map((text) => (
+                <div key={text} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "14px", color: "rgba(226,232,240,0.55)" }}>
+                  <CheckCircle2 size={16} style={{ color: "#06B6D4", flexShrink: 0, marginTop: "2px" }} />
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Visual — Invoice Preview */}
+          <div className="feature-visual" style={{ padding: "0", overflow: "hidden" }}>
+            <div style={{ padding: "24px 28px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FileText size={16} style={{ color: "#06B6D4" }} />
+                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#E2E8F0" }}>Invoice #FT-2026-0021</span>
+                </div>
+                <span style={{ fontSize: "11px", fontWeight: "700", color: "#10B981", background: "rgba(16,185,129,0.1)", padding: "3px 10px", borderRadius: "6px" }}>LUNAS</span>
+              </div>
+            </div>
+
+            <div style={{ padding: "24px 28px" }}>
+              {/* From / To */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+                <div>
+                  <div style={{ fontSize: "10px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Dari</div>
+                  <div style={{ fontSize: "13px", fontWeight: "600", color: "#E2E8F0" }}>Budi Santoso</div>
+                  <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.4)" }}>UI/UX Designer</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "10px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Untuk</div>
+                  <div style={{ fontSize: "13px", fontWeight: "600", color: "#E2E8F0" }}>PT Kreasi Digital</div>
+                  <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.4)" }}>kreasi@mail.com</div>
+                </div>
               </div>
 
-              {/* Tag */}
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: "600",
-                  color: feature.color,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  opacity: 0.8,
-                }}
-              >
-                {feature.tag}
-              </span>
+              {/* Line items */}
+              <div style={{ borderRadius: "8px", overflow: "hidden", marginBottom: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", padding: "8px 12px", background: "rgba(255,255,255,0.03)", fontSize: "10px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>
+                  <span>Deskripsi</span>
+                  <span>Jumlah</span>
+                </div>
+                {[
+                  { desc: "Milestone 2 — Desain UI High-Fidelity", amount: "Rp 1.200.000" },
+                  { desc: "Change Request — Dashboard Admin", amount: "Rp 600.000" },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto", padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.03)", fontSize: "12px" }}>
+                    <span style={{ color: "rgba(226,232,240,0.6)" }}>{item.desc}</span>
+                    <span style={{ color: "#E2E8F0", fontWeight: "600" }}>{item.amount}</span>
+                  </div>
+                ))}
+              </div>
 
-              {/* Title */}
-              <h3
-                style={{
-                  fontSize: "18px",
-                  fontWeight: "700",
-                  marginTop: "6px",
-                  marginBottom: "10px",
-                  color: "#e2e8f0",
-                }}
-              >
-                {feature.title}
-              </h3>
-
-              {/* Description */}
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: "rgba(226,232,240,0.55)",
-                  lineHeight: "1.7",
-                }}
-              >
-                {feature.description}
-              </p>
-
-              {/* Bottom accent line */}
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: "2px",
-                  background: `linear-gradient(90deg, transparent, rgba(${feature.gradient}, 0.5), transparent)`,
-                  opacity: 0,
-                  transition: "opacity 0.3s ease",
-                }}
-                className="card-accent-line"
-              />
+              {/* Total */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "rgba(226,232,240,0.5)" }}>Total</span>
+                <span style={{ fontSize: "20px", fontWeight: "900", color: "#34D399" }}>Rp 1.800.000</span>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
       <style>{`
-        .glass-card:hover .card-accent-line {
-          opacity: 1 !important;
+        @media (max-width: 900px) {
+          .feature-row, .feature-row-reverse { grid-template-columns: 1fr !important; }
+          .feature-row-reverse > div { order: 0 !important; }
         }
       `}</style>
     </section>
