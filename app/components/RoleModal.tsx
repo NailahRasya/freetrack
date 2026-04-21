@@ -1,14 +1,15 @@
-"use client";
+"use client"; // Menandakan komponen dijalankan di sisi klien
 import { useEffect } from "react";
-import { X, Briefcase, User2, ArrowRight } from "lucide-react";
+import { X, Briefcase, User2, ArrowRight } from "lucide-react"; // Mengimpor ikon untuk peran dan interaksi
 
+// Definisi tipe data untuk props yang diterima oleh RoleModal
 interface RoleModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean; // Status apakah modal terbuka atau tidak
+  onClose: () => void; // Fungsi untuk menutup modal
 }
 
 export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
-  // Close on ESC key
+  // Efek samping untuk menutup modal ketika tombol ESC pada keyboard ditekan
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -17,14 +18,16 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
     return () => document.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
 
-  // Prevent body scroll when modal is open
+  // Efek samping untuk mencegah scroll pada body website ketika modal sedang terbuka
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
+  // Jika status modal tidak terbuka, jangan render apapun
   if (!isOpen) return null;
 
+  // Konfigurasi pilihan peran (Role) yang tersedia
   const roles = [
     {
       id: "client",
@@ -50,7 +53,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop: Latar belakang gelap transparan di belakang modal */}
       <div
         id="role-modal-backdrop"
         onClick={onClose}
@@ -68,13 +71,13 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
           animation: "fadeInBackdrop 0.25s ease",
         }}
       >
-        {/* Modal card */}
+        {/* Card Modal: Wadah utama konten modal */}
         <div
           id="role-modal-card"
           role="dialog"
           aria-modal="true"
           aria-labelledby="role-modal-title"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat konten di dalamnya diklik
           style={{
             background: "linear-gradient(145deg, rgba(13,21,56,0.98) 0%, rgba(10,15,40,0.98) 100%)",
             border: "1px solid rgba(255,255,255,0.08)",
@@ -87,7 +90,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
             animation: "slideUpModal 0.3s cubic-bezier(0.34,1.56,0.64,1)",
           }}
         >
-          {/* Close button */}
+          {/* Tombol Close (X) di pojok kanan atas modal */}
           <button
             id="role-modal-close"
             onClick={onClose}
@@ -120,7 +123,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
             <X size={16} />
           </button>
 
-          {/* Header */}
+          {/* Bagian Header Modal */}
           <div style={{ textAlign: "center", marginBottom: "36px" }}>
             <div style={{
               display: "inline-flex",
@@ -163,7 +166,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
             </p>
           </div>
 
-          {/* Role cards */}
+          {/* Daftar Pilihan Peran (Client vs Freelancer) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }} className="role-grid">
             {roles.map((role) => (
               <a
@@ -183,7 +186,6 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
                   transition: "all 0.25s ease",
                   position: "relative",
                   overflow: "hidden",
-                  group: true,
                 } as React.CSSProperties}
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLAnchorElement;
@@ -198,7 +200,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
                   el.style.borderColor = role.colorBorder;
                 }}
               >
-                {/* Icon */}
+                {/* Ikon Peran */}
                 <div style={{
                   width: "60px",
                   height: "60px",
@@ -213,7 +215,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
                   {role.icon}
                 </div>
 
-                {/* Text */}
+                {/* Teks Deskripsi Peran */}
                 <div style={{ flex: 1 }}>
                   <div style={{
                     fontSize: "16px",
@@ -233,7 +235,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
                   </div>
                 </div>
 
-                {/* Arrow */}
+                {/* Indikator klik (Arrow) */}
                 <div style={{
                   display: "flex",
                   alignItems: "center",
@@ -249,7 +251,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
             ))}
           </div>
 
-          {/* Footer note */}
+          {/* Bagian Bawah Modal (Link Login jika sudah punya akun) */}
           <p style={{
             textAlign: "center",
             fontSize: "12px",
@@ -264,6 +266,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
         </div>
       </div>
 
+      {/* Definisi animasi CSS untuk modal */}
       <style>{`
         @keyframes fadeInBackdrop {
           from { opacity: 0; }

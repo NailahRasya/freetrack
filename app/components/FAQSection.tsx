@@ -1,7 +1,8 @@
-"use client";
+"use client"; // Menunjukkan komponen dijalankan di sisi klien
 import { useState } from "react";
-import { Plus, Minus, MessageCircle } from "lucide-react";
+import { Plus, Minus, MessageCircle } from "lucide-react"; // Mengimpor ikon untuk interaksi accordion dan kontak
 
+// Daftar pertanyaan dan jawaban (FAQ) yang akan ditampilkan
 const faqs = [
   {
     q: "Apa jaminan pembayaran saya aman?",
@@ -32,9 +33,11 @@ const faqs = [
 export default function FAQSection() {
   return (
     <section id="faq" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+      {/* Ornamen latar belakang (orb cahaya biru) */}
       <div className="orb" style={{ width: "400px", height: "400px", background: "#1A36F0", top: "0", left: "-100px", opacity: 0.05 }} />
 
       <div style={{ maxWidth: "800px", margin: "0 auto", position: "relative" }}>
+        {/* Header Section FAQ */}
         <div style={{ textAlign: "center", marginBottom: "56px" }}>
           <span className="section-badge">✦ FAQ</span>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
@@ -43,13 +46,14 @@ export default function FAQSection() {
           </h2>
         </div>
 
+        {/* List Accordion FAQ */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {faqs.map((item, i) => (
             <FAQItem key={i} question={item.q} answer={item.a} index={i} />
           ))}
         </div>
 
-        {/* Contact */}
+        {/* Bagian Kontak/Support tambahan jika FAQ belum menjawab */}
         <div style={{
           marginTop: "56px", textAlign: "center", padding: "40px",
           background: "rgba(26,54,240,0.05)", border: "1px solid rgba(26,54,240,0.12)",
@@ -70,7 +74,9 @@ export default function FAQSection() {
   );
 }
 
+// Komponen Internal untuk masing-masing item FAQ dengan efek accordion (buka/tutup)
 function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
+  // State untuk melacak apakah pertanyaan ini sedang terbuka
   const [open, setOpen] = useState(false);
 
   return (
@@ -79,6 +85,7 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
       style={{ padding: "0", overflow: "hidden", cursor: "pointer", border: open ? "1px solid rgba(16,185,129,0.2)" : undefined }}
       onClick={() => setOpen(!open)}
     >
+      {/* Bagian Pertanyaan (Header Accordion) */}
       <div style={{ padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <span style={{ fontSize: "12px", fontWeight: "700", color: "#10B981", opacity: 0.5, minWidth: "22px" }}>
@@ -86,6 +93,7 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
           </span>
           <span style={{ fontSize: "15px", fontWeight: "600" }}>{question}</span>
         </div>
+        {/* Ikon Plus/Minus sebagai indikator status terbuka/tertutup */}
         <div style={{
           width: "26px", height: "26px", borderRadius: "8px",
           background: open ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.03)",
@@ -95,6 +103,7 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
           {open ? <Minus size={14} /> : <Plus size={14} />}
         </div>
       </div>
+      {/* Bagian Jawaban (Konten yang di-expand/collapse) */}
       {open && (
         <div style={{ padding: "0 22px 18px 56px", fontSize: "14px", color: "rgba(226,232,240,0.55)", lineHeight: "1.75", borderTop: "1px solid rgba(255,255,255,0.03)" }}>
           {answer}

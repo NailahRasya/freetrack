@@ -1,18 +1,21 @@
-"use client";
+"use client"; // Menandakan komponen berjalan di sisi klien
 import { useState } from "react";
 import {
   BarChart3, Wallet, Clock, Star, TrendingUp,
   CheckCircle2, UploadCloud, Shield
-} from "lucide-react";
+} from "lucide-react"; // Mengimpor ikon-ikon untuk elemen dashboard
 
 export default function DashboardSection() {
+  // State untuk melacak tab aktif antara tampilan 'freelancer' atau 'client'
   const [activeTab, setActiveTab] = useState<"freelancer" | "client">("freelancer");
 
   return (
     <section id="dashboard" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+      {/* Ornamen latar belakang (orb cahaya biru) */}
       <div className="orb" style={{ width: "500px", height: "500px", background: "#1A36F0", bottom: "-100px", left: "-150px", opacity: 0.06 }} />
 
       <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative" }}>
+        {/* Header Section Preview Dashboard */}
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
           <span className="section-badge">✦ Dashboard Preview</span>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
@@ -24,7 +27,7 @@ export default function DashboardSection() {
           </p>
         </div>
 
-        {/* Tab toggle */}
+        {/* Toggle Tab untuk memilih peran (Freelancer/Client) */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "36px" }}>
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "5px", display: "flex", gap: "4px" }}>
             {(["freelancer", "client"] as const).map((tab) => (
@@ -44,9 +47,9 @@ export default function DashboardSection() {
           </div>
         </div>
 
-        {/* Dashboard card */}
+        {/* Kartu Visualisasi Dashboard (Mockup Aplikasi) */}
         <div className="feature-visual" style={{ padding: "0", overflow: "hidden", boxShadow: "0 40px 100px rgba(0,0,0,0.4)" }}>
-          {/* Top bar */}
+          {/* Bar atas jendela browser mockup */}
           <div style={{ padding: "14px 24px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", gap: "6px" }}>
               <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#EF4444" }} />
@@ -60,7 +63,7 @@ export default function DashboardSection() {
           </div>
 
           <div style={{ padding: "28px" }}>
-            {/* Stats row */}
+            {/* Baris Statistik (Stats Row) - Berubah sesuai tab aktif */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "28px" }}>
               {(activeTab === "freelancer"
                 ? [
@@ -97,7 +100,7 @@ export default function DashboardSection() {
               ))}
             </div>
 
-            {/* Active milestones */}
+            {/* List Milestone/Proyek yang sedang berjalan */}
             <div style={{ fontSize: "13px", fontWeight: "700", color: "rgba(226,232,240,0.5)", marginBottom: "14px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
               {activeTab === "freelancer" ? "Milestone Aktif" : "Proyek Berjalan"}
             </div>
@@ -115,6 +118,7 @@ export default function DashboardSection() {
                     <Clock size={11} /> {project.deadline}
                   </div>
                 </div>
+                {/* Bar progres milestone aktif */}
                 <div style={{ height: "4px", background: "rgba(255,255,255,0.04)", borderRadius: "2px" }}>
                   <div style={{ width: `${project.pct}%`, height: "100%", borderRadius: "2px", background: "linear-gradient(90deg, #1A36F0, #06B6D4)", transition: "width 1s ease" }} />
                 </div>

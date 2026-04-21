@@ -1,6 +1,7 @@
-"use client";
-import { Rocket, CheckSquare, UploadCloud, Wallet, ArrowDown } from "lucide-react";
+"use client"; // Komponen dijalankan di sisi klien
+import { Rocket, CheckSquare, UploadCloud, Wallet, ArrowDown } from "lucide-react"; // Mengimpor ikon untuk flow kerja
 
+// Definisi langkah-langkah (steps) dalam alur kerja FreeTrack
 const steps = [
   {
     icon: <Rocket size={24} />,
@@ -39,10 +40,12 @@ const steps = [
 export default function HowItWorksSection() {
   return (
     <section id="workflow" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+      {/* Ornamen latar belakang (orb cahaya) */}
       <div className="orb" style={{ width: "400px", height: "400px", background: "#10B981", top: "50%", left: "-150px", opacity: 0.06 }} />
       <div className="orb" style={{ width: "350px", height: "350px", background: "#1A36F0", bottom: "0", right: "-100px", opacity: 0.07 }} />
 
       <div style={{ maxWidth: "900px", margin: "0 auto", position: "relative" }}>
+        {/* Header Section Alur Kerja */}
         <div style={{ textAlign: "center", marginBottom: "72px" }}>
           <span className="section-badge">✦ The Workflow</span>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
@@ -54,17 +57,18 @@ export default function HowItWorksSection() {
           </p>
         </div>
 
-        {/* Vertical Timeline */}
+        {/* Timeline Vertikal untuk menjelaskan langkah-langkah */}
         <div style={{ position: "relative" }}>
-          {/* Vertical line */}
+          {/* Garis vertikal penghubung antar langkah */}
           <div style={{
             position: "absolute", left: "32px", top: "0", bottom: "0", width: "2px",
             background: "linear-gradient(to bottom, rgba(26,54,240,0.3), rgba(16,185,129,0.3), rgba(6,182,212,0.3), rgba(16,185,129,0.3))",
           }} className="timeline-line" />
 
+          {/* Mapping data steps menjadi elemen UI */}
           {steps.map((step, i) => (
             <div key={i} style={{ display: "flex", gap: "28px", marginBottom: i < steps.length - 1 ? "48px" : "0", position: "relative" }}>
-              {/* Icon circle */}
+              {/* Lingkaran Ikon Langkah */}
               <div style={{
                 width: "64px", height: "64px", borderRadius: "16px",
                 background: step.colorBg,
@@ -76,8 +80,9 @@ export default function HowItWorksSection() {
                 {step.icon}
               </div>
 
-              {/* Content */}
+              {/* Kartu Konten Langkah (Glassmorphism style) */}
               <div className="glass-card" style={{ flex: 1, padding: "24px 28px", position: "relative" }}>
+                {/* Garis aksen di bagian atas kartu */}
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: `linear-gradient(90deg, ${step.color}, transparent)` }} />
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
@@ -95,12 +100,13 @@ export default function HowItWorksSection() {
                   {step.description}
                 </p>
 
+                {/* Detail teknis singkat di bawah deskripsi */}
                 <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.3)", fontWeight: "500" }}>
                   {step.detail}
                 </div>
               </div>
 
-              {/* Arrow connector */}
+              {/* Ikon panah bawah sebagai konektor antar langkah */}
               {i < steps.length - 1 && (
                 <div style={{
                   position: "absolute", bottom: "-30px", left: "28px",
@@ -114,6 +120,7 @@ export default function HowItWorksSection() {
         </div>
       </div>
 
+      {/* Kontrol CSS khusus untuk tampilan mobile agar garis timeline tetap rapi */}
       <style>{`
         @media (max-width: 600px) {
           .timeline-line { left: 24px !important; }

@@ -1,12 +1,12 @@
-"use client";
-import { ArrowRight, Shield, Globe } from "lucide-react";
+"use client"; // Menandakan bahwa komponen dijalankan di sisi klien
+import { ArrowRight, Shield, Globe } from "lucide-react"; // Mengimpor ikon untuk visualisasi di footer
 
+// Struktur data untuk link yang ditampilkan di footer, dikelompokkan berdasarkan kategori
 const footerLinks = {
   Platform: [
     { label: "Fitur", href: "#features" },
     { label: "Cara Kerja", href: "#workflow" },
     { label: "Dashboard", href: "#dashboard" },
-
     { label: "Keamanan", href: "#" },
   ],
   Freelancer: [
@@ -35,7 +35,7 @@ const footerLinks = {
 export default function Footer() {
   return (
     <footer style={{ borderTop: "1px solid rgba(255,255,255,0.04)", padding: "80px 24px 40px", position: "relative", overflow: "hidden" }}>
-      {/* CTA Banner */}
+      {/* CTA Banner: Ajakan terakhir di bawah halaman untuk mendaftar */}
       <div style={{
         maxWidth: "1200px", margin: "0 auto 80px",
         background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05))",
@@ -64,10 +64,10 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Footer content */}
+      {/* Konten Utama Footer (Grid Link dan Branding) */}
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "260px repeat(4, 1fr)", gap: "48px", marginBottom: "56px" }} className="footer-grid">
-          {/* Brand */}
+          {/* Bagian Brand dan Deskripsi Singkat */}
           <div>
             <a href="#" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <img src="/logo_icon.png" alt="FreeTrack" style={{ height: "32px", display: "block" }} />
@@ -88,7 +88,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Link columns */}
+          {/* Mapping kolom link footer berdasarkan kategori */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
               <h4 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", color: "rgba(226,232,240,0.4)", marginBottom: "18px" }}>
@@ -110,7 +110,7 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom bar */}
+        {/* Bar bagian paling bawah footer (Copyright dan Trust Badge) */}
         <div style={{
           borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "28px",
           display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "16px",
@@ -125,6 +125,7 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* Styling CSS untuk responsivitas kolom footer pada layar tablet/mobile */}
       <style>{`
         @media (max-width: 1000px) {
           .footer-grid { grid-template-columns: 1fr 1fr !important; }

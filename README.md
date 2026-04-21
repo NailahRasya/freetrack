@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FreeTrack - Project Governance Platform
 
-## Getting Started
+![FreeTrack Banner](/logo_icon.png)
 
-First, run the development server:
+**FreeTrack** adalah platform *project governance* revolusioner yang dirancang khusus untuk freelancer mahasiswa dan profesional muda di Indonesia. Kami hadir untuk memberikan kepastian kerja dan transparansi pembayaran, sehingga Anda bisa fokus pada karya terbaik Anda tanpa rasa takut.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Mengapa FreeTrack?
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Banyak freelancer muda di Indonesia sering menghadapi masalah klasik seperti:
+- **Scope Creep**: Klien tiba-tiba meminta banyak fitur tambahan tanpa bayar ekstra.
+- **Masalah Pembayaran**: Proyek selesai, tapi klien *ghosting* atau pembayaran tertunda berbulan-bulan.
+- **Kurangnya Kontrak**: Kerjasama hanya berdasarkan rasa percaya tanpa dokumentasi legal yang kuat.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+FreeTrack hadir untuk mengakhiri masalah tersebut dengan sistem tata kelola proyek yang cerdas.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Fitur Utama
 
-## Learn More
+### 1. Milestone Planning (Tahapan Jelas)
+Jangan biarkan proyek menggantung tanpa ujung. Pecah proyek Anda menjadi beberapa tahapan (milestone) dengan deadline dan harga yang spesifik. Freelancer bekerja per tahapan, Klien membayar per keberhasilan.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Smart Change Request (Anti Scope Creep)
+Setiap permintaan fitur ekstra di luar kontrak awal akan dicatat secara transparan sebagai *Change Request*. Sistem akan menghitung biaya tambahan secara otomatis, dan freelancer baru mulai bekerja setelah disetujui klien.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. Sistem Escrow Terjamin
+Sistem dompet bersama (escrow) memastikan dana sudah tersedia sebelum pekerjaan dimulai. Dana tersimpan aman di FreeTrack dan baru cair ke freelancer setelah hasil kerja divalidasi.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. Auto-Invoicing & Dokumentasi
+Lupakan pembuatan invoice manual di Canva. Setiap milestone yang selesai akan men-generate invoice PDF profesional secara otomatis. Riwayat pekerjaan dan pembayaran tersimpan rapi sebagai bukti portofolio Anda.
 
-## Deploy on Vercel
+### 5. Auto-Approve Policy
+Klien lama memberi respons? Jangan khawatir. Sistem *Auto-Approve* kami akan mencairkan dana secara otomatis jika tidak ada ulasan dari klien dalam jangka waktu tertentu, sehingga arus kas freelancer tetap lancar.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Teknologi yang Digunakan
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Frontend**: [Next.js](https://nextjs.org/) (App Router) dengan TypeScript.
+- **Backend & Auth**: [Supabase](https://supabase.com/).
+- **Styling**: Vanilla CSS dengan desain modern premium.
+- **Icons**: [Lucide React](https://lucide.dev/).
+- **Notifications**: [SweetAlert2](https://sweetalert2.github.io/).
+

@@ -1,17 +1,18 @@
-"use client";
+"use client"; // Menandakan komponen berjalan di sisi klien
 import {
   GitBranch, Calendar, DollarSign, AlertTriangle,
   PlusCircle, FileText, CheckCircle2, ArrowRight,
   Clock, Receipt
-} from "lucide-react";
+} from "lucide-react"; // Mengimpor kumpulan ikon dari lucide-react
 
 export default function FeaturesSection() {
   return (
     <section id="features" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+      {/* Ornamen latar belakang (orb cahaya hijau) */}
       <div className="orb" style={{ width: "500px", height: "500px", background: "#10B981", top: "-100px", right: "-200px", opacity: 0.06 }} />
 
       <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
-        {/* Header */}
+        {/* Bagian Header Section Fitur */}
         <div style={{ textAlign: "center", marginBottom: "80px" }}>
           <span className="section-badge">✦ Feature Showcase</span>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
@@ -23,9 +24,9 @@ export default function FeaturesSection() {
           </p>
         </div>
 
-        {/* === FEATURE 1: Milestone Planning === */}
+        {/* === FITUR 1: Milestone Planning === */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center", marginBottom: "120px" }} className="feature-row">
-          {/* Left: Copy */}
+          {/* Sisi Kiri: Penjelasan Teks */}
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}>
@@ -54,7 +55,7 @@ export default function FeaturesSection() {
             </div>
           </div>
 
-          {/* Right: Visual — Milestone Timeline */}
+          {/* Sisi Kanan: Visualisasi Milestone Timeline */}
           <div className="feature-visual" style={{ padding: "28px" }}>
             <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "20px", fontWeight: "600" }}>
               ↳ Preview Milestone
@@ -66,7 +67,7 @@ export default function FeaturesSection() {
               { name: "Testing & Handover", deadline: "5 Feb", price: "Rp 800k", status: "pending", pct: 0 },
             ].map((ms, i) => (
               <div key={i} style={{ display: "flex", gap: "16px", marginBottom: i < 3 ? "20px" : "0" }}>
-                {/* Timeline dot & line */}
+                {/* Titik dan garis timeline */}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "20px" }}>
                   <div style={{
                     width: "12px", height: "12px", borderRadius: "50%",
@@ -76,13 +77,14 @@ export default function FeaturesSection() {
                   }} />
                   {i < 3 && <div style={{ width: "2px", flex: 1, background: ms.status === "done" ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.05)", marginTop: "4px" }} />}
                 </div>
-                {/* Content */}
+                {/* Konten detail milestone */}
                 <div style={{ flex: 1, paddingBottom: "4px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                     <span style={{ fontSize: "14px", fontWeight: "600", color: ms.status === "pending" ? "rgba(226,232,240,0.3)" : "#E2E8F0" }}>{ms.name}</span>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: ms.status === "done" ? "#10B981" : ms.status === "active" ? "#06B6D4" : "rgba(226,232,240,0.2)" }}>{ms.price}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {/* Progress bar per milestone */}
                     <div style={{ height: "4px", flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: "2px" }}>
                       <div style={{ width: `${ms.pct}%`, height: "100%", borderRadius: "2px", background: ms.status === "done" ? "#10B981" : "linear-gradient(90deg, #1A36F0, #06B6D4)" }} />
                     </div>
@@ -97,15 +99,15 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        {/* === FEATURE 2: Smart Change Request === */}
+        {/* === FITUR 2: Smart Change Request === */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center", marginBottom: "120px" }} className="feature-row-reverse">
-          {/* Left: Visual */}
+          {/* Sisi Kiri: Visualisasi Log Change Request */}
           <div className="feature-visual" style={{ padding: "28px", order: 0 }}>
             <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "20px", fontWeight: "600" }}>
               ↳ Change Request Log
             </div>
 
-            {/* Original scope */}
+            {/* Ilustrasi scope awal proyek yang sudah dikunci */}
             <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
               <div style={{ fontSize: "11px", color: "#10B981", fontWeight: "700", marginBottom: "6px", display: "flex", alignItems: "center", gap: "5px" }}>
                 <CheckCircle2 size={12} /> Scope Awal (Terkunci)
@@ -115,7 +117,7 @@ export default function FeaturesSection() {
               </div>
             </div>
 
-            {/* Change requests */}
+            {/* Ilustrasi daftar permintaan perubahan (change requests) */}
             {[
               { title: "Tambah halaman admin dashboard", cost: "+Rp 600k", status: "approved", icon: <CheckCircle2 size={14} /> },
               { title: "Tambah animasi micro-interaction", cost: "+Rp 300k", status: "pending", icon: <Clock size={14} /> },
@@ -138,7 +140,7 @@ export default function FeaturesSection() {
               </div>
             ))}
 
-            {/* Divider */}
+            {/* Garis pemisah dan total nilai proyek */}
             <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "16px 0" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>Total nilai proyek sekarang</span>
@@ -146,7 +148,7 @@ export default function FeaturesSection() {
             </div>
           </div>
 
-          {/* Right: Copy */}
+          {/* Sisi Kanan: Penjelasan Teks */}
           <div style={{ order: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F59E0B" }}>
@@ -176,9 +178,9 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        {/* === FEATURE 3: Auto-Invoicing === */}
+        {/* === FITUR 3: Auto-Invoicing === */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center" }} className="feature-row">
-          {/* Left: Copy */}
+          {/* Sisi Kiri: Penjelasan Teks */}
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#06B6D4" }}>
@@ -207,8 +209,9 @@ export default function FeaturesSection() {
             </div>
           </div>
 
-          {/* Right: Visual — Invoice Preview */}
+          {/* Sisi Kanan: Visualisasi Preview Invoice */}
           <div className="feature-visual" style={{ padding: "0", overflow: "hidden" }}>
+            {/* Header Invoice Mockup */}
             <div style={{ padding: "24px 28px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -219,8 +222,9 @@ export default function FeaturesSection() {
               </div>
             </div>
 
+            {/* Isu Invoice Mockup */}
             <div style={{ padding: "24px 28px" }}>
-              {/* From / To */}
+              {/* Informasi Dari / Untuk */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
                 <div>
                   <div style={{ fontSize: "10px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Dari</div>
@@ -234,7 +238,7 @@ export default function FeaturesSection() {
                 </div>
               </div>
 
-              {/* Line items */}
+              {/* Tabel Item dalam Invoice */}
               <div style={{ borderRadius: "8px", overflow: "hidden", marginBottom: "16px" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr auto", padding: "8px 12px", background: "rgba(255,255,255,0.03)", fontSize: "10px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>
                   <span>Deskripsi</span>
@@ -251,7 +255,7 @@ export default function FeaturesSection() {
                 ))}
               </div>
 
-              {/* Total */}
+              {/* Total Tagihan */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <span style={{ fontSize: "13px", fontWeight: "600", color: "rgba(226,232,240,0.5)" }}>Total</span>
                 <span style={{ fontSize: "20px", fontWeight: "900", color: "#34D399" }}>Rp 1.800.000</span>
@@ -261,6 +265,7 @@ export default function FeaturesSection() {
         </div>
       </div>
 
+      {/* Media query untuk mengubah tata letak grid menjadi satu kolom pada layar sempit/mobile */}
       <style>{`
         @media (max-width: 900px) {
           .feature-row, .feature-row-reverse { grid-template-columns: 1fr !important; }

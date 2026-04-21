@@ -1,16 +1,18 @@
-"use client";
+"use client"; // Komponen dijalankan di sisi klien
 import { useState } from "react";
 import {
   ArrowRight, Shield, CheckCircle2,
   Users, Target,
-} from "lucide-react";
-import RoleModal from "./RoleModal";
+} from "lucide-react"; // Mengimpor ikon yang diperlukan
+import RoleModal from "./RoleModal"; // Mengimpor komponen modal pemilihan role
 
 export default function HeroSection() {
+  // State untuk mengontrol apakah modal pemilihan role sedang terbuka atau tertutup
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <>
+      {/* Section Hero: Bagian pertama yang dilihat pengguna saat membuka web */}
       <section
         style={{
           minHeight: "100vh",
@@ -21,20 +23,21 @@ export default function HeroSection() {
           padding: "120px 24px 80px",
         }}
       >
-        {/* Background layers */}
+        {/* Layer latar belakang dekoratif (grid dan gradasi) */}
         <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.5 }} />
         <div style={{ position: "absolute", inset: 0, background: "var(--gradient-hero)" }} />
 
-        {/* Orbs */}
+        {/* Efek ornamen cahaya (orbs) di latar belakang agar terlihat modern */}
         <div className="orb" style={{ width: "700px", height: "700px", background: "#1A36F0", top: "-200px", left: "-200px", opacity: 0.1 }} />
         <div className="orb" style={{ width: "500px", height: "500px", background: "#10B981", bottom: "-100px", right: "-100px", opacity: 0.08 }} />
 
         <div style={{ maxWidth: "1200px", margin: "0 auto", width: "100%", position: "relative" }}>
+          {/* Grid tata letak: sisi kiri untuk teks/copy, sisi kanan untuk ilustrasi visual */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "80px", alignItems: "center" }} className="hero-grid">
 
-            {/* Left: Copy */}
+            {/* Bagian Kiri: Teks Pemasaran (Copywriting) */}
             <div>
-              {/* Badge */}
+              {/* Badge penanda kategori platform */}
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: "8px",
                 background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)",
@@ -46,6 +49,7 @@ export default function HeroSection() {
                 </span>
               </div>
 
+              {/* Judul Utama (Headline) dengan efek teks gradasi */}
               <h1 style={{
                 fontSize: "clamp(36px, 5vw, 58px)", fontWeight: "900",
                 lineHeight: "1.08", letterSpacing: "-2px", marginBottom: "24px",
@@ -61,6 +65,7 @@ export default function HeroSection() {
                 </span>
               </h1>
 
+              {/* Paragraf penjelasan singkat tentang produk */}
               <p style={{
                 fontSize: "17px", color: "rgba(226,232,240,0.55)", lineHeight: "1.8",
                 marginBottom: "40px", maxWidth: "460px",
@@ -68,8 +73,9 @@ export default function HeroSection() {
                 FreeTrack adalah platform <em style={{ color: "rgba(226,232,240,0.8)", fontStyle: "normal", fontWeight: "600" }}>project governance</em> untuk freelancer mahasiswa &amp; profesional muda Indonesia. Akhiri scope creep, amankan pembayaranmu.
               </p>
 
+              {/* Tombol Call to Action (CTA) */}
               <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", alignItems: "center", marginBottom: "56px" }}>
-                {/* CTA utama — buka modal */}
+                {/* Tombol utama untuk memulai, membuka modal pemilihan role */}
                 <button
                   id="hero-cta-main"
                   className="btn-emerald"
@@ -79,13 +85,14 @@ export default function HeroSection() {
                   <Target size={18} />
                   Mulai Kelola Proyek Anda
                 </button>
+                {/* Tombol sekunder untuk melihat cara kerja */}
                 <a href="#workflow" id="hero-cta-learn" className="btn-secondary" style={{ fontSize: "16px", padding: "18px 42px" }}>
                   Lihat Cara Kerja
                   <ArrowRight size={16} />
                 </a>
               </div>
 
-              {/* Trust indicators */}
+              {/* Indikator kepercayaan (Trust Indicators) */}
               <div style={{ display: "flex", gap: "28px", flexWrap: "wrap" }}>
                 {[
                   { icon: <Shield size={15} />, text: "Escrow Terjamin" },
@@ -100,10 +107,10 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Right: Freelancer Workspace Illustration */}
+            {/* Bagian Kanan: Ilustrasi Visual Ruang Kerja Freelancer */}
             <div style={{ position: "relative", height: "520px" }} className="hero-visual">
 
-              {/* Main: Laptop workspace card */}
+              {/* Kartu Mockup Dashboard (Ilustrasi Laptop Workspace) */}
               <div style={{
                 position: "absolute", top: "50%", left: "50%",
                 transform: "translate(-50%, -50%)",
@@ -114,11 +121,12 @@ export default function HeroSection() {
                 boxShadow: "0 40px 100px rgba(0,0,0,0.5)",
                 zIndex: 2,
               }}>
-                {/* Toolbar */}
+                {/* Bagian Toolbar atas mockup */}
                 <div style={{
                   padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)",
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                 }}>
+                  {/* Titik dekoratif seperti di jendela macOS/Browser */}
                   <div style={{ display: "flex", gap: "6px" }}>
                     <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#EF4444" }} />
                     <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#F59E0B" }} />
@@ -127,7 +135,7 @@ export default function HeroSection() {
                   <span style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", fontWeight: "500" }}>freetrack.id/proyek/web-app-021</span>
                 </div>
 
-                {/* Content */}
+                {/* Konten ilustrasi dalam mockup */}
                 <div style={{ padding: "20px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
                     <div>
@@ -139,7 +147,7 @@ export default function HeroSection() {
                     </span>
                   </div>
 
-                  {/* Milestones mini */}
+                  {/* List Milestone Mini (Ilustrasi progres proyek) */}
                   {[
                     { name: "Wireframe & Flow", pct: 100, status: "done", price: "Rp 800k" },
                     { name: "UI Design (Hi-Fi)", pct: 65, status: "active", price: "Rp 1.5jt" },
@@ -155,6 +163,7 @@ export default function HeroSection() {
                           {ms.price}
                         </span>
                       </div>
+                      {/* Bar progres untuk masing-masing milestone */}
                       <div style={{ height: "4px", background: "rgba(255,255,255,0.04)", borderRadius: "2px" }}>
                         <div style={{
                           width: `${ms.pct}%`, height: "100%", borderRadius: "2px",
@@ -165,7 +174,7 @@ export default function HeroSection() {
                     </div>
                   ))}
 
-                  {/* Escrow info */}
+                  {/* Info Dana Escrow (Keamanan pembayaran) */}
                   <div style={{
                     marginTop: "16px", background: "rgba(16,185,129,0.06)",
                     border: "1px solid rgba(16,185,129,0.15)", borderRadius: "10px",
@@ -183,6 +192,7 @@ export default function HeroSection() {
           </div>
         </div>
 
+        {/* Media query untuk menyembunyikan visual di layar kecil agar teks tetap terbaca */}
         <style>{`
           @media (max-width: 900px) {
             .hero-grid { grid-template-columns: 1fr !important; }
@@ -191,7 +201,7 @@ export default function HeroSection() {
         `}</style>
       </section>
 
-      {/* Role Selection Modal */}
+      {/* Modal Pilihan Role untuk Login/Register */}
       <RoleModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );

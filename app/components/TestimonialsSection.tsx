@@ -1,12 +1,14 @@
-"use client";
-import { Target, Users, GraduationCap, TrendingUp, Heart, Globe } from "lucide-react";
+"use client"; // Menunjukkan bahwa file ini adalah Client Component
+import { Target, Users, GraduationCap, TrendingUp, Heart, Globe } from "lucide-react"; // Mengimpor ikon untuk visualisasi misi dan testimoni
 
 export default function TestimonialsSection() {
   return (
     <section id="mission" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+      {/* Ornamen latar belakang (orb cahaya hijau) */}
       <div className="orb" style={{ width: "500px", height: "500px", background: "#10B981", top: "-100px", left: "50%", transform: "translateX(-50%)", opacity: 0.06 }} />
 
       <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
+        {/* Header Section Misi */}
         <div style={{ textAlign: "center", marginBottom: "72px" }}>
           <span className="section-badge">✦ Misi Kami</span>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
@@ -20,7 +22,7 @@ export default function TestimonialsSection() {
           </p>
         </div>
 
-        {/* Mission Stats */}
+        {/* Statistik Pencapaian Misi */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", marginBottom: "80px" }}>
           {[
             { icon: <GraduationCap size={22} />, value: "3.200+", label: "Freelancer Mahasiswa Terdaftar", color: "#10B981" },
@@ -29,6 +31,7 @@ export default function TestimonialsSection() {
             { icon: <Heart size={22} />, value: "4.9/5", label: "Rating Kepuasan Pengguna", color: "#F59E0B" },
           ].map((stat) => (
             <div key={stat.label} className="glass-card" style={{ padding: "28px", textAlign: "center" }}>
+              {/* Ikon statistik dengan latar belakang berwarna transparan */}
               <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: `${stat.color}15`, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", color: stat.color }}>
                 {stat.icon}
               </div>
@@ -38,7 +41,7 @@ export default function TestimonialsSection() {
           ))}
         </div>
 
-        {/* Testimonials */}
+        {/* Bagian Testimoni Pengguna */}
         <div style={{ marginBottom: "64px" }}>
           <h3 style={{ fontSize: "22px", fontWeight: "800", textAlign: "center", marginBottom: "36px", color: "#E2E8F0" }}>
             Cerita dari Mereka yang Sudah Merasakan
@@ -68,10 +71,13 @@ export default function TestimonialsSection() {
               },
             ].map((t) => (
               <div key={t.name} className="glass-card" style={{ padding: "28px" }}>
+                {/* Isi kutipan testimoni */}
                 <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.65)", lineHeight: "1.75", fontStyle: "italic", marginBottom: "20px" }}>
                   &ldquo;{t.text}&rdquo;
                 </p>
+                {/* Profil pengguna yang memberikan testimoni */}
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                  {/* Avatar inisial nama */}
                   <div style={{
                     width: "40px", height: "40px", borderRadius: "10px",
                     background: `${t.color}20`, display: "flex", alignItems: "center", justifyContent: "center",
@@ -89,12 +95,13 @@ export default function TestimonialsSection() {
           </div>
         </div>
 
-        {/* Vision statement */}
+        {/* Pernyataan Visi (Vision Statement) dengan Call to Action */}
         <div style={{
           background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05))",
           border: "1px solid rgba(16,185,129,0.15)", borderRadius: "20px",
           padding: "48px 40px", textAlign: "center", position: "relative", overflow: "hidden",
         }}>
+          {/* Orb ornamen di tengah kartu visi */}
           <div className="orb" style={{ width: "300px", height: "300px", background: "#10B981", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.06 }} />
           <div style={{ position: "relative" }}>
             <Globe size={32} style={{ color: "#10B981", margin: "0 auto 16px", display: "block" }} />

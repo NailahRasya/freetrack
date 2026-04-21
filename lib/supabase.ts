@@ -1,6 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
+// Impor fungsi createClient dari utils untuk mengikuti best practice Next.js
+import { createClient } from "@/utils/supabase/client";
 
-const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
-const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Membuat instance klien Supabase untuk digunakan di seluruh aplikasi (client-side)
+export const supabase = createClient();

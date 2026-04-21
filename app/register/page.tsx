@@ -1,9 +1,9 @@
-"use client";
+"use client"; // Menandakan komponen ini berjalan di sisi klien (Client Component)
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase"; // Mengimpor konfigurasi klien Supabase
 import {
   Eye,
   EyeOff,
@@ -15,15 +15,15 @@ import {
   ShieldCheck,
   ArrowRight,
   ChevronLeft,
-} from "lucide-react";
+} from "lucide-react"; // Mengimpor kumpulan ikon dari lucide-react
 
-// ─── SweetAlert2 dynamic import (client only) ───────────────────────────────
+// Fungsi pembantu untuk memuat SweetAlert2 secara dinamis
 async function swal(opts: object) {
   const Swal = (await import("sweetalert2")).default;
   return Swal.fire(opts as Parameters<typeof Swal.fire>[0]);
 }
 
-// ─── Password strength ────────────────────────────────────────────────────────
+// Fungsi untuk menghitung kekuatan password berdasarkan panjang dan variasi karakter
 function getStrength(pw: string): { score: number; label: string; color: string } {
   let score = 0;
   if (pw.length >= 8) score++;
@@ -42,8 +42,10 @@ function getStrength(pw: string): { score: number; label: string; color: string 
 export default function RegisterPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  // Role 'client' atau 'freelancer' diambil dari parameter URL
   const role = (searchParams.get("role") ?? "client") as "client" | "freelancer";
 
+  // State untuk menyimpan data input form pendaftaran
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,10 +56,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Mengatur mounted ke true setelah render pertama untuk keamanan hidrasi
   useEffect(() => setMounted(true), []);
 
+  // Menghitung kekuatan password secara real-time berdasarkan state 'password'
   const strength = getStrength(password);
 
+  // Konfigurasi visual berdasarkan role (warna, ikon, label)
   const roleConfig = {
     client: {
       label: "Client",
@@ -77,11 +82,12 @@ export default function RegisterPage() {
     },
   }[role];
 
+  // Handler untuk proses pendaftaran user baru
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
 
-      // ── Client-side validations ──────────────────────────────────────────
+      // Validasi sisi klien sebelum memanggil API Supabase
       if (!fullName.trim()) {
         await swal({ icon: "warning", title: "Nama diperlukan", text: "Masukkan nama lengkap kamu.", confirmButtonColor: roleConfig.color });
         return;
@@ -103,8 +109,9 @@ export default function RegisterPage() {
         return;
       }
 
-      setLoading(true);
+      setLoading(true); // Memulai status loading
       try {
+        // Melakukan registrasi menggunakan Supabase Auth serta menyimpan metadata role
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -115,6 +122,7 @@ export default function RegisterPage() {
 
         if (error) throw error;
 
+        // Menampilkan notifikasi sukses jika berhasil
         await swal({
           icon: "success",
           title: "Pendaftaran Berhasil! 🎉",
@@ -122,32 +130,33 @@ export default function RegisterPage() {
           confirmButtonText: "Login Sekarang",
           confirmButtonColor: roleConfig.color,
         });
+        // Mengarahkan ke halaman login setelah daftar berhasil
         router.push(`/login?role=${role}`);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Terjadi kesalahan. Coba lagi.";
         await swal({ icon: "error", title: "Gagal Mendaftar", text: msg, confirmButtonColor: roleConfig.color });
       } finally {
-        setLoading(false);
+        setLoading(false); // Menghentikan status loading
       }
     },
     [fullName, email, password, confirmPassword, agreed, role, roleConfig.color, router]
   );
 
+  // Menunda render hingga komponen terpasang di klien
   if (!mounted) return null;
 
   return (
     <>
-      {/* ── Page wrapper ── */}
       <div style={{ minHeight: "100vh", background: "#0A0F1E", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", position: "relative", overflow: "hidden" }}>
 
-        {/* Decorative orbs */}
+        {/* Ornamen visual latar belakang */}
         <div style={{ position: "absolute", top: "-10%", left: "-5%", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(circle, rgba(77,99,255,0.15), transparent 70%)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", bottom: "-10%", right: "-5%", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(circle, rgba(16,185,129,0.12), transparent 70%)", pointerEvents: "none" }} />
 
-        {/* ── Card ── */}
+        {/* Kartu Pendaftaran Utama */}
         <div style={{ background: "linear-gradient(145deg,rgba(13,21,56,0.98) 0%,rgba(10,15,40,0.98) 100%)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "24px", padding: "48px 44px", maxWidth: "480px", width: "100%", position: "relative", boxShadow: "0 40px 120px rgba(0,0,0,0.7)", animation: "slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)" }}>
 
-          {/* Back */}
+          {/* Tombol kembali ke Beranda */}
           <Link href="/" style={{ display: "flex", width: "fit-content", alignItems: "center", gap: "6px", fontSize: "13px", color: "rgba(226,232,240,0.4)", textDecoration: "none", marginBottom: "28px", transition: "color 0.2s" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#e2e8f0")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(226,232,240,0.4)")}
@@ -155,7 +164,7 @@ export default function RegisterPage() {
             <ChevronLeft size={14} /> Kembali ke beranda
           </Link>
 
-          {/* Role badge */}
+          {/* Badge Role Aktif */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: roleConfig.colorSoft, border: `1px solid ${roleConfig.colorBorder}`, padding: "6px 16px", borderRadius: "50px", marginBottom: "20px" }}>
             <span style={{ color: roleConfig.color }}>{roleConfig.icon}</span>
             <span style={{ fontSize: "12px", fontWeight: "700", color: roleConfig.color, letterSpacing: "0.4px" }}>
@@ -173,10 +182,9 @@ export default function RegisterPage() {
             </Link>
           </p>
 
-          {/* ── Form ── */}
           <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
 
-            {/* Full Name */}
+            {/* Input Nama Lengkap */}
             <div>
               <label htmlFor="reg-fullname" style={labelStyle}>Nama Lengkap</label>
               <div style={inputWrap}>
@@ -193,7 +201,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Email */}
+            {/* Input Email */}
             <div>
               <label htmlFor="reg-email" style={labelStyle}>Alamat Email</label>
               <div style={inputWrap}>
@@ -210,7 +218,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Password */}
+            {/* Input Password dengan Bar Kekuatan */}
             <div>
               <label htmlFor="reg-password" style={labelStyle}>Password</label>
               <div style={inputWrap}>
@@ -229,7 +237,7 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {/* Strength bar */}
+              {/* Bar indikator kekuatan password */}
               {password.length > 0 && (
                 <div style={{ marginTop: "10px" }}>
                   <div style={{ display: "flex", gap: "4px", marginBottom: "6px" }}>
@@ -242,7 +250,7 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Confirm Password */}
+            {/* Konfirmasi Password */}
             <div>
               <label htmlFor="reg-confirm" style={labelStyle}>Konfirmasi Password</label>
               <div style={inputWrap}>
@@ -265,7 +273,7 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Terms checkbox */}
+            {/* Checkbox Persetujuan Syarat & Ketentuan */}
             <label htmlFor="reg-terms" style={{ display: "flex", alignItems: "flex-start", gap: "12px", cursor: "pointer", userSelect: "none" }}>
               <div style={{ position: "relative", flexShrink: 0, marginTop: "2px" }}>
                 <input
@@ -288,7 +296,7 @@ export default function RegisterPage() {
               </span>
             </label>
 
-            {/* Submit */}
+            {/* Tombol Daftar */}
             <button
               id="reg-submit"
               type="submit"
@@ -330,7 +338,7 @@ export default function RegisterPage() {
   );
 }
 
-// ─── Shared style tokens ────────────────────────────────────────────────────
+// ─── Token style untuk konsistensi UI ────────────────────────────────────────
 const labelStyle: React.CSSProperties = {
   display: "block",
   fontSize: "12px",
