@@ -1,5 +1,5 @@
 "use client"; // Komponen dijalankan di sisi klien
-import { Rocket, CheckSquare, UploadCloud, Wallet, ArrowDown } from "lucide-react"; // Mengimpor ikon untuk flow kerja
+import { Rocket, CheckSquare, FileCheck, Wallet, ArrowDown } from "lucide-react"; // Mengimpor ikon untuk flow kerja
 import { motion } from "framer-motion";
 
 // Definisi langkah-langkah (steps) dalam alur kerja FreeTrack
@@ -21,7 +21,7 @@ const steps = [
     detail: "Review · Auto-Approve · Change Request",
   },
   {
-    icon: <UploadCloud size={24} />,
+    icon: <FileCheck size={24} />,
     title: "Upload Bukti Kerja",
     description: "File, link, screenshot — upload langsung ke platform sebagai bukti penyelesaian. Dokumentasi rapi, tak terbantahkan.",
     color: "#06B6D4",
@@ -96,12 +96,13 @@ export default function HowItWorksSection() {
           {/* Garis vertikal penghubung antar langkah (animated background) */}
           <motion.div 
             initial={{ height: 0 }}
-            whileInView={{ height: "100%" }}
+            whileInView={{ height: "calc(100% - 64px)" }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 1.5, ease: "easeInOut", delay: 0.2 }}
             style={{
-              position: "absolute", left: "32px", top: "0", width: "2px",
-              background: "linear-gradient(to bottom, rgba(26,54,240,0.5), rgba(16,185,129,0.5), rgba(6,182,212,0.5), rgba(16,185,129,0.5))",
+              position: "absolute", left: "32px", top: "32px", width: "2px",
+              background: "linear-gradient(to bottom, rgba(26,54,240,0.3), rgba(16,185,129,0.3), rgba(6,182,212,0.3), rgba(16,185,129,0.3))",
+              zIndex: 0
             }} 
             className="timeline-line" 
           />
@@ -118,11 +119,12 @@ export default function HowItWorksSection() {
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 style={{
                   width: "64px", height: "64px", borderRadius: "16px",
-                  background: step.colorBg,
-                  border: `1px solid ${step.color}30`,
+                  background: "#0A0F1E", // Solid background to block the line
+                  border: `1px solid ${step.color}40`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  color: step.color, flexShrink: 0, zIndex: 1,
-                  boxShadow: `0 0 24px ${step.color}15`,
+                  color: step.color, flexShrink: 0, zIndex: 2,
+                  position: "relative",
+                  boxShadow: `0 0 20px ${step.color}15, inset 0 0 10px ${step.color}10`,
                   cursor: "default"
                 }}
               >
@@ -163,10 +165,17 @@ export default function HowItWorksSection() {
               {/* Ikon panah bawah sebagai konektor antar langkah */}
               {i < steps.length - 1 && (
                 <div style={{
-                  position: "absolute", bottom: "-30px", left: "28px",
-                  color: "rgba(226,232,240,0.1)", zIndex: 0,
+                  position: "absolute", bottom: "-32px", left: "32px",
+                  transform: "translateX(-50%)",
+                  color: "rgba(226,232,240,0.6)", 
+                  zIndex: 2,
+                  background: "#0A0F1E",
+                  borderRadius: "50%",
+                  padding: "4px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "1px solid rgba(255,255,255,0.05)",
                 }}>
-                  <ArrowDown size={16} />
+                  <ArrowDown size={14} strokeWidth={3} />
                 </div>
               )}
             </motion.div>
