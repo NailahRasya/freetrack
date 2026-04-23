@@ -1,7 +1,7 @@
 # FreeTrack - Project Governance Platform
 
 <p align="center">
-  <img src="public/logo.png" alt="Logo" width="300">
+  <img src="public/logo_icon.png" alt="Logo" width="300">
 </p>
 
 
