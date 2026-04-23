@@ -1,14 +1,37 @@
 "use client"; // Komponen dijalankan di sisi klien
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  ArrowRight, Shield, CheckCircle2,
-  Users, Target,
+  ArrowRight, Shield, CheckCircle2, Laptop, Coffee,
+  ListChecks, BarChart3, Users, Target, Wallet
 } from "lucide-react"; // Mengimpor ikon yang diperlukan
 import RoleModal from "./RoleModal"; // Mengimpor komponen modal pemilihan role
 
 export default function HeroSection() {
   // State untuk mengontrol apakah modal pemilihan role sedang terbuka atau tertutup
   const [modalOpen, setModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20,
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    
+    const interval = setInterval(() => {
+      setStep((s) => (s + 1) % 3);
+    }, 3500);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <>
@@ -107,85 +130,120 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Bagian Kanan: Ilustrasi Visual Ruang Kerja Freelancer */}
-            <div style={{ position: "relative", height: "520px" }} className="hero-visual">
+            {/* Right: Interactive Dynamic UI */}
+            <div style={{ position: "relative", height: "560px", perspective: "1000px" }} className="hero-visual">
+              
+              {/* Main Escrow Card */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%", left: "50%",
+                  width: "100%", maxWidth: "340px",
+                  background: "linear-gradient(145deg, rgba(15,23,42,0.9), rgba(9,9,11,0.95))",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "24px",
+                  padding: "24px",
+                  boxShadow: "0 30px 60px rgba(0,0,0,0.5)",
+                  transform: `translate(calc(-50% + ${mousePos.x * 1.5}px), calc(-50% + ${mousePos.y * 1.5}px)) rotateX(${mousePos.y * -0.5}deg) rotateY(${mousePos.x * 0.5}deg)`,
+                  transition: "transform 0.1s ease-out",
+                  zIndex: 2,
+                }}
+              >
+                 {/* Card Header */}
+                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                     <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 20px rgba(77,99,255,0.3)" }}>
+                       <Shield size={22} color="white" />
+                     </div>
+                     <div>
+                       <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.5)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "2px" }}>Smart Contract</div>
+                       <div style={{ fontSize: "17px", fontWeight: "800", color: "white", letterSpacing: "-0.5px" }}>Freetrack Escrow</div>
+                     </div>
+                   </div>
+                 </div>
 
-              {/* Kartu Mockup Dashboard (Ilustrasi Laptop Workspace) */}
+                 {/* Parties */}
+                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "16px", marginBottom: "24px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                   <div style={{ textAlign: "center" }}>
+                     <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(77,99,255,0.15)", margin: "0 auto 8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#4D63FF" }}><Users size={18} /></div>
+                     <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.6)", fontWeight: "500" }}>Klien</div>
+                   </div>
+                   
+                   <div style={{ flex: 1, padding: "0 16px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                     <div style={{ width: "100%", height: "3px", background: "rgba(255,255,255,0.1)", position: "relative", borderRadius: "2px", overflow: "hidden" }}>
+                       <div style={{ 
+                          position: "absolute", top: 0, left: 0, height: "100%", background: "linear-gradient(90deg, #4D63FF, #10B981)", 
+                          width: step >= 1 ? "100%" : "0%", transition: "width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)" 
+                       }} />
+                     </div>
+                     <div style={{ fontSize: "10px", color: step >= 1 ? "#10B981" : "rgba(226,232,240,0.4)", marginTop: "10px", fontWeight: "700", transition: "color 0.3s", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                       {step === 0 ? "Menunggu Dana" : "Dana Terkunci"}
+                     </div>
+                   </div>
+
+                   <div style={{ textAlign: "center" }}>
+                     <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(16,185,129,0.15)", margin: "0 auto 8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}><Laptop size={18} /></div>
+                     <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.6)", fontWeight: "500" }}>Freelancer</div>
+                   </div>
+                 </div>
+
+                 {/* Amount */}
+                 <div style={{ textAlign: "center", marginBottom: "28px", background: "rgba(0,0,0,0.2)", padding: "16px", borderRadius: "12px" }}>
+                   <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)", marginBottom: "6px", fontWeight: "500" }}>Total Nilai Proyek</div>
+                   <div style={{ fontSize: "32px", fontWeight: "900", color: "#10B981", letterSpacing: "-1px" }}>Rp 12.500.000</div>
+                 </div>
+
+                 {/* Button */}
+                 <button style={{
+                   width: "100%", padding: "16px", borderRadius: "14px", border: "none",
+                   background: step === 0 ? "rgba(255,255,255,0.05)" : step === 1 ? "linear-gradient(135deg, #10B981, #059669)" : "linear-gradient(135deg, #4D63FF, #2563EB)",
+                   color: step === 0 ? "rgba(255,255,255,0.4)" : "white",
+                   fontWeight: "800", fontSize: "15px", cursor: "pointer",
+                   transition: "all 0.4s ease",
+                   display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                   boxShadow: step >= 1 ? `0 10px 25px ${step === 1 ? 'rgba(16,185,129,0.3)' : 'rgba(77,99,255,0.3)'}` : "none",
+                 }}>
+                   {step === 0 ? <><Wallet size={18} /> Deposit Dana</> : step === 1 ? <><Shield size={18} /> Escrow Aktif</> : <><CheckCircle2 size={18} /> Proyek Selesai</>}
+                 </button>
+              </div>
+
+              {/* Floating Notification 1 (Top Right) */}
               <div style={{
-                position: "absolute", top: "50%", left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: "360px",
-                background: "rgba(13,27,62,0.9)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "20px", padding: "0", overflow: "hidden",
-                boxShadow: "0 40px 100px rgba(0,0,0,0.5)",
-                zIndex: 2,
+                position: "absolute", top: "10%", right: "-5%",
+                background: "rgba(16,185,129,0.15)", backdropFilter: "blur(12px)",
+                border: "1px solid rgba(16,185,129,0.3)",
+                padding: "14px 18px", borderRadius: "16px",
+                display: "flex", alignItems: "center", gap: "14px",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+                transform: `translate(${mousePos.x * 2.5}px, ${mousePos.y * 2.5}px) scale(${step >= 1 ? 1 : 0.9})`,
+                transition: "transform 0.1s ease-out, opacity 0.5s ease",
+                opacity: step >= 1 ? 1 : 0,
+                zIndex: 3,
               }}>
-                {/* Bagian Toolbar atas mockup */}
-                <div style={{
-                  padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                }}>
-                  {/* Titik dekoratif seperti di jendela macOS/Browser */}
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#EF4444" }} />
-                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#F59E0B" }} />
-                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#10B981" }} />
-                  </div>
-                  <span style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", fontWeight: "500" }}>freetrack.id/proyek/web-app-021</span>
+                <div style={{ background: "#10B981", borderRadius: "50%", padding: "8px", boxShadow: "0 0 15px rgba(16,185,129,0.5)" }}><CheckCircle2 size={18} color="white" /></div>
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: "800", color: "#34D399", marginBottom: "2px" }}>Milestone Disetujui</div>
+                  <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.7)" }}>Dana dicairkan dengan aman</div>
                 </div>
+              </div>
 
-                {/* Konten ilustrasi dalam mockup */}
-                <div style={{ padding: "20px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-                    <div>
-                      <div style={{ fontSize: "10px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Proyek Aktif</div>
-                      <div style={{ fontSize: "16px", fontWeight: "700", color: "#E2E8F0" }}>Mobile App Development</div>
-                    </div>
-                    <span style={{ fontSize: "11px", fontWeight: "700", color: "#10B981", background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "6px" }}>
-                      On Track
-                    </span>
-                  </div>
-
-                  {/* List Milestone Mini (Ilustrasi progres proyek) */}
-                  {[
-                    { name: "Wireframe & Flow", pct: 100, status: "done", price: "Rp 800k" },
-                    { name: "UI Design (Hi-Fi)", pct: 65, status: "active", price: "Rp 1.5jt" },
-                    { name: "Frontend Dev", pct: 0, status: "pending", price: "Rp 2jt" },
-                  ].map((ms) => (
-                    <div key={ms.name} style={{ marginBottom: "14px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
-                        <span style={{ color: ms.status === "pending" ? "rgba(226,232,240,0.3)" : "rgba(226,232,240,0.7)", fontWeight: "600" }}>
-                          {ms.status === "done" && <span style={{ color: "#10B981", marginRight: "4px" }}>✓</span>}
-                          {ms.name}
-                        </span>
-                        <span style={{ color: ms.status === "done" ? "#10B981" : ms.status === "active" ? "#06B6D4" : "rgba(226,232,240,0.25)", fontWeight: "700" }}>
-                          {ms.price}
-                        </span>
-                      </div>
-                      {/* Bar progres untuk masing-masing milestone */}
-                      <div style={{ height: "4px", background: "rgba(255,255,255,0.04)", borderRadius: "2px" }}>
-                        <div style={{
-                          width: `${ms.pct}%`, height: "100%", borderRadius: "2px",
-                          background: ms.status === "done" ? "#10B981" : ms.status === "active" ? "linear-gradient(90deg, #1A36F0, #06B6D4)" : "transparent",
-                          transition: "width 1.5s ease",
-                        }} />
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Info Dana Escrow (Keamanan pembayaran) */}
-                  <div style={{
-                    marginTop: "16px", background: "rgba(16,185,129,0.06)",
-                    border: "1px solid rgba(16,185,129,0.15)", borderRadius: "10px",
-                    padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center",
-                  }}>
-                    <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.5)" }}>
-                      <Shield size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
-                      Dana Escrow
-                    </div>
-                    <div style={{ fontSize: "14px", fontWeight: "800", color: "#34D399" }}>Rp 4.3jt</div>
-                  </div>
+              {/* Floating Notification 2 (Bottom Left) */}
+              <div style={{
+                position: "absolute", bottom: "15%", left: "-5%",
+                background: "rgba(77,99,255,0.15)", backdropFilter: "blur(12px)",
+                border: "1px solid rgba(77,99,255,0.3)",
+                padding: "14px 18px", borderRadius: "16px",
+                display: "flex", alignItems: "center", gap: "14px",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+                transform: `translate(${mousePos.x * 0.8}px, ${mousePos.y * 0.8}px) scale(${step === 2 ? 1 : 0.9})`,
+                transition: "transform 0.1s ease-out, opacity 0.5s ease",
+                opacity: step === 2 ? 1 : 0,
+                zIndex: 3,
+              }}>
+                <div style={{ background: "#4D63FF", borderRadius: "50%", padding: "8px", boxShadow: "0 0 15px rgba(77,99,255,0.5)" }}><ListChecks size={18} color="white" /></div>
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: "800", color: "#A5B4FC", marginBottom: "2px" }}>Revisi Selesai</div>
+                  <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.7)" }}>Klien menyetujui hasil akhir</div>
                 </div>
               </div>
             </div>
@@ -194,9 +252,17 @@ export default function HeroSection() {
 
         {/* Media query untuk menyembunyikan visual di layar kecil agar teks tetap terbaca */}
         <style>{`
+          @keyframes pulse-badge {
+            0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
           @media (max-width: 900px) {
-            .hero-grid { grid-template-columns: 1fr !important; }
-            .hero-visual { display: none !important; }
+            .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+            .hero-visual { height: 400px !important; margin-top: 20px; transform: scale(0.85); transform-origin: top center; }
           }
         `}</style>
       </section>
