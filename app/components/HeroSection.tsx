@@ -5,6 +5,7 @@ import {
   ListChecks, Users, Target, Wallet
 } from "lucide-react";
 import RoleModal from "./RoleModal"; // Import RoleModal for role selection
+import AnimatedHeroTitle from "./AnimatedHeroTitle";
 import "./HeroSection.css";
 
 const TRUST_INDICATORS = [
@@ -62,17 +63,7 @@ export default function HeroSection() {
               </span>
             </div>
 
-            <h1 className="hero-title">
-              Bekerja dengan{" "}
-              <span className="gradient-text-emerald" style={{ display: "inline-block" }}>
-                Kepastian,
-              </span>
-              <br />
-              Dibayar dengan{" "}
-              <span className="gradient-text" style={{ display: "inline-block" }}>
-                Transparansi.
-              </span>
-            </h1>
+            <AnimatedHeroTitle />
 
             <p className="hero-description">
               FreeTrack adalah platform <em>project governance</em> untuk freelancer mahasiswa & profesional muda Indonesia. Akhiri scope creep, amankan pembayaranmu.
