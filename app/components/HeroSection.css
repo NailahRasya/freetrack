@@ -458,3 +458,16 @@
     display: none; /* Hide floating notifications on mobile to save space */
   }
 }
+
+/* Animated Title Styles */
+.animated-gradient {
+  background-size: 200% auto !important;
+  animation: shine 3s linear infinite !important;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
