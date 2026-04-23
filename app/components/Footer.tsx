@@ -1,5 +1,6 @@
 "use client"; // Menandakan bahwa komponen dijalankan di sisi klien
 import { ArrowRight, Shield, Globe } from "lucide-react"; // Mengimpor ikon untuk visualisasi di footer
+import { motion } from "framer-motion";
 
 // Struktur data untuk link yang ditampilkan di footer, dikelompokkan berdasarkan kategori
 const footerLinks = {
@@ -36,12 +37,18 @@ export default function Footer() {
   return (
     <footer style={{ borderTop: "1px solid rgba(255,255,255,0.04)", padding: "80px 24px 40px", position: "relative", overflow: "hidden" }}>
       {/* CTA Banner: Ajakan terakhir di bawah halaman untuk mendaftar */}
-      <div style={{
-        maxWidth: "1200px", margin: "0 auto 80px",
-        background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05))",
-        border: "1px solid rgba(16,185,129,0.15)", borderRadius: "24px",
-        padding: "64px 48px", textAlign: "center", position: "relative", overflow: "hidden",
-      }}>
+      <motion.div 
+        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        style={{
+          maxWidth: "1200px", margin: "0 auto 80px",
+          background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05))",
+          border: "1px solid rgba(16,185,129,0.15)", borderRadius: "24px",
+          padding: "64px 48px", textAlign: "center", position: "relative", overflow: "hidden",
+        }}
+      >
         <div className="orb" style={{ width: "400px", height: "400px", background: "#10B981", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.06 }} />
         <div style={{ position: "relative" }}>
           <span className="section-badge">✦ Mulai Sekarang</span>
@@ -53,16 +60,28 @@ export default function Footer() {
             Gratis selamanya. Tidak perlu kartu kredit.
           </p>
           <div style={{ display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="#" className="btn-emerald" style={{ fontSize: "16px", padding: "16px 40px" }}>
+            <motion.a 
+              whileHover={{ scale: 1.05, filter: "brightness(1.1)", boxShadow: "0 0 25px rgba(16,185,129,0.5)" }}
+              transition={{ duration: 0.2 }}
+              href="#" 
+              className="btn-emerald" 
+              style={{ fontSize: "16px", padding: "16px 40px", display: "inline-flex" }}
+            >
               Daftar sebagai Freelancer
               <ArrowRight size={16} />
-            </a>
-            <a href="#" className="btn-secondary" style={{ fontSize: "16px", padding: "16px 40px" }}>
+            </motion.a>
+            <motion.a 
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+              href="#" 
+              className="btn-secondary" 
+              style={{ fontSize: "16px", padding: "16px 40px", display: "inline-flex" }}
+            >
               Post Proyek Pertama
-            </a>
+            </motion.a>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Konten Utama Footer (Grid Link dan Branding) */}
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>

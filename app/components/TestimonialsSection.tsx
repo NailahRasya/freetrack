@@ -1,5 +1,24 @@
 "use client"; // Menunjukkan bahwa file ini adalah Client Component
 import { Target, Users, GraduationCap, TrendingUp, Heart, Globe } from "lucide-react"; // Mengimpor ikon untuk visualisasi misi dan testimoni
+import { motion } from "framer-motion";
+
+const textVariants = {
+  hidden: { opacity: 0, y: 30, filter: "blur(8px)" },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    filter: "blur(0px)",
+    transition: { duration: 0.7, ease: "easeOut" }
+  }
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 }
+  }
+};
 
 export default function TestimonialsSection() {
   return (
@@ -9,43 +28,70 @@ export default function TestimonialsSection() {
 
       <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
         {/* Header Section Misi */}
-        <div style={{ textAlign: "center", marginBottom: "72px" }}>
-          <span className="section-badge">✦ Misi Kami</span>
-          <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          style={{ textAlign: "center", marginBottom: "72px" }}
+        >
+          <motion.span variants={textVariants} className="section-badge" style={{ display: "inline-block" }}>✦ Misi Kami</motion.span>
+          <motion.h2 variants={textVariants} style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
             Membantu{" "}
             <span className="gradient-text-emerald">5.000 Freelancer Mahasiswa</span>
             <br />
             di Indonesia
-          </h2>
-          <p style={{ fontSize: "17px", color: "rgba(226,232,240,0.5)", maxWidth: "560px", margin: "0 auto" }}>
+          </motion.h2>
+          <motion.p variants={textVariants} style={{ fontSize: "17px", color: "rgba(226,232,240,0.5)", maxWidth: "560px", margin: "0 auto" }}>
             Kami percaya setiap mahasiswa dan profesional muda berhak mendapatkan bayaran yang adil atas kerja kerasnya — tanpa takut ditipu.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Statistik Pencapaian Misi */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", marginBottom: "80px" }}>
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", marginBottom: "80px" }}
+        >
           {[
             { icon: <GraduationCap size={22} />, value: "3.200+", label: "Freelancer Mahasiswa Terdaftar", color: "#10B981" },
             { icon: <TrendingUp size={22} />, value: "Rp 2.8M+", label: "Total Dana Diamankan", color: "#06B6D4" },
             { icon: <Target size={22} />, value: "97%", label: "Proyek Selesai Tepat Waktu", color: "#1A36F0" },
             { icon: <Heart size={22} />, value: "4.9/5", label: "Rating Kepuasan Pengguna", color: "#F59E0B" },
-          ].map((stat) => (
-            <div key={stat.label} className="glass-card" style={{ padding: "28px", textAlign: "center" }}>
+          ].map((stat, i) => (
+            <motion.div 
+              variants={{
+                hidden: { opacity: 0, y: 40, filter: "blur(4px)" },
+                visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.5 } }
+              }}
+              whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.2)" }}
+              key={stat.label} 
+              className="glass-card" 
+              style={{ padding: "28px", textAlign: "center", cursor: "default" }}
+            >
               {/* Ikon statistik dengan latar belakang berwarna transparan */}
               <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: `${stat.color}15`, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", color: stat.color }}>
                 {stat.icon}
               </div>
               <div style={{ fontSize: "28px", fontWeight: "900", color: "#E2E8F0", marginBottom: "4px" }}>{stat.value}</div>
               <div style={{ fontSize: "13px", color: "rgba(226,232,240,0.4)", lineHeight: "1.4" }}>{stat.label}</div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Bagian Testimoni Pengguna */}
-        <div style={{ marginBottom: "64px" }}>
-          <h3 style={{ fontSize: "22px", fontWeight: "800", textAlign: "center", marginBottom: "36px", color: "#E2E8F0" }}>
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          style={{ marginBottom: "64px" }}
+        >
+          <motion.h3 variants={textVariants} style={{ fontSize: "22px", fontWeight: "800", textAlign: "center", marginBottom: "36px", color: "#E2E8F0" }}>
             Cerita dari Mereka yang Sudah Merasakan
-          </h3>
+          </motion.h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "20px" }}>
             {[
               {
@@ -70,7 +116,15 @@ export default function TestimonialsSection() {
                 color: "#06B6D4",
               },
             ].map((t) => (
-              <div key={t.name} className="glass-card" style={{ padding: "28px" }}>
+              <motion.div 
+                key={t.name} 
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+                }}
+                className="glass-card" 
+                style={{ padding: "28px" }}
+              >
                 {/* Isi kutipan testimoni */}
                 <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.65)", lineHeight: "1.75", fontStyle: "italic", marginBottom: "20px" }}>
                   &ldquo;{t.text}&rdquo;
@@ -90,17 +144,23 @@ export default function TestimonialsSection() {
                     <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>{t.role}</div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Pernyataan Visi (Vision Statement) dengan Call to Action */}
-        <div style={{
-          background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05))",
-          border: "1px solid rgba(16,185,129,0.15)", borderRadius: "20px",
-          padding: "48px 40px", textAlign: "center", position: "relative", overflow: "hidden",
-        }}>
+        <motion.div 
+          initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          style={{
+            background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05))",
+            border: "1px solid rgba(16,185,129,0.15)", borderRadius: "20px",
+            padding: "48px 40px", textAlign: "center", position: "relative", overflow: "hidden",
+          }}
+        >
           {/* Orb ornamen di tengah kartu visi */}
           <div className="orb" style={{ width: "300px", height: "300px", background: "#10B981", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.06 }} />
           <div style={{ position: "relative" }}>
@@ -111,12 +171,17 @@ export default function TestimonialsSection() {
             <p style={{ fontSize: "15px", color: "rgba(226,232,240,0.45)", maxWidth: "520px", margin: "0 auto 28px", lineHeight: "1.7" }}>
               Kami sedang membangun ekosistem di mana mahasiswa bisa membangun karier freelance tanpa takut. Target kami: 5.000 freelancer terlindungi di akhir 2026.
             </p>
-            <a href="#" className="btn-emerald" style={{ padding: "14px 36px" }}>
+            <motion.a 
+              whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(16,185,129,0.5)" }}
+              href="#" 
+              className="btn-emerald" 
+              style={{ padding: "14px 36px", display: "inline-flex" }}
+            >
               <Users size={16} />
               Bergabung dengan Misi Kami
-            </a>
+            </motion.a>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

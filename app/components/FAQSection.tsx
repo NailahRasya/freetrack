@@ -1,6 +1,7 @@
 "use client"; // Menunjukkan komponen dijalankan di sisi klien
 import { useState } from "react";
 import { Plus, Minus, MessageCircle } from "lucide-react"; // Mengimpor ikon untuk interaksi accordion dan kontak
+import { motion, AnimatePresence } from "framer-motion";
 
 // Daftar pertanyaan dan jawaban (FAQ) yang akan ditampilkan
 const faqs = [
@@ -30,6 +31,19 @@ const faqs = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+};
+
 export default function FAQSection() {
   return (
     <section id="faq" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
@@ -38,27 +52,47 @@ export default function FAQSection() {
 
       <div style={{ maxWidth: "800px", margin: "0 auto", position: "relative" }}>
         {/* Header Section FAQ */}
-        <div style={{ textAlign: "center", marginBottom: "56px" }}>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          style={{ textAlign: "center", marginBottom: "56px" }}
+        >
           <span className="section-badge">✦ FAQ</span>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
             Pertanyaan yang{" "}
             <span className="gradient-text-emerald">Sering Ditanyakan</span>
           </h2>
-        </div>
+        </motion.div>
 
         {/* List Accordion FAQ */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+        >
           {faqs.map((item, i) => (
-            <FAQItem key={i} question={item.q} answer={item.a} index={i} />
+            <motion.div key={i} variants={itemVariants}>
+              <FAQItem question={item.q} answer={item.a} index={i} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Bagian Kontak/Support tambahan jika FAQ belum menjawab */}
-        <div style={{
-          marginTop: "56px", textAlign: "center", padding: "40px",
-          background: "rgba(26,54,240,0.05)", border: "1px solid rgba(26,54,240,0.12)",
-          borderRadius: "20px",
-        }}>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          style={{
+            marginTop: "56px", textAlign: "center", padding: "40px",
+            background: "rgba(26,54,240,0.05)", border: "1px solid rgba(26,54,240,0.12)",
+            borderRadius: "20px",
+          }}
+        >
           <MessageCircle size={28} style={{ color: "#4D63FF", margin: "0 auto 12px", display: "block" }} />
           <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "8px" }}>Masih ada pertanyaan?</h3>
           <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.45)", marginBottom: "20px" }}>
@@ -68,7 +102,7 @@ export default function FAQSection() {
             <MessageCircle size={16} />
             Hubungi Support
           </a>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -91,24 +125,40 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
           <span style={{ fontSize: "12px", fontWeight: "700", color: "#10B981", opacity: 0.5, minWidth: "22px" }}>
             {String(index + 1).padStart(2, "0")}
           </span>
-          <span style={{ fontSize: "15px", fontWeight: "600" }}>{question}</span>
+          <span style={{ fontSize: "15px", fontWeight: "600", color: open ? "#10B981" : "#E2E8F0" }}>{question}</span>
         </div>
         {/* Ikon Plus/Minus sebagai indikator status terbuka/tertutup */}
         <div style={{
           width: "26px", height: "26px", borderRadius: "8px",
           background: open ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.03)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0, transition: "all 0.3s ease", color: open ? "#10B981" : "rgba(226,232,240,0.3)",
+          flexShrink: 0, transition: "background 0.3s ease, color 0.3s ease", color: open ? "#10B981" : "rgba(226,232,240,0.3)",
         }}>
-          {open ? <Minus size={14} /> : <Plus size={14} />}
+          <motion.div
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            {open ? <Minus size={14} /> : <Plus size={14} />}
+          </motion.div>
         </div>
       </div>
       {/* Bagian Jawaban (Konten yang di-expand/collapse) */}
-      {open && (
-        <div style={{ padding: "0 22px 18px 56px", fontSize: "14px", color: "rgba(226,232,240,0.55)", lineHeight: "1.75", borderTop: "1px solid rgba(255,255,255,0.03)" }}>
-          {answer}
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div style={{ padding: "0 22px 18px 56px", fontSize: "14px", color: "rgba(226,232,240,0.55)", lineHeight: "1.75", borderTop: "1px solid rgba(255,255,255,0.03)" }}>
+              {answer}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

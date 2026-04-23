@@ -4,6 +4,26 @@ import {
   PlusCircle, FileText, CheckCircle2, ArrowRight,
   Clock, Receipt
 } from "lucide-react"; // Mengimpor kumpulan ikon dari lucide-react
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
 
 export default function FeaturesSection() {
   return (
@@ -13,7 +33,13 @@ export default function FeaturesSection() {
 
       <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
         {/* Bagian Header Section Fitur */}
-        <div style={{ textAlign: "center", marginBottom: "80px" }}>
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={itemVariants}
+          style={{ textAlign: "center", marginBottom: "80px" }}
+        >
           <span className="section-badge">✦ Feature Showcase</span>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
             Tiga Pilar{" "}
@@ -22,12 +48,19 @@ export default function FeaturesSection() {
           <p style={{ fontSize: "17px", color: "rgba(226,232,240,0.5)", maxWidth: "520px", margin: "0 auto" }}>
             Setiap fitur dirancang spesifik untuk mengatasi masalah yang paling sering dialami freelancer.
           </p>
-        </div>
+        </motion.div>
 
         {/* === FITUR 1: Milestone Planning === */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center", marginBottom: "120px" }} className="feature-row">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center", marginBottom: "120px" }} 
+          className="feature-row"
+        >
           {/* Sisi Kiri: Penjelasan Teks */}
-          <div>
+          <motion.div variants={itemVariants}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}>
                 <GitBranch size={20} />
@@ -53,10 +86,16 @@ export default function FeaturesSection() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Sisi Kanan: Visualisasi Milestone Timeline */}
-          <div className="feature-visual" style={{ padding: "28px" }}>
+          <motion.div 
+            variants={itemVariants}
+            className="feature-visual" 
+            style={{ padding: "28px" }}
+            whileHover={{ scale: 1.03, boxShadow: "0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(16,185,129,0.3)" }}
+            transition={{ duration: 0.2 }}
+          >
             <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "20px", fontWeight: "600" }}>
               ↳ Preview Milestone
             </div>
@@ -96,13 +135,26 @@ export default function FeaturesSection() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* === FITUR 2: Smart Change Request === */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center", marginBottom: "120px" }} className="feature-row-reverse">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center", marginBottom: "120px" }} 
+          className="feature-row-reverse"
+        >
           {/* Sisi Kiri: Visualisasi Log Change Request */}
-          <div className="feature-visual" style={{ padding: "28px", order: 0 }}>
+          <motion.div 
+            variants={itemVariants}
+            className="feature-visual" 
+            style={{ padding: "28px", order: 0 }}
+            whileHover={{ scale: 1.03, boxShadow: "0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,158,11,0.3)" }}
+            transition={{ duration: 0.2 }}
+          >
             <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "20px", fontWeight: "600" }}>
               ↳ Change Request Log
             </div>
@@ -146,10 +198,10 @@ export default function FeaturesSection() {
               <span style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>Total nilai proyek sekarang</span>
               <span style={{ fontSize: "16px", fontWeight: "800", color: "#34D399" }}>Rp 5.4jt</span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Sisi Kanan: Penjelasan Teks */}
-          <div style={{ order: 1 }}>
+          <motion.div variants={itemVariants} style={{ order: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F59E0B" }}>
                 <AlertTriangle size={20} />
@@ -175,13 +227,20 @@ export default function FeaturesSection() {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* === FITUR 3: Auto-Invoicing === */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center" }} className="feature-row">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center" }} 
+          className="feature-row"
+        >
           {/* Sisi Kiri: Penjelasan Teks */}
-          <div>
+          <motion.div variants={itemVariants}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#06B6D4" }}>
                 <Receipt size={20} />
@@ -207,10 +266,16 @@ export default function FeaturesSection() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Sisi Kanan: Visualisasi Preview Invoice */}
-          <div className="feature-visual" style={{ padding: "0", overflow: "hidden" }}>
+          <motion.div 
+            variants={itemVariants}
+            className="feature-visual" 
+            style={{ padding: "0", overflow: "hidden" }}
+            whileHover={{ scale: 1.03, boxShadow: "0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(6,182,212,0.3)" }}
+            transition={{ duration: 0.2 }}
+          >
             {/* Header Invoice Mockup */}
             <div style={{ padding: "24px 28px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -261,8 +326,8 @@ export default function FeaturesSection() {
                 <span style={{ fontSize: "20px", fontWeight: "900", color: "#34D399" }}>Rp 1.800.000</span>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* Media query untuk mengubah tata letak grid menjadi satu kolom pada layar sempit/mobile */}

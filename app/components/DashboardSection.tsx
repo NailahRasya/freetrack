@@ -1,22 +1,46 @@
 "use client"; // Menandakan komponen berjalan di sisi klien
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   BarChart3, Wallet, Clock, Star, TrendingUp,
   CheckCircle2, UploadCloud, Shield
 } from "lucide-react"; // Mengimpor ikon-ikon untuk elemen dashboard
+import { motion, useScroll, useTransform } from "framer-motion";
 
 export default function DashboardSection() {
   // State untuk melacak tab aktif antara tampilan 'freelancer' atau 'client'
   const [activeTab, setActiveTab] = useState<"freelancer" | "client">("freelancer");
 
-  return (
-    <section id="dashboard" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
-      {/* Ornamen latar belakang (orb cahaya biru) */}
-      <div className="orb" style={{ width: "500px", height: "500px", background: "#1A36F0", bottom: "-100px", left: "-150px", opacity: 0.06 }} />
+  // Setup parallax scroll
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"]
+  });
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative" }}>
+  const orbY = useTransform(scrollYProgress, [0, 1], [100, -100]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [30, -30]);
+
+  return (
+    <section ref={sectionRef} id="dashboard" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+      {/* Ornamen latar belakang (orb cahaya biru) dengan efek parallax ringan */}
+      <motion.div 
+        className="orb" 
+        style={{ 
+          width: "500px", height: "500px", background: "#1A36F0", 
+          bottom: "-100px", left: "-150px", opacity: 0.06,
+          y: orbY
+        }} 
+      />
+
+      <motion.div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", y: contentY }}>
         {/* Header Section Preview Dashboard */}
-        <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+          style={{ textAlign: "center", marginBottom: "48px" }}
+        >
           <span className="section-badge">✦ Dashboard Preview</span>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: "900", letterSpacing: "-1px", lineHeight: "1.15", marginBottom: "16px" }}>
             Satu Layar,{" "}
@@ -25,10 +49,16 @@ export default function DashboardSection() {
           <p style={{ fontSize: "17px", color: "rgba(226,232,240,0.5)", maxWidth: "480px", margin: "0 auto" }}>
             Pantau proyek, earnings, dan reputasimu dari satu tempat.
           </p>
-        </div>
+        </motion.div>
 
         {/* Toggle Tab untuk memilih peran (Freelancer/Client) */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "36px" }}>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          style={{ display: "flex", justifyContent: "center", marginBottom: "36px" }}
+        >
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "5px", display: "flex", gap: "4px" }}>
             {(["freelancer", "client"] as const).map((tab) => (
               <button
@@ -45,10 +75,17 @@ export default function DashboardSection() {
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Kartu Visualisasi Dashboard (Mockup Aplikasi) */}
-        <div className="feature-visual" style={{ padding: "0", overflow: "hidden", boxShadow: "0 40px 100px rgba(0,0,0,0.4)" }}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 40 }}
+          whileInView={{ opacity: 1, scale: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="feature-visual" 
+          style={{ padding: "0", overflow: "hidden", boxShadow: "0 40px 100px rgba(0,0,0,0.4)" }}
+        >
           {/* Bar atas jendela browser mockup */}
           <div style={{ padding: "14px 24px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", gap: "6px" }}>
@@ -87,7 +124,8 @@ export default function DashboardSection() {
                     padding: "20px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "2px"
+                    gap: "2px",
+                    transition: "all 0.3s ease"
                   }}
                 >
                   <div style={{ color: item.color, marginBottom: "10px" }}>{item.icon}</div>
@@ -125,8 +163,8 @@ export default function DashboardSection() {
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   );
 }
