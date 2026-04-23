@@ -1,6 +1,6 @@
 # FreeTrack - Project Governance Platform
 
-![FreeTrack Banner](/logo_icon.png)
+![FreeTrack Banner](/logo.png)
 
 **FreeTrack** adalah platform *project governance* revolusioner yang dirancang khusus untuk freelancer mahasiswa dan profesional muda di Indonesia. Kami hadir untuk memberikan kepastian kerja dan transparansi pembayaran, sehingga Anda bisa fokus pada karya terbaik Anda tanpa rasa takut.
 
