@@ -7,11 +7,15 @@ import DashboardSection from "./components/DashboardSection";
 import TestimonialsSection from "./components/TestimonialsSection";
 import FAQSection from "./components/FAQSection";
 import Footer from "./components/Footer";
+import SplashScreen from "./components/SplashScreen";
 
 // Komponen Home sebagai entry point utama halaman depan (Landing Page)
 export default function Home() {
   return (
     <>
+      {/* Menampilkan splash screen saat awal dimuat */}
+      <SplashScreen />
+
       {/* Menampilkan navigasi di bagian atas halaman */}
       <Navbar />
       
