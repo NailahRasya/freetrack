@@ -16,6 +16,7 @@ import {
   ArrowRight,
   ChevronLeft,
 } from "lucide-react"; // Mengimpor kumpulan ikon dari lucide-react
+import PolicyModal from "../components/PolicyModal";
 
 // Fungsi pembantu untuk memuat SweetAlert2 secara dinamis
 async function swal(opts: object) {
@@ -55,6 +56,8 @@ export default function RegisterPage() {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isPolicyOpen, setIsPolicyOpen] = useState(false);
+  const [policyType, setPolicyType] = useState<"terms" | "privacy">("terms");
 
   // Mengatur mounted ke true setelah render pertama untuk keamanan hidrasi
   useEffect(() => setMounted(true), []);
@@ -289,9 +292,21 @@ export default function RegisterPage() {
               </div>
               <span style={{ fontSize: "13px", color: "rgba(226,232,240,0.55)", lineHeight: "1.6" }}>
                 Saya menyetujui{" "}
-                <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>Syarat & Ketentuan</a>
+                <button 
+                  type="button"
+                  onClick={() => { setPolicyType("terms"); setIsPolicyOpen(true); }}
+                  style={{ background: "none", border: "none", padding: 0, color: roleConfig.color, fontWeight: "600", textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
+                >
+                  Syarat & Ketentuan
+                </button>
                 {" "}serta{" "}
-                <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>Kebijakan Privasi</a>
+                <button 
+                  type="button"
+                  onClick={() => { setPolicyType("privacy"); setIsPolicyOpen(true); }}
+                  style={{ background: "none", border: "none", padding: 0, color: roleConfig.color, fontWeight: "600", textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
+                >
+                  Kebijakan Privasi
+                </button>
                 {" "}Freetrack.
               </span>
             </label>
@@ -316,6 +331,13 @@ export default function RegisterPage() {
             </button>
           </form>
         </div>
+        
+        {/* Modal untuk menampilkan kebijakan formalitas */}
+        <PolicyModal 
+          isOpen={isPolicyOpen} 
+          onClose={() => setIsPolicyOpen(false)} 
+          type={policyType} 
+        />
       </div>
 
       <style>{`

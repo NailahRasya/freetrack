@@ -14,6 +14,7 @@ import {
   ArrowRight,
   ChevronLeft,
 } from "lucide-react"; // Mengimpor ikon dari lucide-react
+import PolicyModal from "../components/PolicyModal";
 
 // Fungsi pembantu untuk memuat SweetAlert2 secara dinamis (hanya di sisi klien)
 async function swal(opts: object) {
@@ -33,6 +34,8 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false); // Mengatur visibilitas password
   const [loading, setLoading] = useState(false); // Menandakan status loading saat proses login
   const [mounted, setMounted] = useState(false); // Memastikan komponen sudah terpasang di browser
+  const [isPolicyOpen, setIsPolicyOpen] = useState(false);
+  const [policyType, setPolicyType] = useState<"terms" | "privacy">("terms");
 
   // Mengatur mounted menjadi true setelah komponen dirender pertama kali
   useEffect(() => setMounted(true), []);
@@ -214,7 +217,13 @@ export default function LoginPage() {
             {/* Tautan ke Syarat & Ketentuan */}
             <p style={{ fontSize: "12px", color: "rgba(226,232,240,0.25)", textAlign: "center", margin: "0" }}>
               Dengan masuk, kamu menyetujui{" "}
-              <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: "rgba(226,232,240,0.4)", textDecoration: "underline" }}>Syarat & Ketentuan</a>{" "}kami.
+              <button 
+                type="button"
+                onClick={() => { setPolicyType("terms"); setIsPolicyOpen(true); }}
+                style={{ background: "none", border: "none", padding: 0, color: "rgba(226,232,240,0.4)", textDecoration: "underline", fontSize: "12px", cursor: "pointer" }}
+              >
+                Syarat & Ketentuan
+              </button>{" "}kami.
             </p>
 
             {/* Tombol Submit untuk login */}
@@ -258,6 +267,13 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+        
+        {/* Modal untuk menampilkan kebijakan formalitas */}
+        <PolicyModal 
+          isOpen={isPolicyOpen} 
+          onClose={() => setIsPolicyOpen(false)} 
+          type={policyType} 
+        />
       </div>
 
       {/* Definisi animasi CSS */}
