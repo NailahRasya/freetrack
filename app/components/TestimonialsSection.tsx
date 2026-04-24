@@ -1,5 +1,5 @@
-"use client"; // Menunjukkan bahwa file ini adalah Client Component
-import { Target, Users, GraduationCap, TrendingUp, Heart, Globe } from "lucide-react"; // Mengimpor ikon untuk visualisasi misi dan testimoni
+"use client";
+import { Target, Users, GraduationCap, TrendingUp, Heart, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 
 const textVariants = {
@@ -20,13 +20,65 @@ const containerVariants = {
   }
 };
 
+const TESTIMONIALS = [
+  {
+    name: "Nadia Putri",
+    role: "Mahasiswi Desain · Universitas Indonesia",
+    text: "Dulu klien minta tambah 3 halaman tanpa bayar extra. Sekarang lewat FreeTrack, setiap tambahan otomatis masuk Change Request. Saya nggak rugi lagi.",
+    avatar: "NP",
+    color: "#10B981",
+  },
+  {
+    name: "Raka Mahardika",
+    role: "Junior Web Developer · ITS Surabaya",
+    text: "Fitur escrow benar-benar bikin tenang. DP sudah masuk sebelum saya mulai ngoding. Kalau klien ghosting, uang tetap aman di FreeTrack.",
+    avatar: "RM",
+    color: "#1A36F0",
+  },
+  {
+    name: "Sari Dewi",
+    role: "Copywriter Freelance · UGM",
+    text: "Invoice otomatis setiap milestone selesai — nggak perlu lagi bikin sendiri di Canva. Profesional banget, klien juga lebih percaya.",
+    avatar: "SD",
+    color: "#06B6D4",
+  },
+  {
+    name: "Bima Arya",
+    role: "Videografer Freelance · ISI Yogyakarta",
+    text: "Pernah kerja capek-capek tapi revisi video nggak habis-habis. Fitur limit revisi dan milestone di sini bikin kerjaan jelas kapan selesainya.",
+    avatar: "BA",
+    color: "#F59E0B",
+  },
+  {
+    name: "Citra Larasati",
+    role: "Social Media Manager · Univ. Brawijaya",
+    text: "Klien sering lupa bayar kalau nggak ditagih. Auto-invoicing dari FreeTrack jadi penyelamat, dan penarikan dananya juga cepat banget masuk ke rekening.",
+    avatar: "CL",
+    color: "#10B981",
+  },
+  {
+    name: "Kevin Pratama",
+    role: "UI/UX Designer · Telkom University",
+    text: "Baru pertama kali ngerasa freelance se-profesional ini. Sistem kontrak digitalnya bikin kesepakatan kuat secara hukum, nggak ada lagi project menggantung.",
+    avatar: "KP",
+    color: "#1A36F0",
+  },
+  {
+    name: "Anisa Maharani",
+    role: "Illustrator · ITB",
+    text: "Sangat terbantu buat mahasiswa yang baru mulai freelance dan nggak ngerti cara bikin kontrak. Semua template dan workflow sudah disediakan otomatis.",
+    avatar: "AM",
+    color: "#06B6D4",
+  }
+];
+
 export default function TestimonialsSection() {
   return (
-    <section id="mission" style={{ padding: "120px 24px", position: "relative", overflow: "hidden" }}>
+    <section id="mission" style={{ padding: "120px 0", position: "relative", overflow: "hidden" }}>
       {/* Ornamen latar belakang (orb cahaya hijau) */}
       <div className="orb" style={{ width: "500px", height: "500px", background: "#10B981", top: "-100px", left: "50%", transform: "translateX(-50%)", opacity: 0.06 }} />
 
-      <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", padding: "0 24px" }}>
         {/* Header Section Misi */}
         <motion.div 
           initial="hidden"
@@ -80,52 +132,32 @@ export default function TestimonialsSection() {
             </motion.div>
           ))}
         </motion.div>
+      </div>
 
-        {/* Bagian Testimoni Pengguna */}
-        <motion.div 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={containerVariants}
-          style={{ marginBottom: "64px" }}
-        >
-          <motion.h3 variants={textVariants} style={{ fontSize: "22px", fontWeight: "800", textAlign: "center", marginBottom: "36px", color: "#E2E8F0" }}>
-            Cerita dari Mereka yang Sudah Merasakan
-          </motion.h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "20px" }}>
-            {[
-              {
-                name: "Nadia Putri",
-                role: "Mahasiswi Desain · Universitas Indonesia",
-                text: "Dulu klien minta tambah 3 halaman tanpa bayar extra. Sekarang lewat FreeTrack, setiap tambahan otomatis masuk Change Request. Saya nggak rugi lagi.",
-                avatar: "NP",
-                color: "#10B981",
-              },
-              {
-                name: "Raka Mahardika",
-                role: "Junior Web Developer · ITS Surabaya",
-                text: "Fitur escrow benar-benar bikin tenang. DP sudah masuk sebelum saya mulai ngoding. Kalau klien ghosting, uang tetap aman di FreeTrack.",
-                avatar: "RM",
-                color: "#1A36F0",
-              },
-              {
-                name: "Sari Dewi",
-                role: "Copywriter Freelance · UGM",
-                text: "Invoice otomatis setiap milestone selesai — nggak perlu lagi bikin sendiri di Canva. Profesional banget, klien juga lebih percaya.",
-                avatar: "SD",
-                color: "#06B6D4",
-              },
-            ].map((t) => (
-              <motion.div 
-                key={t.name} 
-                variants={{
-                  hidden: { opacity: 0, y: 30 },
-                  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-                }}
-                className="glass-card" 
-                style={{ padding: "28px" }}
-              >
-                {/* Isi kutipan testimoni */}
+      {/* Bagian Testimoni Pengguna */}
+      <motion.div 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={containerVariants}
+        style={{ marginBottom: "64px", position: "relative", width: "100%" }}
+      >
+        <motion.h3 variants={textVariants} style={{ fontSize: "22px", fontWeight: "800", textAlign: "center", marginBottom: "36px", color: "#E2E8F0" }}>
+          Cerita dari Mereka yang Sudah Merasakan
+        </motion.h3>
+        
+        {/* Full-width marquee container */}
+        <motion.div variants={textVariants} style={{ position: "relative", overflow: "hidden", padding: "10px 0" }}>
+          <div className="marquee-container" style={{
+            display: "flex",
+            width: "max-content",
+            animation: "scrollX 40s linear infinite",
+            gap: "20px",
+            paddingLeft: "20px" // give some initial padding
+          }}>
+            {/* Render array twice to loop seamlessly */}
+            {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+              <div key={`${t.name}-${i}`} className="glass-card" style={{ width: "350px", padding: "28px", flexShrink: 0, whiteSpace: "normal" }}>
                 <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.65)", lineHeight: "1.75", fontStyle: "italic", marginBottom: "20px" }}>
                   &ldquo;{t.text}&rdquo;
                 </p>
@@ -135,20 +167,26 @@ export default function TestimonialsSection() {
                   <div style={{
                     width: "40px", height: "40px", borderRadius: "10px",
                     background: `${t.color}20`, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "14px", fontWeight: "800", color: t.color,
+                    fontSize: "14px", fontWeight: "800", color: t.color, flexShrink: 0
                   }}>
                     {t.avatar}
                   </div>
-                  <div>
-                    <div style={{ fontSize: "14px", fontWeight: "700", color: "#E2E8F0" }}>{t.name}</div>
-                    <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>{t.role}</div>
+                  <div style={{ overflow: "hidden" }}>
+                    <div style={{ fontSize: "14px", fontWeight: "700", color: "#E2E8F0", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>{t.name}</div>
+                    <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>{t.role}</div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
 
+          {/* Left/Right Edge Shadows for Smooth Scrolling Effect */}
+          <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: "100px", background: "linear-gradient(to right, #0A0F1E 0%, transparent 100%)", zIndex: 2, pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: "100px", background: "linear-gradient(to left, #0A0F1E 0%, transparent 100%)", zIndex: 2, pointerEvents: "none" }} />
+        </motion.div>
+      </motion.div>
+
+      <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", padding: "0 24px" }}>
         {/* Pernyataan Visi (Vision Statement) dengan Call to Action */}
         <motion.div 
           initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
@@ -183,6 +221,16 @@ export default function TestimonialsSection() {
           </div>
         </motion.div>
       </div>
+
+      <style>{`
+        @keyframes scrollX {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(calc(-50% - 10px)); } /* 10px is half the gap */
+        }
+        .marquee-container:hover {
+          animation-play-state: paused !important;
+        }
+      `}</style>
     </section>
   );
 }

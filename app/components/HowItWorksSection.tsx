@@ -96,11 +96,11 @@ export default function HowItWorksSection() {
           {/* Garis vertikal penghubung antar langkah (animated background) */}
           <motion.div 
             initial={{ height: 0 }}
-            whileInView={{ height: "calc(100% - 64px)" }}
+            whileInView={{ height: "100%" }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 1.5, ease: "easeInOut", delay: 0.2 }}
             style={{
-              position: "absolute", left: "32px", top: "32px", width: "2px",
+              position: "absolute", left: "31px", top: "0", width: "2px",
               background: "linear-gradient(to bottom, rgba(26,54,240,0.3), rgba(16,185,129,0.3), rgba(6,182,212,0.3), rgba(16,185,129,0.3))",
               zIndex: 0
             }} 
@@ -119,12 +119,12 @@ export default function HowItWorksSection() {
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 style={{
                   width: "64px", height: "64px", borderRadius: "16px",
-                  background: "#0A0F1E", // Solid background to block the line
-                  border: `1px solid ${step.color}40`,
+                  background: `linear-gradient(0deg, ${step.colorBg}, ${step.colorBg}), #0A0F1E`,
+                  border: `1px solid ${step.color}30`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  color: step.color, flexShrink: 0, zIndex: 2,
+                  color: step.color, flexShrink: 0, zIndex: 1,
                   position: "relative",
-                  boxShadow: `0 0 20px ${step.color}15, inset 0 0 10px ${step.color}10`,
+                  boxShadow: `0 0 24px ${step.color}15`,
                   cursor: "default"
                 }}
               >
@@ -134,7 +134,7 @@ export default function HowItWorksSection() {
               {/* Kartu Konten Langkah (Glassmorphism style) */}
               <motion.div 
                 className="glass-card" 
-                style={{ flex: 1, padding: "24px 28px", position: "relative" }}
+                style={{ flex: 1, padding: "24px 28px", position: "relative", overflow: "hidden" }}
                 whileHover={{ scale: 1.02, x: 5, boxShadow: "0 15px 35px rgba(0,0,0,0.2)" }}
                 transition={{ duration: 0.2 }}
               >
@@ -165,17 +165,18 @@ export default function HowItWorksSection() {
               {/* Ikon panah bawah sebagai konektor antar langkah */}
               {i < steps.length - 1 && (
                 <div style={{
-                  position: "absolute", bottom: "-32px", left: "32px",
-                  transform: "translateX(-50%)",
-                  color: "rgba(226,232,240,0.6)", 
-                  zIndex: 2,
-                  background: "#0A0F1E",
-                  borderRadius: "50%",
-                  padding: "4px",
+                  position: "absolute", bottom: "-36px", left: "20px",
+                  width: "24px", height: "24px", borderRadius: "6px",
+                  background: "#0A0F1E", // Matches page background to mask the line
+                  border: `1px solid ${step.color}60`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                }}>
-                  <ArrowDown size={14} strokeWidth={3} />
+                  color: step.color, zIndex: 2,
+                  boxShadow: `0 0 15px ${step.color}30`,
+                  transform: "rotate(45deg)"
+                }} className="timeline-arrow">
+                  <div style={{ transform: "rotate(-45deg)", display: "flex", alignItems: "center", justifyContent: "center", marginTop: "2px", marginLeft: "2px" }}>
+                    <ArrowDown size={14} strokeWidth={3} />
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -185,9 +186,7 @@ export default function HowItWorksSection() {
 
       {/* Kontrol CSS khusus untuk tampilan mobile agar garis timeline tetap rapi */}
       <style>{`
-        @media (max-width: 600px) {
-          .timeline-line { left: 24px !important; }
-        }
+        /* Remove timeline-line override to keep it perfectly aligned on all screens */
       `}</style>
     </section>
   );
