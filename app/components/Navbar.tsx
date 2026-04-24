@@ -53,7 +53,7 @@ export default function Navbar() {
         >
           {/* Logo FreeTrack */}
           <a href="#" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-            <img src="/logo_icon.png" alt="FreeTrack" style={{ height: "36px", display: "block" }} />
+            <img src="/logo_icon.png" alt="FreeTrack" style={{ height: "26px", width: "auto", objectFit: "contain", display: "block" }} />
             <span style={{
               fontSize: "19px", fontWeight: "800", letterSpacing: "-0.5px",
               background: "linear-gradient(135deg, #4D63FF, #06B6D4)",

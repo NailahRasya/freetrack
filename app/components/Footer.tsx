@@ -89,7 +89,7 @@ export default function Footer() {
           {/* Bagian Brand dan Deskripsi Singkat */}
           <div>
             <a href="#" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-              <img src="/logo_icon.png" alt="FreeTrack" style={{ height: "32px", display: "block" }} />
+              <img src="/logo_icon.png" alt="FreeTrack" style={{ height: "24px", width: "auto", objectFit: "contain", display: "block" }} />
               <span style={{
                 fontSize: "18px", fontWeight: "800", letterSpacing: "-0.5px",
                 background: "linear-gradient(135deg, #4D63FF, #06B6D4)",
