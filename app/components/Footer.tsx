@@ -103,7 +103,7 @@ export default function Footer() {
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "rgba(226,232,240,0.3)" }}>
               <Globe size={12} />
-              🇮🇩 Dibuat di Indonesia
+              Dibuat oleh Kelompok 4 RPL
             </div>
           </div>
 
