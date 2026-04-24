@@ -58,7 +58,7 @@ export default function HowItWorksSection() {
         <div style={{ position: "relative" }}>
           {/* Vertical line */}
           <div style={{
-            position: "absolute", left: "32px", top: "0", bottom: "0", width: "2px",
+            position: "absolute", left: "31px", top: "0", bottom: "0", width: "2px",
             background: "linear-gradient(to bottom, rgba(26,54,240,0.3), rgba(16,185,129,0.3), rgba(6,182,212,0.3), rgba(16,185,129,0.3))",
           }} className="timeline-line" />
 
@@ -67,17 +67,18 @@ export default function HowItWorksSection() {
               {/* Icon circle */}
               <div style={{
                 width: "64px", height: "64px", borderRadius: "16px",
-                background: step.colorBg,
+                background: `linear-gradient(0deg, ${step.colorBg}, ${step.colorBg}), #0A0F1E`,
                 border: `1px solid ${step.color}30`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 color: step.color, flexShrink: 0, zIndex: 1,
                 boxShadow: `0 0 24px ${step.color}15`,
+                position: "relative",
               }}>
                 {step.icon}
               </div>
 
               {/* Content */}
-              <div className="glass-card" style={{ flex: 1, padding: "24px 28px", position: "relative" }}>
+              <div className="glass-card" style={{ flex: 1, padding: "24px 28px", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: `linear-gradient(90deg, ${step.color}, transparent)` }} />
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
@@ -103,10 +104,18 @@ export default function HowItWorksSection() {
               {/* Arrow connector */}
               {i < steps.length - 1 && (
                 <div style={{
-                  position: "absolute", bottom: "-30px", left: "28px",
-                  color: "rgba(226,232,240,0.1)", zIndex: 0,
-                }}>
-                  <ArrowDown size={16} />
+                  position: "absolute", bottom: "-36px", left: "20px",
+                  width: "24px", height: "24px", borderRadius: "6px",
+                  background: "#0A0F1E", // Matches page background to mask the line
+                  border: `1px solid ${step.color}60`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: step.color, zIndex: 2,
+                  boxShadow: `0 0 15px ${step.color}30`,
+                  transform: "rotate(45deg)"
+                }} className="timeline-arrow">
+                  <div style={{ transform: "rotate(-45deg)", display: "flex", alignItems: "center", justifyContent: "center", marginTop: "2px", marginLeft: "2px" }}>
+                    <ArrowDown size={14} strokeWidth={3} />
+                  </div>
                 </div>
               )}
             </div>
@@ -115,9 +124,7 @@ export default function HowItWorksSection() {
       </div>
 
       <style>{`
-        @media (max-width: 600px) {
-          .timeline-line { left: 24px !important; }
-        }
+        /* Remove timeline-line override to keep it perfectly aligned on all screens */
       `}</style>
     </section>
   );
