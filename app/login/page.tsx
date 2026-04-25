@@ -1,6 +1,6 @@
 "use client"; // Menandakan bahwa komponen ini adalah Client Component
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase"; // Mengimpor klien Supabase yang sudah dikonfigurasi
@@ -22,7 +22,7 @@ async function swal(opts: object) {
   return Swal.fire(opts as Parameters<typeof Swal.fire>[0]);
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams(); // Mengambil parameter pencarian dari URL
   const router = useRouter(); // Hook untuk navigasi antar halaman
   // Mengambil role dari URL (default: client), digunakan untuk menyesuaikan tema UI
@@ -192,9 +192,9 @@ export default function LoginPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                 <label htmlFor="login-password" style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
-                <a href="/forgot-password" style={{ fontSize: "12px", color: roleConfig.color, textDecoration: "none", fontWeight: "600" }}>
+                <Link href="/forgot-password" style={{ fontSize: "12px", color: roleConfig.color, textDecoration: "none", fontWeight: "600" }}>
                   Lupa password?
-                </a>
+                </Link>
               </div>
               <div style={inputWrap}>
                 <Lock size={16} style={inputIcon} />
@@ -294,6 +294,14 @@ export default function LoginPage() {
         }
       `}</style>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }
 

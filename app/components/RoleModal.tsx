@@ -1,5 +1,6 @@
 "use client"; // Menandakan komponen dijalankan di sisi klien
 import { useEffect } from "react";
+import Link from "next/link";
 import { X, Briefcase, User2, ArrowRight } from "lucide-react"; // Mengimpor ikon untuk peran dan interaksi
 
 // Definisi tipe data untuk props yang diterima oleh RoleModal
@@ -259,9 +260,9 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
             marginTop: "24px",
           }}>
             Sudah punya akun?{" "}
-            <a href="/login" style={{ color: "#4D63FF", textDecoration: "none", fontWeight: "600" }}>
+            <Link href="/login" style={{ color: "#4D63FF", textDecoration: "none", fontWeight: "600" }}>
               Masuk di sini
-            </a>
+            </Link>
           </p>
         </div>
       </div>

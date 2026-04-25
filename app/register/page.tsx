@@ -1,6 +1,6 @@
 "use client"; // Menandakan komponen ini berjalan di sisi klien (Client Component)
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase"; // Mengimpor konfigurasi klien Supabase
@@ -40,7 +40,7 @@ function getStrength(pw: string): { score: number; label: string; color: string 
   return { score, label: "Sangat Kuat", color: "#34D399" };
 }
 
-export default function RegisterPage() {
+function RegisterContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   // Role 'client' atau 'freelancer' diambil dari parameter URL
@@ -357,6 +357,14 @@ export default function RegisterPage() {
         }
       `}</style>
     </>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterContent />
+    </Suspense>
   );
 }
 
