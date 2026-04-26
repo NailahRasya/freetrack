@@ -6,7 +6,14 @@ export async function middleware(request: NextRequest) {
   const { supabase, response } = await updateSession(request);
 
   // 2. Ambil data user dari session saat ini
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  // Jika ada error terkait session (seperti Refresh Token Not Found), 
+  // kita anggap user tidak terautentikasi tanpa memunculkan error fatal.
+  if (error) {
+    // Error ini biasanya log otomatis ke console oleh library, 
+    // tapi kita pastikan navigasi tetap aman.
+  }
 
   const url = request.nextUrl.clone();
   const path = url.pathname;

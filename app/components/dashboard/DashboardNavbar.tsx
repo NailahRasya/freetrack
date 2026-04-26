@@ -3,9 +3,27 @@
 import { Search, Bell, ChevronDown, User, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../../../lib/supabase";
 
 export default function DashboardNavbar() {
   const [showProfile, setShowProfile] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      // Bersihkan local storage untuk memastikan tidak ada data tersisa
+      localStorage.clear();
+      // Gunakan window.location agar halaman refresh total dan state auth benar-benar bersih
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Error logging out:", error);
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <header
@@ -149,12 +167,14 @@ export default function DashboardNavbar() {
                 }}
               >
                 {[
-                  { icon: User, label: "Profile" },
-                  { icon: SettingsIcon, label: "Settings" },
-                  { icon: LogOut, label: "Logout", color: "#EF4444" }
+                  { icon: User, label: "Profile", action: () => {} },
+                  { icon: SettingsIcon, label: "Settings", action: () => {} },
+                  { icon: LogOut, label: isLoggingOut ? "Logging out..." : "Logout", color: "#EF4444", action: handleLogout }
                 ].map((item, idx) => (
                   <button
                     key={idx}
+                    onClick={item.action}
+                    disabled={isLoggingOut}
                     style={{
                       width: "100%",
                       display: "flex",
@@ -167,10 +187,11 @@ export default function DashboardNavbar() {
                       color: item.color || "rgba(226, 232, 240, 0.8)",
                       fontSize: "13px",
                       fontWeight: "500",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease"
+                      cursor: isLoggingOut && item.label.includes("Log") ? "not-allowed" : "pointer",
+                      transition: "all 0.2s ease",
+                      opacity: isLoggingOut && item.label.includes("Log") ? 0.7 : 1
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)")}
+                    onMouseEnter={(e) => { if (!isLoggingOut) e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)" }}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     <item.icon size={16} />

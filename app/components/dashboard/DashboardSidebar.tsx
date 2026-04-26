@@ -86,7 +86,7 @@ export default function DashboardSidebar() {
       <nav style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
         {menuItems.map((item) => {
           const isActive = item.href === "/dashboard" 
-            ? pathname === "/dashboard" 
+            ? pathname === "/dashboard" || pathname === "/dashboard/client" || pathname === "/dashboard/freelancer"
             : pathname.startsWith(item.href);
           return (
             <Link 
