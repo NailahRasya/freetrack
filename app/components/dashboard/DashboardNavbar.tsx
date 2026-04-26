@@ -15,6 +15,27 @@ export default function DashboardNavbar() {
   const handleLogout = async () => {
     try {
       setShowProfile(false);
+      
+      // Validasi Konfirmasi Logout menggunakan SweetAlert2
+      const result = await Swal.fire({
+        title: "Konfirmasi Logout",
+        text: "Apakah anda yakin ingin keluar dari sistem?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Ya, Logout",
+        cancelButtonText: "Batal",
+        background: "#0F1B2E",
+        color: "#fff",
+        confirmButtonColor: "#EF4444", // Warna merah untuk aksi destruktif
+        cancelButtonColor: "rgba(255,255,255,0.1)",
+        customClass: {
+          popup: "glass-card",
+        }
+      });
+
+      // Jika user membatalkan, hentikan proses
+      if (!result.isConfirmed) return;
+
       setIsLoggingOut(true);
       
       // Tampilkan loading state menggunakan SweetAlert2 untuk pengalaman premium

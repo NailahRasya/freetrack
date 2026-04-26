@@ -15,7 +15,7 @@ import {
   CLIENT_FALLBACK_PATH,
 } from "@/lib/rbac";
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   // ── 1. Refresh Supabase session cookie ────────────────────────────────────
   const { supabase, response } = await updateSession(request);
 
