@@ -53,7 +53,16 @@ export default function StatsCards() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.1 }}
-          whileHover={{ y: -5, borderColor: `${stat.color}50` }}
+          whileHover={{ 
+            y: -6, 
+            borderColor: `${stat.color}60`,
+            boxShadow: `0 20px 48px rgba(0,0,0,0.4), 0 0 24px ${stat.color}20`
+          }}
+          whileTap={{ 
+            scale: 0.95,
+            background: "rgba(25, 42, 70, 0.7)",
+            transition: { duration: 0.1 }
+          }}
           className="glass-card"
           style={{
             padding: "24px",

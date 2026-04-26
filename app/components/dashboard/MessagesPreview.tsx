@@ -57,7 +57,12 @@ export default function MessagesPreview() {
               transition: "all 0.2s ease",
               position: "relative"
             }}
-            whileHover={{ x: 4 }}
+            whileHover={{ 
+              x: 4,
+              background: "rgba(255, 255, 255, 0.05)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+            }}
+            whileTap={{ scale: 0.96 }}
           >
             <div style={{
               width: "44px",

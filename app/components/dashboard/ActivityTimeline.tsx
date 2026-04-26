@@ -62,7 +62,12 @@ export default function ActivityTimeline() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.1 }}
-              style={{ display: "flex", gap: "20px", position: "relative" }}
+              whileHover={{ 
+                x: 6,
+                background: "rgba(255, 255, 255, 0.02)",
+              }}
+              whileTap={{ scale: 0.98 }}
+              style={{ display: "flex", gap: "20px", position: "relative", cursor: "pointer" }}
             >
               {/* Dot / Icon */}
               <div style={{
@@ -77,7 +82,8 @@ export default function ActivityTimeline() {
                 color: activity.color,
                 zIndex: 1,
                 boxShadow: `0 0 10px ${activity.color}40`,
-                flexShrink: 0
+                flexShrink: 0,
+                transition: "box-shadow 0.3s ease",
               }}>
                 <activity.icon size={14} />
               </div>

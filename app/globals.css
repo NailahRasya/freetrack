@@ -138,7 +138,6 @@ body {
 .glass-card:hover {
   background: var(--glass-hover);
   border-color: rgba(26, 54, 240, 0.25);
-  transform: translateY(-3px);
   box-shadow: 0 16px 48px rgba(26, 54, 240, 0.1);
 }
 

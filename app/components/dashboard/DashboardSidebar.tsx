@@ -86,7 +86,7 @@ export default function DashboardSidebar() {
       <nav style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
         {menuItems.map((item) => {
           const isActive = item.href === "/dashboard" 
-            ? pathname === "/dashboard" 
+            ? (pathname === "/dashboard" || pathname === "/dashboard/client" || pathname === "/dashboard/freelancer")
             : pathname.startsWith(item.href);
           return (
             <Link 
@@ -95,8 +95,8 @@ export default function DashboardSidebar() {
               style={{ textDecoration: "none" }}
             >
               <motion.div
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ x: 4, background: isActive ? "rgba(26, 54, 240, 0.15)" : "rgba(255, 255, 255, 0.05)" }}
+                whileTap={{ scale: 0.95 }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -137,36 +137,46 @@ export default function DashboardSidebar() {
       {/* Bottom Actions */}
       <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "12px" }}>
         {!collapsed ? (
-          <button 
+          <motion.button 
             className="btn-primary"
+            whileHover={{ scale: 1.02, boxShadow: "0 0 25px rgba(26, 54, 240, 0.5)" }}
+            whileTap={{ scale: 0.96 }}
             style={{ 
               width: "100%", 
               justifyContent: "center", 
               padding: "12px", 
               fontSize: "14px",
-              boxShadow: "0 0 20px rgba(26, 54, 240, 0.3)"
+              boxShadow: "0 0 20px rgba(26, 54, 240, 0.3)",
+              cursor: "pointer",
+              border: "none"
             }}
           >
             <PlusCircle size={18} />
             <span>Create Project</span>
-          </button>
+          </motion.button>
         ) : (
-          <button 
+          <motion.button 
             className="btn-primary"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             style={{ 
               width: "48px", 
               height: "48px",
               padding: "0",
               justifyContent: "center",
-              margin: "0 auto"
+              margin: "0 auto",
+              cursor: "pointer",
+              border: "none"
             }}
           >
             <PlusCircle size={24} />
-          </button>
+          </motion.button>
         )}
 
-        <button
+        <motion.button
           onClick={() => setCollapsed(!collapsed)}
+          whileHover={{ background: "rgba(255, 255, 255, 0.08)", color: "#fff" }}
+          whileTap={{ scale: 0.9 }}
           style={{
             background: "rgba(255, 255, 255, 0.03)",
             border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -180,11 +190,9 @@ export default function DashboardSidebar() {
             justifyContent: "center",
             transition: "all 0.2s ease"
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(226, 232, 240, 0.4)")}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+        </motion.button>
       </div>
     </motion.aside>
   );

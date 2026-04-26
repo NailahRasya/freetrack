@@ -146,7 +146,13 @@ export default function PaymentTracker() {
         ))}
       </div>
 
-      <button
+      <motion.button
+        whileHover={{ 
+          background: "rgba(6, 182, 212, 0.08)", 
+          borderColor: "rgba(6, 182, 212, 0.3)",
+          color: "#22D3EE"
+        }}
+        whileTap={{ scale: 0.98 }}
         style={{
           width: "100%",
           marginTop: "20px",
@@ -162,7 +168,7 @@ export default function PaymentTracker() {
         }}
       >
         View History
-      </button>
+      </motion.button>
     </div>
   );
 }

@@ -57,15 +57,24 @@ export default function ActiveProjects() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.1 }}
-            whileHover={{ scale: 1.01, background: "rgba(255, 255, 255, 0.03)" }}
+            whileHover={{ 
+              y: -4,
+              background: "rgba(255, 255, 255, 0.04)",
+              borderColor: `${project.statusColor}50`,
+              boxShadow: `0 12px 32px rgba(0,0,0,0.3), 0 0 16px ${project.statusColor}15`
+            }}
+            whileTap={{ 
+              scale: 0.97,
+              background: "rgba(255, 255, 255, 0.06)",
+              transition: { duration: 0.1 }
+            }}
             style={{
               padding: "20px",
               borderRadius: "16px",
               border: "1px solid rgba(255, 255, 255, 0.05)",
               background: "rgba(255, 255, 255, 0.01)",
-              transition: "all 0.3s ease",
               cursor: "pointer",
-              minWidth: 0 // Allow content to shrink
+              minWidth: 0
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>

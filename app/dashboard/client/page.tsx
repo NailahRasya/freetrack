@@ -61,55 +61,7 @@ export default function DashboardPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "32px", minWidth: 0 }}>
           <PaymentTracker />
           
-          {/* Quick Actions / Tips Card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="glass-card"
-            style={{
-              padding: "24px",
-              background: "var(--gradient-primary)",
-              color: "#fff",
-              position: "relative",
-              overflow: "hidden",
-              border: "none",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px"
-            }}
-          >
-            {/* Abstract Shape Overlay */}
-            <div style={{
-              position: "absolute",
-              top: "-50px",
-              right: "-50px",
-              width: "150px",
-              height: "150px",
-              background: "rgba(255, 255, 255, 0.1)",
-              borderRadius: "50%",
-              filter: "blur(40px)"
-            }} />
 
-            <div style={{ zIndex: 1 }}>
-              <h3 style={{ fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>Try FreeTrack Pro</h3>
-              <p style={{ fontSize: "13px", opacity: 0.9, lineHeight: "1.5", marginBottom: "16px" }}>
-                Unlock advanced analytics, priority support, and smart contract automation for your enterprise projects.
-              </p>
-              <button style={{ 
-                background: "#fff", 
-                color: "var(--primary)", 
-                border: "none", 
-                padding: "10px 20px", 
-                borderRadius: "10px", 
-                fontWeight: "700", 
-                fontSize: "13px",
-                cursor: "pointer",
-                boxShadow: "0 10px 20px rgba(0,0,0,0.1)"
-              }}>
-                Upgrade Now
-              </button>
-            </div>
-          </motion.div>
         </div>
       </div>
 

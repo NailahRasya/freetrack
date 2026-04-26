@@ -3,9 +3,56 @@
 import { Search, Bell, ChevronDown, User, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 export default function DashboardNavbar() {
   const [showProfile, setShowProfile] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      setShowProfile(false);
+      
+      // Tampilkan loading state
+      Swal.fire({
+        title: "Logging out...",
+        text: "Please wait while we secure your session.",
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+          Swal.showLoading();
+        },
+        background: "#0F1B2E",
+        color: "#fff",
+        customClass: {
+          popup: "glass-card",
+        }
+      });
+
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+
+      // Hapus local storage jika ada data sensitif
+      localStorage.clear();
+
+      // Redirect ke login
+      router.push("/login");
+      
+      Swal.close();
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Logout Failed",
+        text: error.message || "An unexpected error occurred.",
+        background: "#0F1B2E",
+        color: "#fff",
+      });
+    }
+  };
 
   return (
     <header
@@ -64,7 +111,14 @@ export default function DashboardNavbar() {
       {/* Right Actions */}
       <div style={{ display: "flex", alignItems: "center", gap: "clamp(8px, 2vw, 20px)", flexShrink: 0 }}>
         {/* Notifications */}
-        <button
+        <motion.button
+          whileHover={{ 
+            background: "rgba(6, 182, 212, 0.12)",
+            borderColor: "rgba(6, 182, 212, 0.4)",
+            color: "#22D3EE",
+            scale: 1.06
+          }}
+          whileTap={{ scale: 0.94 }}
           style={{
             width: "40px",
             height: "40px",
@@ -77,7 +131,7 @@ export default function DashboardNavbar() {
             justifyContent: "center",
             cursor: "pointer",
             position: "relative",
-            transition: "all 0.2s ease"
+            transition: "background 0.2s ease, border-color 0.2s ease"
           }}
         >
           <Bell size={20} />
@@ -92,12 +146,17 @@ export default function DashboardNavbar() {
             border: "2px solid #0B1220",
             boxShadow: "0 0 10px var(--accent)"
           }} />
-        </button>
+        </motion.button>
 
         {/* User Profile */}
         <div style={{ position: "relative" }}>
-          <button
+          <motion.button
             onClick={() => setShowProfile(!showProfile)}
+            whileHover={{ 
+              background: "rgba(255, 255, 255, 0.07)",
+              borderColor: "rgba(6, 182, 212, 0.3)"
+            }}
+            whileTap={{ scale: 0.97 }}
             style={{
               display: "flex",
               alignItems: "center",
@@ -107,7 +166,7 @@ export default function DashboardNavbar() {
               background: "rgba(255, 255, 255, 0.03)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               cursor: "pointer",
-              transition: "all 0.2s ease"
+              transition: "background 0.2s ease, border-color 0.2s ease"
             }}
           >
             <span style={{ fontSize: "13px", fontWeight: "600", color: "#E2E8F0", display: "none" }} className="desktop-only">Alex Rivera</span>
@@ -126,7 +185,7 @@ export default function DashboardNavbar() {
               AR
             </div>
             <ChevronDown size={14} style={{ color: "rgba(226, 232, 240, 0.4)" }} />
-          </button>
+          </motion.button>
 
           <AnimatePresence>
             {showProfile && (
@@ -153,8 +212,20 @@ export default function DashboardNavbar() {
                   { icon: SettingsIcon, label: "Settings" },
                   { icon: LogOut, label: "Logout", color: "#EF4444" }
                 ].map((item, idx) => (
-                  <button
+                  <motion.button
+                    onClick={() => {
+                      if (item.label === "Logout") {
+                        handleLogout();
+                      }
+                    }}
                     key={idx}
+                    whileHover={{ 
+                      background: item.color 
+                        ? "rgba(239, 68, 68, 0.08)" 
+                        : "rgba(255, 255, 255, 0.06)",
+                      x: 3
+                    }}
+                    whileTap={{ scale: 0.97 }}
                     style={{
                       width: "100%",
                       display: "flex",
@@ -167,15 +238,12 @@ export default function DashboardNavbar() {
                       color: item.color || "rgba(226, 232, 240, 0.8)",
                       fontSize: "13px",
                       fontWeight: "500",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease"
+                      cursor: "pointer"
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     <item.icon size={16} />
                     {item.label}
-                  </button>
+                  </motion.button>
                 ))}
               </motion.div>
             )}
