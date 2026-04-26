@@ -34,10 +34,25 @@ export default function DashboardLayout({
   useEffect(() => {
     async function getUser() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          // Jika refresh token tidak ditemukan, kemungkinan session sudah dihapus di server
+          if (error.message.includes("Refresh Token Not Found")) {
+            console.warn("Session expired, redirecting to login...");
+            await supabase.auth.signOut();
+            window.location.href = "/login";
+            return;
+          }
+          console.error("Auth error:", error.message);
+        }
+
         if (user) {
           setUser(user);
           setRole(user.user_metadata?.role || "client");
+        } else {
+          // Jika tidak ada user dan tidak ada error spesifik, tetap redirect ke login
+          window.location.href = "/login";
         }
       } catch (error) {
         console.error("Error fetching user:", error);

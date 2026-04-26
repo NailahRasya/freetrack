@@ -3,19 +3,21 @@
 import { Search, Bell, ChevronDown, User, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import Swal from "sweetalert2";
 
 export default function DashboardNavbar() {
   const [showProfile, setShowProfile] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
       setShowProfile(false);
+      setIsLoggingOut(true);
       
-      // Tampilkan loading state
+      // Tampilkan loading state menggunakan SweetAlert2 untuk pengalaman premium
       Swal.fire({
         title: "Logging out...",
         text: "Please wait while we secure your session.",
@@ -31,19 +33,18 @@ export default function DashboardNavbar() {
         }
       });
 
-      const { error } = await supabase.auth.signOut();
+      await supabase.auth.signOut();
       
-      if (error) throw error;
-
-      // Hapus local storage jika ada data sensitif
+      // Bersihkan local storage untuk memastikan tidak ada data tersisa
       localStorage.clear();
 
-      // Redirect ke login
-      router.push("/login");
+      // Gunakan window.location agar halaman refresh total dan state auth benar-benar bersih
+      window.location.href = "/login";
       
       Swal.close();
     } catch (error: any) {
       console.error("Logout error:", error);
+      setIsLoggingOut(false);
       Swal.fire({
         icon: "error",
         title: "Logout Failed",
@@ -208,9 +209,9 @@ export default function DashboardNavbar() {
                 }}
               >
                 {[
-                  { icon: User, label: "Profile" },
-                  { icon: SettingsIcon, label: "Settings" },
-                  { icon: LogOut, label: "Logout", color: "#EF4444" }
+                  { icon: User, label: "Profile", action: () => {} },
+                  { icon: SettingsIcon, label: "Settings", action: () => {} },
+                  { icon: LogOut, label: isLoggingOut ? "Logging out..." : "Logout", color: "#EF4444", action: handleLogout }
                 ].map((item, idx) => (
                   <motion.button
                     onClick={() => {
@@ -226,6 +227,8 @@ export default function DashboardNavbar() {
                       x: 3
                     }}
                     whileTap={{ scale: 0.97 }}
+                    onClick={item.action}
+                    disabled={isLoggingOut}
                     style={{
                       width: "100%",
                       display: "flex",
@@ -238,8 +241,12 @@ export default function DashboardNavbar() {
                       color: item.color || "rgba(226, 232, 240, 0.8)",
                       fontSize: "13px",
                       fontWeight: "500",
-                      cursor: "pointer"
+                      cursor: isLoggingOut && item.label.includes("Log") ? "not-allowed" : "pointer",
+                      transition: "all 0.2s ease",
+                      opacity: isLoggingOut && item.label.includes("Log") ? 0.7 : 1
                     }}
+                    onMouseEnter={(e) => { if (!isLoggingOut) e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)" }}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     <item.icon size={16} />
                     {item.label}
