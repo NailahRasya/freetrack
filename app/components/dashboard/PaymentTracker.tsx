@@ -10,8 +10,8 @@ const payments = [
     milestone: "UI/UX High Fidelity Design",
     project: "E-Commerce Mobile App",
     amount: "Rp 4.5M",
-    status: "Released",
-    date: "2 hours ago",
+    status: "Dirilis",
+    date: "2 jam yang lalu",
     icon: CheckCircle2,
     color: "var(--accent)",
   },
@@ -20,8 +20,8 @@ const payments = [
     milestone: "API Integration",
     project: "Corporate Website Redesign",
     amount: "Rp 3.2M",
-    status: "In Escrow",
-    date: "Yesterday",
+    status: "Dalam Escrow",
+    date: "Kemarin",
     icon: ShieldCheck,
     color: "var(--cyan)",
   },
@@ -30,8 +30,8 @@ const payments = [
     milestone: "Landing Page Development",
     project: "Startup Landing Page",
     amount: "Rp 2.8M",
-    status: "Pending Approval",
-    date: "2 days ago",
+    status: "Menunggu Persetujuan",
+    date: "2 hari yang lalu",
     icon: Clock,
     color: "var(--warning)",
   },
@@ -44,7 +44,7 @@ export default function PaymentTracker() {
   return (
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Payment Tracker</h3>
+        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Pelacak Pembayaran</h3>
         <ArrowUpRight size={18} style={{ color: "rgba(226, 232, 240, 0.4)", cursor: "pointer" }} />
       </div>
 
@@ -167,7 +167,7 @@ export default function PaymentTracker() {
           transition: "all 0.2s ease"
         }}
       >
-        View History
+        Lihat Riwayat
       </motion.button>
     </div>
   );

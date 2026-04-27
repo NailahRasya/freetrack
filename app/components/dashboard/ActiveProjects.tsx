@@ -12,7 +12,7 @@ const projects = [
     progress: 75,
     budget: "Rp 12.5M",
     deadline: "May 15, 2026",
-    status: "Active",
+    status: "Aktif",
     statusColor: "var(--cyan)",
   },
   {
@@ -22,7 +22,7 @@ const projects = [
     progress: 40,
     budget: "Rp 8.0M",
     deadline: "June 02, 2026",
-    status: "Review",
+    status: "Ditinjau",
     statusColor: "var(--warning)",
   },
   {
@@ -32,7 +32,7 @@ const projects = [
     progress: 100,
     budget: "Rp 15.0M",
     deadline: "Apr 20, 2026",
-    status: "Completed",
+    status: "Selesai",
     statusColor: "var(--accent)",
   },
 ];
@@ -44,9 +44,9 @@ export default function ActiveProjects() {
   return (
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", width: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Active Projects</h3>
+        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Proyek Aktif</h3>
         <button style={{ background: "transparent", border: "none", color: "rgba(226, 232, 240, 0.4)", cursor: "pointer", fontSize: "13px" }}>
-          View All
+          Lihat Semua
         </button>
       </div>
 
@@ -104,7 +104,7 @@ export default function ActiveProjects() {
             {/* Progress Bar */}
             <div style={{ marginBottom: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "12px", fontWeight: "600" }}>
-                <span style={{ color: "rgba(226, 232, 240, 0.5)" }}>Progress</span>
+                <span style={{ color: "rgba(226, 232, 240, 0.5)" }}>Kemajuan</span>
                 <span style={{ color: project.statusColor }}>{project.progress}%</span>
               </div>
               <div style={{ height: "6px", background: "rgba(255, 255, 255, 0.05)", borderRadius: "3px", overflow: "hidden" }}>

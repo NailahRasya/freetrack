@@ -28,10 +28,10 @@ export default function FreelancerDashboardPage() {
             letterSpacing: "-0.5px",
             marginBottom: "8px"
           }}>
-            Welcome back, <span className="gradient-text-emerald">Sarah Jenkins</span>
+            Selamat datang kembali, <span className="gradient-text-emerald">Sarah Jenkins</span>
           </h1>
           <p style={{ color: "rgba(226, 232, 240, 0.4)", fontSize: "15px" }}>
-            Here's what's happening in your personal workspace today.
+            Berikut adalah apa yang terjadi di ruang kerja pribadi Anda hari ini.
           </p>
         </motion.div>
       </header>
@@ -95,9 +95,9 @@ export default function FreelancerDashboardPage() {
             }} />
 
             <div style={{ zIndex: 1 }}>
-              <h3 style={{ fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>Scope Creep Detected?</h3>
+              <h3 style={{ fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>Scope Creep Terdeteksi?</h3>
               <p style={{ fontSize: "13px", opacity: 0.9, lineHeight: "1.5", marginBottom: "16px" }}>
-                If the client requests additional features outside the original contract, you can submit a Change Request to update the budget or timeline.
+                Jika klien meminta fitur tambahan di luar kontrak asli, Anda dapat mengajukan Permintaan Perubahan untuk memperbarui anggaran atau lini masa.
               </p>
               <button 
                 onClick={() => setIsChangeRequestOpen(true)}
@@ -116,7 +116,7 @@ export default function FreelancerDashboardPage() {
                 onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
                 onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
               >
-                Propose Change Request
+                Ajukan Permintaan Perubahan
               </button>
             </div>
           </motion.div>

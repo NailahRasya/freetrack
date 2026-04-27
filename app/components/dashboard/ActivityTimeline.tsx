@@ -6,33 +6,33 @@ import { Plus, Check, CreditCard, UserPlus, FileText } from "lucide-react";
 const activities = [
   {
     id: 1,
-    title: "Project Created",
-    desc: "New project 'Smart Contract Audit' has been posted.",
-    time: "4 hours ago",
+    title: "Proyek Dibuat",
+    desc: "Proyek baru 'Smart Contract Audit' telah dipasang.",
+    time: "4 jam yang lalu",
     icon: Plus,
     color: "var(--cyan)",
   },
   {
     id: 2,
-    title: "Milestone Approved",
-    desc: "You approved 'UI Design Hi-Fi' for E-Commerce App.",
-    time: "Yesterday",
+    title: "Target Disetujui",
+    desc: "Anda menyetujui 'UI Design Hi-Fi' untuk Aplikasi E-Commerce.",
+    time: "Kemarin",
     icon: Check,
     color: "var(--accent)",
   },
   {
     id: 3,
-    title: "Payment Released",
-    desc: "Rp 4,500,000 released to Sarah Jenkins.",
-    time: "2 days ago",
+    title: "Pembayaran Dirilis",
+    desc: "Rp 4.500.000 dirilis ke Sarah Jenkins.",
+    time: "2 hari yang lalu",
     icon: CreditCard,
     color: "var(--primary-light)",
   },
   {
     id: 4,
-    title: "Contract Signed",
-    desc: "Aris Munandar signed the contract for Website Redesign.",
-    time: "3 days ago",
+    title: "Kontrak Ditandatangani",
+    desc: "Aris Munandar menandatangani kontrak untuk Website Redesign.",
+    time: "3 hari yang lalu",
     icon: FileText,
     color: "var(--warning)",
   },
@@ -41,7 +41,7 @@ const activities = [
 export default function ActivityTimeline() {
   return (
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", height: "100%" }}>
-      <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", marginBottom: "24px" }}>Activity Timeline</h3>
+      <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", marginBottom: "24px" }}>Lini Masa Aktivitas</h3>
 
       <div style={{ position: "relative" }}>
         {/* Vertical Line */}

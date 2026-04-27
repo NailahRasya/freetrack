@@ -40,8 +40,8 @@ export default function DashboardNavbar() {
       
       // Tampilkan loading state menggunakan SweetAlert2 untuk pengalaman premium
       Swal.fire({
-        title: "Logging out...",
-        text: "Please wait while we secure your session.",
+        title: "Sedang keluar...",
+        text: "Mohon tunggu sementara kami mengamankan sesi Anda.",
         allowOutsideClick: false,
         showConfirmButton: false,
         willOpen: () => {
@@ -68,8 +68,8 @@ export default function DashboardNavbar() {
       setIsLoggingOut(false);
       Swal.fire({
         icon: "error",
-        title: "Logout Failed",
-        text: error.message || "An unexpected error occurred.",
+        title: "Gagal Keluar",
+        text: error.message || "Terjadi kesalahan yang tidak terduga.",
         background: "#0F1B2E",
         color: "#fff",
       });
@@ -107,7 +107,7 @@ export default function DashboardNavbar() {
         />
         <input 
           type="text" 
-          placeholder="Search..."
+          placeholder="Cari..."
           style={{
             width: "100%",
             background: "rgba(255, 255, 255, 0.03)",
@@ -230,9 +230,9 @@ export default function DashboardNavbar() {
                 }}
               >
                 {[
-                  { icon: User, label: "Profile", action: () => {} },
-                  { icon: SettingsIcon, label: "Settings", action: () => {} },
-                  { icon: LogOut, label: isLoggingOut ? "Logging out..." : "Logout", color: "#EF4444", action: handleLogout }
+                  { icon: User, label: "Profil", action: () => {} },
+                  { icon: SettingsIcon, label: "Pengaturan", action: () => {} },
+                  { icon: LogOut, label: isLoggingOut ? "Sedang keluar..." : "Keluar", color: "#EF4444", action: handleLogout }
                 ].map((item, idx) => (
                   <motion.button
                     onClick={() => {

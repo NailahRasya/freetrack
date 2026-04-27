@@ -106,10 +106,10 @@ export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, mile
 
             <div style={{ marginBottom: "24px" }}>
               <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#fff", marginBottom: "8px" }}>
-                Submit Progress
+                Kirim Kemajuan
               </h2>
               <p style={{ color: "rgba(226, 232, 240, 0.6)", fontSize: "14px" }}>
-                Upload evidence or provide a link for <strong style={{ color: "#fff" }}>{milestoneTitle}</strong>.
+                Unggah bukti atau berikan tautan untuk <strong style={{ color: "#fff" }}>{milestoneTitle}</strong>.
               </p>
             </div>
 
@@ -128,7 +128,7 @@ export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, mile
                 <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "rgba(16, 185, 129, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)" }}>
                   <CheckCircle size={32} />
                 </div>
-                <h3 style={{ fontSize: "18px", color: "#fff", fontWeight: "700" }}>Submitted Successfully!</h3>
+                <h3 style={{ fontSize: "18px", color: "#fff", fontWeight: "700" }}>Berhasil Dikirim!</h3>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit}>
@@ -160,7 +160,7 @@ export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, mile
                       transition: "all 0.2s"
                     }}
                   >
-                    <FileText size={16} /> File Upload
+                    <FileText size={16} /> Unggah Berkas
                   </button>
                   <button
                     type="button"
@@ -182,7 +182,7 @@ export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, mile
                       transition: "all 0.2s"
                     }}
                   >
-                    <LinkIcon size={16} /> URL / Link
+                    <LinkIcon size={16} /> URL / Tautan
                   </button>
                 </div>
 
@@ -201,13 +201,13 @@ export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, mile
                   onMouseOut={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
                   >
                     <UploadCloud size={40} style={{ color: "var(--primary-light)", margin: "0 auto 16px" }} />
-                    <p style={{ color: "#fff", fontWeight: "600", marginBottom: "8px" }}>Click to upload or drag and drop</p>
-                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>SVG, PNG, JPG, PDF or ZIP (max. 10MB)</p>
+                    <p style={{ color: "#fff", fontWeight: "600", marginBottom: "8px" }}>Klik untuk mengunggah atau seret dan lepas</p>
+                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>SVG, PNG, JPG, PDF atau ZIP (maks. 10MB)</p>
                   </div>
                 ) : (
                   <div style={{ marginBottom: "24px" }}>
                     <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
-                      Link to Work (e.g. Figma, GitHub, Live Demo)
+                      Tautan Pekerjaan (mis. Figma, GitHub, Live Demo)
                     </label>
                     <input 
                       type="url" 
@@ -231,10 +231,10 @@ export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, mile
 
                 <div style={{ marginBottom: "24px" }}>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
-                    Notes for Client (Optional)
+                    Catatan untuk Klien (Opsional)
                   </label>
                   <textarea 
-                    placeholder="Explain what has been completed..."
+                    placeholder="Jelaskan apa yang telah diselesaikan..."
                     rows={3}
                     style={{
                       width: "100%",
@@ -267,7 +267,7 @@ export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, mile
                       cursor: "pointer"
                     }}
                   >
-                    Cancel
+                    Batal
                   </button>
                   <button
                     type="submit"
@@ -281,7 +281,7 @@ export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, mile
                       cursor: isSubmitting ? "not-allowed" : "pointer"
                     }}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Progress"}
+                    {isSubmitting ? "Mengirim..." : "Kirim Kemajuan"}
                   </button>
                 </div>
               </form>

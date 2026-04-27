@@ -17,12 +17,12 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../../dashboard/layout";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Briefcase, label: "My Projects", href: "/dashboard/projects" },
-  { icon: Wallet, label: "Payments", href: "/dashboard/payments" },
-  { icon: Flag, label: "Milestones", href: "/dashboard/milestones" },
-  { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
-  { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+  { icon: LayoutDashboard, label: "Dasbor", href: "/dashboard" },
+  { icon: Briefcase, label: "Proyek Saya", href: "/dashboard/projects" },
+  { icon: Wallet, label: "Pembayaran", href: "/dashboard/payments" },
+  { icon: Flag, label: "Target Pencapaian", href: "/dashboard/milestones" },
+  { icon: MessageSquare, label: "Pesan", href: "/dashboard/messages" },
+  { icon: Settings, label: "Pengaturan", href: "/dashboard/settings" },
 ];
 
 export default function DashboardSidebar() {
@@ -152,7 +152,7 @@ export default function DashboardSidebar() {
             }}
           >
             <PlusCircle size={18} />
-            <span>Create Project</span>
+            <span>Buat Proyek</span>
           </motion.button>
         ) : (
           <motion.button 

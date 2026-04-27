@@ -24,10 +24,10 @@ export default function DashboardPage() {
             letterSpacing: "-0.5px",
             marginBottom: "8px"
           }}>
-            Welcome back, <span className="gradient-text">Alex Rivera</span>
+            Selamat datang kembali, <span className="gradient-text">Alex Rivera</span>
           </h1>
           <p style={{ color: "rgba(226, 232, 240, 0.4)", fontSize: "15px" }}>
-            Here's what's happening with your projects today.
+            Berikut adalah apa yang terjadi dengan proyek Anda hari ini.
           </p>
         </motion.div>
       </header>

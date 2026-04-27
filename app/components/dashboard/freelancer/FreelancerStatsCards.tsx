@@ -5,33 +5,33 @@ import { Briefcase, DollarSign, Flag, Clock, TrendingUp } from "lucide-react";
 
 const stats = [
   {
-    label: "Active Projects",
+    label: "Proyek Aktif",
     value: "4",
-    change: "+1 this month",
+    change: "+1 bulan ini",
     icon: Briefcase,
     color: "#00E5FF", // Cyan
     gradient: "linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(0, 229, 255, 0) 100%)",
   },
   {
-    label: "Waiting DP",
+    label: "Menunggu DP",
     value: "2",
-    change: "Action required",
+    change: "Butuh tindakan",
     icon: Clock,
     color: "#F59E0B", // Warning Orange
     gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0) 100%)",
   },
   {
-    label: "Milestones Completed",
+    label: "Target Selesai",
     value: "18",
-    change: "3 approved this week",
+    change: "3 disetujui minggu ini",
     icon: Flag,
     color: "#4D63FF", // Primary Light
     gradient: "linear-gradient(135deg, rgba(77, 99, 255, 0.2) 0%, rgba(77, 99, 255, 0) 100%)",
   },
   {
-    label: "Total Earnings",
+    label: "Total Pendapatan",
     value: "Rp 32.5M",
-    change: "+20% vs last month",
+    change: "+20% dari bulan lalu",
     icon: DollarSign,
     color: "#10B981", // Emerald
     gradient: "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 100%)",

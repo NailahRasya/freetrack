@@ -107,11 +107,11 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                   <AlertTriangle size={20} />
                 </div>
                 <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#fff" }}>
-                  Propose Change Request
+                  Ajukan Permintaan Perubahan
                 </h2>
               </div>
               <p style={{ color: "rgba(226, 232, 240, 0.6)", fontSize: "14px", marginLeft: "52px" }}>
-                Submit a request to update the project scope, timeline, or budget. The client will need to review and approve this change.
+                Ajukan permintaan untuk memperbarui lingkup proyek, lini masa, atau anggaran. Klien perlu meninjau dan menyetujui perubahan ini.
               </p>
             </div>
 
@@ -130,21 +130,21 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                 <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "rgba(16, 185, 129, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)" }}>
                   <Send size={32} />
                 </div>
-                <h3 style={{ fontSize: "18px", color: "#fff", fontWeight: "700" }}>Change Request Sent!</h3>
-                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px" }}>The client has been notified of your request.</p>
+                <h3 style={{ fontSize: "18px", color: "#fff", fontWeight: "700" }}>Permintaan Perubahan Terkirim!</h3>
+                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px" }}>Klien telah diberitahu tentang permintaan Anda.</p>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
-                      New Budget Amount (Optional)
+                      Jumlah Anggaran Baru (Opsional)
                     </label>
                     <div style={{ position: "relative" }}>
                       <span style={{ position: "absolute", left: "16px", top: "12px", color: "rgba(255,255,255,0.4)", fontSize: "14px", fontWeight: "600" }}>Rp</span>
                       <input 
                         type="text" 
-                        placeholder="e.g. 15.000.000"
+                        placeholder="misal 15.000.000"
                         style={{
                           width: "100%",
                           padding: "12px 16px 12px 40px",
@@ -162,7 +162,7 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
-                      New Deadline (Optional)
+                      Tenggat Waktu Baru (Opsional)
                     </label>
                     <input 
                       type="date" 
@@ -185,11 +185,11 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
 
                 <div style={{ marginBottom: "24px" }}>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
-                    Reason for Change <span style={{ color: "var(--danger)" }}>*</span>
+                    Alasan Perubahan <span style={{ color: "var(--danger)" }}>*</span>
                   </label>
                   <textarea 
                     required
-                    placeholder="Describe the scope creep or reason for the change request..."
+                    placeholder="Jelaskan scope creep atau alasan permintaan perubahan..."
                     rows={4}
                     style={{
                       width: "100%",
@@ -222,7 +222,7 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                     onMouseOver={(e) => e.currentTarget.style.color = "#fff"}
                     onMouseOut={(e) => e.currentTarget.style.color = "rgba(255,255,255,0.6)"}
                   >
-                    Cancel
+                    Batal
                   </button>
                   <button
                     type="submit"
@@ -234,7 +234,7 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                       cursor: isSubmitting ? "not-allowed" : "pointer"
                     }}
                   >
-                    {isSubmitting ? "Sending..." : "Submit Request"}
+                    {isSubmitting ? "Mengirim..." : "Ajukan Permintaan"}
                   </button>
                 </div>
               </form>

@@ -8,7 +8,7 @@ const chats = [
     id: 1,
     name: "Sarah Jenkins",
     message: "I've uploaded the latest design files to the dashboard...",
-    time: "12m ago",
+    time: "12mnt yang lalu",
     unread: true,
     avatar: "SJ",
     color: "#00E5FF",
@@ -17,7 +17,7 @@ const chats = [
     id: 2,
     name: "Aris Munandar",
     message: "Could we jump on a quick call to discuss the API?",
-    time: "45m ago",
+    time: "45mnt yang lalu",
     unread: false,
     avatar: "AM",
     color: "#00FFA3",
@@ -26,7 +26,7 @@ const chats = [
     id: 3,
     name: "David Chen",
     message: "The smart contract audit is 90% complete. I found...",
-    time: "2h ago",
+    time: "2j yang lalu",
     unread: false,
     avatar: "DC",
     color: "#4D63FF",
@@ -37,7 +37,7 @@ export default function MessagesPreview() {
   return (
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", height: "100%" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Recent Messages</h3>
+        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Pesan Terbaru</h3>
         <MessageSquare size={18} style={{ color: "rgba(226, 232, 240, 0.4)", cursor: "pointer" }} />
       </div>
 
@@ -123,7 +123,7 @@ export default function MessagesPreview() {
         border: "1px solid rgba(255, 255, 255, 0.05)"
       }}>
         <input 
-          placeholder="Quick reply..." 
+          placeholder="Balas cepat..." 
           style={{ 
             background: "transparent", 
             border: "none", 

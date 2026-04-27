@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Edit2, Trash2, CheckCircle2, Lock, UploadCloud, Clock } from "lucide-react";
 import UploadEvidenceModal from "./UploadEvidenceModal";
 
-type MilestoneStatus = "Waiting DP" | "In Progress" | "Pending Approval" | "Approved";
+type MilestoneStatus = "Menunggu DP" | "Dalam Pengerjaan" | "Menunggu Persetujuan" | "Disetujui";
 
 interface Milestone {
   id: number;
@@ -16,9 +16,9 @@ interface Milestone {
 }
 
 const initialMilestones: Milestone[] = [
-  { id: 1, title: "Wireframing & UI Design", price: "Rp 3.000.000", deadline: "2026-05-10", status: "Approved" },
-  { id: 2, title: "Frontend Development", price: "Rp 5.000.000", deadline: "2026-05-20", status: "In Progress" },
-  { id: 3, title: "Backend Integration", price: "Rp 4.000.000", deadline: "2026-06-05", status: "Waiting DP" }
+  { id: 1, title: "Wireframing & UI Design", price: "Rp 3.000.000", deadline: "2026-05-10", status: "Disetujui" },
+  { id: 2, title: "Frontend Development", price: "Rp 5.000.000", deadline: "2026-05-20", status: "Dalam Pengerjaan" },
+  { id: 3, title: "Backend Integration", price: "Rp 4.000.000", deadline: "2026-06-05", status: "Menunggu DP" }
 ];
 
 export default function MilestoneManager() {
@@ -36,7 +36,7 @@ export default function MilestoneManager() {
   // Menghitung persentase progres
   const progressPercentage = useMemo(() => {
     if (milestones.length === 0) return 0;
-    const approvedCount = milestones.filter(m => m.status === "Approved").length;
+    const approvedCount = milestones.filter(m => m.status === "Disetujui").length;
     return Math.round((approvedCount / milestones.length) * 100);
   }, [milestones]);
 
@@ -50,7 +50,7 @@ export default function MilestoneManager() {
       title: editForm.title,
       price: editForm.price,
       deadline: editForm.deadline,
-      status: "Waiting DP" // Milestone baru default ke Waiting DP sampai klien menyetujui kontrak
+      status: "Menunggu DP" // Milestone baru default ke Menunggu DP sampai klien menyetujui kontrak
     }]);
     setIsAdding(false);
     setEditForm({});
@@ -73,10 +73,10 @@ export default function MilestoneManager() {
 
   const getStatusColor = (status: MilestoneStatus) => {
     switch (status) {
-      case "Approved": return "var(--accent)"; // Emerald
-      case "In Progress": return "var(--cyan)";
-      case "Pending Approval": return "var(--primary-light)";
-      case "Waiting DP": return "var(--warning)"; // Orange
+      case "Disetujui": return "var(--accent)"; // Emerald
+      case "Dalam Pengerjaan": return "var(--cyan)";
+      case "Menunggu Persetujuan": return "var(--primary-light)";
+      case "Menunggu DP": return "var(--warning)"; // Orange
       default: return "#E2E8F0";
     }
   };
@@ -89,21 +89,21 @@ export default function MilestoneManager() {
         <div style={{ marginBottom: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <div>
-              <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Project Milestones</h3>
-              <p style={{ color: "rgba(226, 232, 240, 0.5)", fontSize: "13px" }}>Manage stages and upload evidence.</p>
+              <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Target Pencapaian Proyek</h3>
+              <p style={{ color: "rgba(226, 232, 240, 0.5)", fontSize: "13px" }}>Kelola tahapan dan unggah bukti.</p>
             </div>
             <button 
               onClick={() => { setIsAdding(true); setEditForm({}); setIsEditingId(null); }}
               className="btn-primary"
               style={{ padding: "8px 16px", fontSize: "13px" }}
             >
-              <Plus size={16} /> Add Milestone
+              <Plus size={16} /> Tambah Target
             </button>
           </div>
 
           <div style={{ background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px", fontWeight: "700" }}>
-              <span style={{ color: "rgba(226, 232, 240, 0.6)" }}>Overall Progress</span>
+              <span style={{ color: "rgba(226, 232, 240, 0.6)" }}>Kemajuan Keseluruhan</span>
               <span style={{ color: progressPercentage === 100 ? "var(--accent)" : "var(--cyan)" }}>{progressPercentage}%</span>
             </div>
             <div style={{ height: "8px", background: "rgba(255, 255, 255, 0.05)", borderRadius: "4px", overflow: "hidden" }}>
@@ -138,15 +138,15 @@ export default function MilestoneManager() {
                 overflow: "hidden"
               }}
             >
-              <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#fff", marginBottom: "12px" }}>Create New Milestone</h4>
+              <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#fff", marginBottom: "12px" }}>Buat Target Baru</h4>
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                <input required placeholder="Milestone Title" value={editForm.title || ""} onChange={e => setEditForm({...editForm, title: e.target.value})} style={inputStyle} />
-                <input required placeholder="Price (Rp)" value={editForm.price || ""} onChange={e => setEditForm({...editForm, price: e.target.value})} style={inputStyle} />
+                <input required placeholder="Judul Target" value={editForm.title || ""} onChange={e => setEditForm({...editForm, title: e.target.value})} style={inputStyle} />
+                <input required placeholder="Harga (Rp)" value={editForm.price || ""} onChange={e => setEditForm({...editForm, price: e.target.value})} style={inputStyle} />
                 <input required type="date" value={editForm.deadline || ""} onChange={e => setEditForm({...editForm, deadline: e.target.value})} style={inputStyle} />
               </div>
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={() => setIsAdding(false)} style={cancelBtnStyle}>Cancel</button>
-                <button type="submit" style={saveBtnStyle}>Save</button>
+                <button type="button" onClick={() => setIsAdding(false)} style={cancelBtnStyle}>Batal</button>
+                <button type="submit" style={saveBtnStyle}>Simpan</button>
               </div>
             </motion.form>
           )}
@@ -156,7 +156,7 @@ export default function MilestoneManager() {
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <AnimatePresence>
             {milestones.map((milestone) => {
-              const isLocked = milestone.status === "Approved" || milestone.status === "Pending Approval";
+              const isLocked = milestone.status === "Disetujui" || milestone.status === "Menunggu Persetujuan";
               const isEditing = isEditingId === milestone.id;
 
               if (isEditing) {
@@ -173,8 +173,8 @@ export default function MilestoneManager() {
                       <input required type="date" value={editForm.deadline || ""} onChange={e => setEditForm({...editForm, deadline: e.target.value})} style={inputStyle} />
                     </div>
                     <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                      <button type="button" onClick={() => setIsEditingId(null)} style={cancelBtnStyle}>Cancel</button>
-                      <button type="submit" style={saveBtnStyle}>Update</button>
+                      <button type="button" onClick={() => setIsEditingId(null)} style={cancelBtnStyle}>Batal</button>
+                      <button type="submit" style={saveBtnStyle}>Perbarui</button>
                     </div>
                   </motion.form>
                 );
@@ -203,12 +203,12 @@ export default function MilestoneManager() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                         <h4 style={{ fontSize: "16px", fontWeight: "700", color: "#fff" }}>{milestone.title}</h4>
-                        {isLocked && <Lock size={12} style={{ color: "rgba(255,255,255,0.3)" }} title="Locked from editing" />}
+                        {isLocked && <Lock size={12} style={{ color: "rgba(255,255,255,0.3)" }} title="Terkunci dari penyuntingan" />}
                       </div>
                       <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "rgba(226, 232, 240, 0.5)", fontWeight: "500" }}>
                         <span>{milestone.price}</span>
                         <span>•</span>
-                        <span>Due {milestone.deadline}</span>
+                        <span>Jatuh tempo {milestone.deadline}</span>
                       </div>
                     </div>
                     
@@ -225,8 +225,8 @@ export default function MilestoneManager() {
                       alignItems: "center",
                       gap: "6px"
                     }}>
-                      {milestone.status === "Approved" && <CheckCircle2 size={12} />}
-                      {milestone.status === "Waiting DP" && <Clock size={12} />}
+                      {milestone.status === "Disetujui" && <CheckCircle2 size={12} />}
+                      {milestone.status === "Menunggu DP" && <Clock size={12} />}
                       {milestone.status}
                     </div>
                   </div>
@@ -235,13 +235,13 @@ export default function MilestoneManager() {
                     
                     {/* Aksi: Upload Bukti */}
                     <div>
-                      {milestone.status === "Waiting DP" ? (
+                      {milestone.status === "Menunggu DP" ? (
                          <div style={{ fontSize: "12px", color: "var(--warning)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
-                           <Clock size={14} /> Upload locked until DP is paid
+                           <Clock size={14} /> Unggahan terkunci sampai DP dibayar
                          </div>
-                      ) : milestone.status === "Approved" ? (
+                      ) : milestone.status === "Disetujui" ? (
                          <div style={{ fontSize: "12px", color: "var(--accent)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
-                           <CheckCircle2 size={14} /> Completed & Approved
+                           <CheckCircle2 size={14} /> Selesai & Disetujui
                          </div>
                       ) : (
                         <button

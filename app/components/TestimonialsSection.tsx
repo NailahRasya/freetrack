@@ -95,7 +95,7 @@ export default function TestimonialsSection() {
             di Indonesia
           </motion.h2>
           <motion.p variants={textVariants} style={{ fontSize: "17px", color: "rgba(226,232,240,0.5)", maxWidth: "560px", margin: "0 auto" }}>
-            Kami percaya setiap mahasiswa dan profesional muda berhak mendapatkan bayaran yang adil atas kerja kerasnya — tanpa takut ditipu.
+            Kami percaya setiap mahasiswa dan profesional muda berhak mendapatkan bayaran yang adil atas kerja kerasnya tanpa takut ditipu.
           </motion.p>
         </motion.div>
 
