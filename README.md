@@ -22,11 +22,11 @@ FreeTrack hadir untuk mengakhiri masalah tersebut dengan sistem tata kelola proy
 ### 1. Milestone Planning (Tahapan Jelas)
 Jangan biarkan proyek menggantung tanpa ujung. Pecah proyek Anda menjadi beberapa tahapan (milestone) dengan deadline dan harga yang spesifik. Freelancer bekerja per tahapan, Klien membayar per keberhasilan.
 
-### 2. Smart Change Request (Anti Scope Creep)
-Setiap permintaan fitur ekstra di luar kontrak awal akan dicatat secara transparan sebagai *Change Request*. Sistem akan menghitung biaya tambahan secara otomatis, dan freelancer baru mulai bekerja setelah disetujui klien.
+### 2. Smart Milestone & Change Request (Anti Scope Creep)
+FreeTrack mendukung dinamika kerja freelancer dengan memberikan kontrol penuh bagi Freelancer untuk menyusun rincian milestone dan harga secara mandiri. Setiap penambahan fitur di luar kontrak (*Change Request*) akan melalui mekanisme negosiasi dan tinjauan (*Review*) oleh klien. Kontrak dianggap sah dan pengerjaan dimulai hanya setelah klien melakukan *Approval Digital* pada draf yang diajukan.
 
-### 3. Sistem Escrow Terjamin
-Sistem dompet bersama (escrow) memastikan dana sudah tersedia sebelum pekerjaan dimulai. Dana tersimpan aman di FreeTrack dan baru cair ke freelancer setelah hasil kerja divalidasi.
+### 3. Sistem Escrow (Rekening Bersama) via Midtrans
+Keamanan finansial terjamin melalui integrasi Midtrans sebagai penjamin. Dana dari klien akan masuk ke akun penampungan FreeTrack sebagai jaminan komitmen sebelum pengerjaan dimulai. Dana tetap aman di saldo sistem selama proyek berstatus *In-Progress* dan akan otomatis ditransfer ke rekening Freelancer melalui layanan *Midtrans Payouts (Iris)* segera setelah klien menekan tombol *Approve* pada milestone yang diselesaikan.
 
 ### 4. Auto-Invoicing & Dokumentasi
 Lupakan pembuatan invoice manual di Canva. Setiap milestone yang selesai akan men-generate invoice PDF profesional secara otomatis. Riwayat pekerjaan dan pembayaran tersimpan rapi sebagai bukti portofolio Anda.
