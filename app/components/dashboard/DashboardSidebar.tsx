@@ -16,6 +16,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../../dashboard/layout";
 
+/**
+ * Item menu navigasi untuk sidebar dashboard.
+ */
 const menuItems = [
   { icon: LayoutDashboard, label: "Dasbor", href: "/dashboard" },
   { icon: Briefcase, label: "Proyek Saya", href: "/dashboard/projects" },
@@ -25,6 +28,9 @@ const menuItems = [
   { icon: Settings, label: "Pengaturan", href: "/dashboard/settings" },
 ];
 
+/**
+ * Komponen Sidebar untuk dashboard utama, mendukung mode ciut (collapsed).
+ */
 export default function DashboardSidebar() {
   const { collapsed, setCollapsed } = useSidebar();
   const pathname = usePathname();
@@ -52,7 +58,7 @@ export default function DashboardSidebar() {
         backdropFilter: "blur(20px)",
       }}
     >
-      {/* Logo Section */}
+      {/* Bagian Logo */}
       <div style={{ 
         display: "flex", 
         alignItems: "center", 
@@ -82,7 +88,7 @@ export default function DashboardSidebar() {
         )}
       </div>
 
-      {/* Navigation Menu */}
+      {/* Menu Navigasi */}
       <nav style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
         {menuItems.map((item) => {
           const isActive = item.href === "/dashboard" 
@@ -134,7 +140,7 @@ export default function DashboardSidebar() {
         })}
       </nav>
 
-      {/* Bottom Actions */}
+      {/* Aksi Bawah */}
       <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "12px" }}>
         {!collapsed ? (
           <motion.button 
@@ -197,3 +203,4 @@ export default function DashboardSidebar() {
     </motion.aside>
   );
 }
+

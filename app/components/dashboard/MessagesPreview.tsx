@@ -3,6 +3,9 @@
 import { motion } from "framer-motion";
 import { MessageSquare, Send } from "lucide-react";
 
+/**
+ * Data dummy untuk pratinjau pesan chat.
+ */
 const chats = [
   {
     id: 1,
@@ -33,6 +36,9 @@ const chats = [
   },
 ];
 
+/**
+ * Komponen MessagesPreview menampilkan ringkasan pesan terbaru dari klien atau freelancer.
+ */
 export default function MessagesPreview() {
   return (
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", height: "100%" }}>
@@ -113,6 +119,7 @@ export default function MessagesPreview() {
         ))}
       </div>
 
+      {/* Input Balas Cepat */}
       <div style={{ 
         marginTop: "24px", 
         display: "flex", 
@@ -152,3 +159,4 @@ export default function MessagesPreview() {
     </div>
   );
 }
+

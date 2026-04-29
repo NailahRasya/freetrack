@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+/**
+ * Membuat klien Supabase untuk digunakan di sisi server (Server Components, Route Handlers).
+ * Menangani sinkronisasi cookie secara otomatis.
+ */
 export async function createClient() {
   const cookieStore = await cookies();
 
@@ -18,12 +22,13 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // Metode `setAll` dipanggil dari Server Component.
+            // Ini bisa diabaikan jika Anda memiliki middleware yang menyegarkan
+            // sesi pengguna (seperti di project ini).
           }
         },
       },
     }
   );
 }
+

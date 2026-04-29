@@ -1,28 +1,28 @@
 /**
  * lib/rbac.ts
  * ──────────────────────────────────────────────────────────────────────────────
- * Central Role-Based Access Control (RBAC) definitions for the FreeTrack
- * platform.  Import from here in both middleware and API route handlers so
- * permission rules live in a single source of truth.
+ * Definisi Central Role-Based Access Control (RBAC) untuk platform FreeTrack.
+ * Impor dari sini baik di middleware maupun handler route API agar aturan
+ * izin tetap berada dalam satu sumber kebenaran (source of truth).
  */
 
-// ── Role types ────────────────────────────────────────────────────────────────
+// ── Tipe Role ────────────────────────────────────────────────────────────────
 
 export type UserRole = "freelancer" | "client";
 
-// ── Permission matrix ─────────────────────────────────────────────────────────
+// ── Matriks Izin ─────────────────────────────────────────────────────────────
 
 /**
- * Milestone fields that a Client is explicitly allowed to mutate.
- * Everything else is considered immutable from their perspective.
+ * Field Milestone yang diizinkan untuk diubah oleh Client secara eksplisit.
+ * Selain ini dianggap tidak dapat diubah (immutable) dari perspektif mereka.
  */
 export const CLIENT_ALLOWED_MILESTONE_FIELDS = ["status"] as const;
 export type ClientAllowedMilestoneField =
   (typeof CLIENT_ALLOWED_MILESTONE_FIELDS)[number];
 
 /**
- * Milestone status values that a Client may set.
- * Freelancers can set any status.
+ * Nilai status Milestone yang boleh diatur oleh Client.
+ * Freelancer dapat mengatur status apa pun.
  */
 export const CLIENT_ALLOWED_STATUS_TRANSITIONS = [
   "Approved",
@@ -31,42 +31,42 @@ export const CLIENT_ALLOWED_STATUS_TRANSITIONS = [
 export type ClientAllowedStatus =
   (typeof CLIENT_ALLOWED_STATUS_TRANSITIONS)[number];
 
-// ── URL patterns that are restricted for Clients ──────────────────────────────
+// ── Pola URL yang dibatasi untuk Client ──────────────────────────────────────
 
-/** Exact path segments that Clients must never access. */
+/** Segmen path eksak yang tidak boleh diakses oleh Client. */
 export const CLIENT_BLOCKED_PATHS: RegExp[] = [
   /^\/dashboard\/milestones\/upload(\/.*)?$/,
   /^\/dashboard\/milestones\/.*\/edit(\/.*)?$/,
   /^\/dashboard\/milestones\/create(\/.*)?$/,
 ];
 
-/** Where Clients are redirected when they hit a blocked path. */
+/** Path tujuan pengalihan (redirect) saat Client mencoba mengakses path terlarang. */
 export const CLIENT_FALLBACK_PATH = "/dashboard/milestones";
 
-// ── Helper functions ──────────────────────────────────────────────────────────
+// ── Fungsi Pembantu (Helper) ──────────────────────────────────────────────────
 
-/** Returns true if the given path is blocked for the Client role. */
+/** Mengembalikan true jika path yang diberikan diblokir untuk role Client. */
 export function isBlockedForClient(pathname: string): boolean {
   return CLIENT_BLOCKED_PATHS.some((pattern) => pattern.test(pathname));
 }
 
 /**
- * Validate a Client's milestone update payload.
+ * Validasi payload pembaruan milestone dari Client.
  *
- * Returns an error message string if the payload is invalid, or null if OK.
+ * Mengembalikan pesan kesalahan (string) jika payload tidak valid, atau null jika OK.
  */
 export function validateClientMilestonePayload(
   body: Record<string, unknown>
 ): string | null {
-  // 1. Check for immutable fields
+  // 1. Periksa field yang tidak boleh diubah (immutable)
   const immutableFields = ["title", "description", "deadline"] as const;
   for (const field of immutableFields) {
     if (field in body) {
-      return `Unauthorized: Clients cannot modify the '${field}' field.`;
+      return `Unauthorized: Client tidak dapat mengubah field '${field}'.`;
     }
   }
 
-  // 2. Enforce status whitelist
+  // 2. Terapkan whitelist status
   if ("status" in body) {
     const requested = body.status as string;
     if (
@@ -74,9 +74,10 @@ export function validateClientMilestonePayload(
         requested as ClientAllowedStatus
       )
     ) {
-      return `Unauthorized: Clients can only set status to 'Approved' or 'Rejected'. Received: '${requested}'.`;
+      return `Unauthorized: Client hanya dapat mengatur status ke 'Approved' atau 'Rejected'. Menerima: '${requested}'.`;
     }
   }
 
   return null;
 }
+

@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { CheckCircle2, Clock, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { useUser } from "../../dashboard/layout";
 
+/**
+ * Data dummy untuk riwayat pembayaran.
+ */
 const payments = [
   {
     id: 1,
@@ -37,6 +40,9 @@ const payments = [
   },
 ];
 
+/**
+ * Komponen PaymentTracker memantau status dana dan pembayaran per milestone.
+ */
 export default function PaymentTracker() {
   const { role } = useUser();
   const isFreelancer = role === "freelancer";
@@ -66,7 +72,7 @@ export default function PaymentTracker() {
             }}
             whileHover={{ background: "rgba(255, 255, 255, 0.04)", borderColor: `${payment.color}30` }}
           >
-            {/* Left: Icon */}
+            {/* Kiri: Ikon Status */}
             <div style={{
               width: "36px",
               height: "36px",
@@ -82,7 +88,7 @@ export default function PaymentTracker() {
               <payment.icon size={18} />
             </div>
 
-            {/* Right: Content */}
+            {/* Kanan: Konten Detail */}
             <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "4px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
                 <h4 style={{ 
@@ -121,7 +127,7 @@ export default function PaymentTracker() {
               </div>
             </div>
 
-            {/* Action for Freelancer */}
+            {/* Tombol Aksi khusus Freelancer jika status dana ada di Escrow */}
             {isFreelancer && payment.status === "In Escrow" && (
               <motion.button 
                 whileHover={{ scale: 1.05 }}
@@ -172,3 +178,4 @@ export default function PaymentTracker() {
     </div>
   );
 }
+

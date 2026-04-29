@@ -3,6 +3,9 @@
 import { motion } from "framer-motion";
 import { Plus, Check, CreditCard, UserPlus, FileText } from "lucide-react";
 
+/**
+ * Data dummy untuk riwayat aktivitas terbaru dalam platform.
+ */
 const activities = [
   {
     id: 1,
@@ -38,13 +41,16 @@ const activities = [
   },
 ];
 
+/**
+ * Komponen ActivityTimeline menampilkan log kronologis dari peristiwa penting proyek.
+ */
 export default function ActivityTimeline() {
   return (
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", height: "100%" }}>
       <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", marginBottom: "24px" }}>Lini Masa Aktivitas</h3>
 
       <div style={{ position: "relative" }}>
-        {/* Vertical Line */}
+        {/* Garis Vertikal Latar Belakang */}
         <div style={{
           position: "absolute",
           left: "15px",
@@ -69,7 +75,7 @@ export default function ActivityTimeline() {
               whileTap={{ scale: 0.98 }}
               style={{ display: "flex", gap: "20px", position: "relative", cursor: "pointer" }}
             >
-              {/* Dot / Icon */}
+              {/* Titik / Ikon Aktivitas */}
               <div style={{
                 width: "32px",
                 height: "32px",
@@ -104,3 +110,4 @@ export default function ActivityTimeline() {
     </div>
   );
 }
+

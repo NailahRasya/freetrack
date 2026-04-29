@@ -10,7 +10,7 @@ import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
 export default function DashboardPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      {/* Header Section */}
+      {/* Bagian Header */}
       <header>
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -32,10 +32,10 @@ export default function DashboardPage() {
         </motion.div>
       </header>
 
-      {/* Overview Stats */}
+      {/* Ringkasan Statistik (Stats Overview) */}
       <StatsCards />
 
-      {/* Main Grid Layout */}
+      {/* Layout Grid Utama */}
       <div style={{ 
         display: "grid", 
         gridTemplateColumns: "minmax(0, 7fr) minmax(0, 5fr)", 
@@ -43,7 +43,7 @@ export default function DashboardPage() {
         alignItems: "stretch", 
         width: "100%"
       }}>
-        {/* Left Column */}
+        {/* Kolom Kiri */}
         <div style={{ display: "flex", flexDirection: "column", gap: "32px", minWidth: 0 }}>
           <ActiveProjects />
           
@@ -57,15 +57,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column */}
+        {/* Kolom Kanan */}
         <div style={{ display: "flex", flexDirection: "column", gap: "32px", minWidth: 0 }}>
           <PaymentTracker />
           
-
         </div>
       </div>
 
-      {/* Custom styles for grid adjustments on smaller screens would be here */}
+      {/* Gaya kustom untuk penyesuaian grid pada layar kecil */}
       <style jsx>{`
         @media (max-width: 1200px) {
           div[style*="gridTemplateColumns: 1.8fr 1.2fr"] {
@@ -81,3 +80,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

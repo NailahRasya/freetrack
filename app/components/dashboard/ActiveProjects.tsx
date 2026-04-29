@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { MoreVertical, Users, Calendar, DollarSign } from "lucide-react";
 import { useUser } from "../../dashboard/layout";
 
+/**
+ * Data dummy untuk daftar proyek yang sedang berjalan.
+ */
 const projects = [
   {
     id: 1,
@@ -37,6 +40,9 @@ const projects = [
   },
 ];
 
+/**
+ * Komponen ActiveProjects menampilkan daftar proyek aktif dengan progress bar dan detail ringkas.
+ */
 export default function ActiveProjects() {
   const { role } = useUser();
   const isClient = role === "client";
@@ -101,7 +107,7 @@ export default function ActiveProjects() {
               </div>
             </div>
 
-            {/* Progress Bar */}
+            {/* Bilah Kemajuan (Progress Bar) */}
             <div style={{ marginBottom: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "12px", fontWeight: "600" }}>
                 <span style={{ color: "rgba(226, 232, 240, 0.5)" }}>Kemajuan</span>
@@ -144,3 +150,4 @@ export default function ActiveProjects() {
     </div>
   );
 }
+

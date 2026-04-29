@@ -3,6 +3,9 @@
 import { motion } from "framer-motion";
 import { Briefcase, DollarSign, Flag, Clock, TrendingUp } from "lucide-react";
 
+/**
+ * Data dummy untuk statistik dashboard.
+ */
 const stats = [
   {
     label: "Proyek Aktif",
@@ -38,6 +41,9 @@ const stats = [
   },
 ];
 
+/**
+ * Komponen StatsCards menampilkan ringkasan data numerik dalam bentuk kartu.
+ */
 export default function StatsCards() {
   return (
     <div style={{ 
@@ -72,10 +78,10 @@ export default function StatsCards() {
             border: "1px solid rgba(255, 255, 255, 0.05)",
             display: "flex",
             flexDirection: "column",
-            minWidth: 0 // Allow content to shrink
+            minWidth: 0 // Memungkinkan konten untuk menyusut
           }}
         >
-          {/* Subtle Background Glow */}
+          {/* Cahaya Latar Belakang Halus */}
           <div style={{
             position: "absolute",
             top: "-20px",
@@ -135,3 +141,4 @@ export default function StatsCards() {
     </div>
   );
 }
+
