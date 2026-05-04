@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, Filter, SlidersHorizontal, Briefcase, CheckCircle2, Clock, DollarSign } from "lucide-react";
+import { Plus, Search, Filter, SlidersHorizontal, Briefcase, CheckCircle2, Clock, DollarSign, X } from "lucide-react";
 import ProjectCard from "../../components/dashboard/ProjectCard";
 
 const projectsData = [
@@ -78,8 +78,33 @@ const stats = [
 export default function ProjectsPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProject, setNewProject] = useState({
+    name: "",
+    freelancer: "",
+    budget: "",
+    deadline: "",
+  });
+  const [projects, setProjects] = useState(projectsData);
 
-  const filteredProjects = projectsData.filter((project) => {
+  const handleCreateProject = () => {
+    if (!newProject.name.trim() || !newProject.freelancer.trim()) return;
+    const created = {
+      id: projects.length + 1,
+      name: newProject.name,
+      freelancer: newProject.freelancer,
+      progress: 0,
+      budget: newProject.budget || "Rp 0",
+      deadline: newProject.deadline || "-",
+      status: "Active",
+      statusColor: "#00E5FF",
+    };
+    setProjects([created, ...projects]);
+    setNewProject({ name: "", freelancer: "", budget: "", deadline: "" });
+    setShowCreateModal(false);
+  };
+
+  const filteredProjects = projects.filter((project) => {
     const matchesTab = activeTab === "All" || project.status === activeTab;
     const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           project.freelancer.toLowerCase().includes(searchQuery.toLowerCase());
@@ -106,6 +131,7 @@ export default function ProjectsPage() {
           whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(0, 229, 255, 0.3)" }}
           whileTap={{ scale: 0.95 }}
           className="btn-primary"
+          onClick={() => setShowCreateModal(true)}
           style={{ 
             padding: "12px 24px", 
             borderRadius: "14px", 
@@ -289,6 +315,140 @@ export default function ProjectsPage() {
           </button>
         </div>
       )}
+
+      {/* Create Project Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowCreateModal(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.7)",
+              backdropFilter: "blur(6px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+              padding: "20px",
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-card"
+              style={{
+                width: "100%",
+                maxWidth: "480px",
+                padding: "32px",
+                borderRadius: "24px",
+                background: "rgba(15, 27, 46, 0.95)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
+                <div>
+                  <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#fff", marginBottom: "4px" }}>
+                    Create <span className="gradient-text">New Project</span>
+                  </h2>
+                  <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.4)" }}>Fill in the details below</p>
+                </div>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "rgba(226, 232, 240, 0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Form Fields */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {[
+                  { label: "Project Name *", key: "name", placeholder: "e.g. E-Commerce Mobile App", type: "text" },
+                  { label: "Freelancer Name *", key: "freelancer", placeholder: "e.g. Sarah Jenkins", type: "text" },
+                  { label: "Budget", key: "budget", placeholder: "e.g. Rp 12.5M", type: "text" },
+                  { label: "Deadline", key: "deadline", placeholder: "", type: "date" },
+                ].map(({ label, key, placeholder, type }) => (
+                  <div key={key}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.5)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                      {label}
+                    </label>
+                    <input
+                      type={type}
+                      placeholder={placeholder}
+                      value={newProject[key as keyof typeof newProject]}
+                      onChange={(e) => setNewProject({ ...newProject, [key]: e.target.value })}
+                      style={{
+                        width: "100%",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        borderRadius: "12px",
+                        padding: "12px 16px",
+                        color: "#fff",
+                        fontSize: "14px",
+                        outline: "none",
+                        boxSizing: "border-box",
+                        colorScheme: "dark",
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: "flex", gap: "12px", marginTop: "28px" }}>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="btn-secondary"
+                  style={{ flex: 1, padding: "12px", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleCreateProject}
+                  disabled={!newProject.name.trim() || !newProject.freelancer.trim()}
+                  className="btn-primary"
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    borderRadius: "12px",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    cursor: !newProject.name.trim() || !newProject.freelancer.trim() ? "not-allowed" : "pointer",
+                    opacity: !newProject.name.trim() || !newProject.freelancer.trim() ? 0.5 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <Plus size={16} />
+                  Create Project
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
