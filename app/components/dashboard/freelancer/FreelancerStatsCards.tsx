@@ -1,44 +1,62 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Briefcase, DollarSign, Flag, Clock, TrendingUp } from "lucide-react";
-
-const stats = [
-  {
-    label: "Proyek Aktif",
-    value: "4",
-    change: "+1 bulan ini",
-    icon: Briefcase,
-    color: "#00E5FF", // Cyan
-    gradient: "linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(0, 229, 255, 0) 100%)",
-  },
-  {
-    label: "Menunggu DP",
-    value: "2",
-    change: "Butuh tindakan",
-    icon: Clock,
-    color: "#F59E0B", // Warning Orange
-    gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0) 100%)",
-  },
-  {
-    label: "Target Selesai",
-    value: "18",
-    change: "3 disetujui minggu ini",
-    icon: Flag,
-    color: "#4D63FF", // Primary Light
-    gradient: "linear-gradient(135deg, rgba(77, 99, 255, 0.2) 0%, rgba(77, 99, 255, 0) 100%)",
-  },
-  {
-    label: "Total Pendapatan",
-    value: "Rp 32.5M",
-    change: "+20% dari bulan lalu",
-    icon: DollarSign,
-    color: "#10B981", // Emerald
-    gradient: "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 100%)",
-  },
-];
+import { Briefcase, DollarSign, Flag, Clock, TrendingUp, Loader2 } from "lucide-react";
+import { useProjects } from "@/lib/hooks/useProjects";
 
 export default function FreelancerStatsCards() {
+  const { projects, loading } = useProjects();
+
+  if (loading) return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "32px" }}>
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="glass-card" style={{ padding: "24px", height: "140px", background: "rgba(15, 27, 46, 0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Loader2 size={24} style={{ animation: "spin 1s linear infinite", color: "rgba(226,232,240,0.1)" }} />
+        </div>
+      ))}
+    </div>
+  );
+
+  const activeCount = projects.filter(p => p.status === "active").length;
+  const draftCount = projects.filter(p => p.status === "draft").length;
+  const pendingCount = projects.filter(p => p.status === "pending_client").length;
+  const completedCount = projects.filter(p => p.status === "completed").length;
+
+  const stats = [
+    {
+      label: "Proyek Aktif",
+      value: String(activeCount),
+      change: "Sedang dikerjakan",
+      icon: Briefcase,
+      color: "#00E5FF",
+      gradient: "linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(0, 229, 255, 0) 100%)",
+    },
+    {
+      label: "Draf Proyek",
+      value: String(draftCount),
+      change: "Belum dikirim",
+      icon: Clock,
+      color: "#7C3AED",
+      gradient: "linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(124, 58, 237, 0) 100%)",
+    },
+    {
+      label: "Menunggu Klien",
+      value: String(pendingCount),
+      change: "Perlu persetujuan",
+      icon: Flag,
+      color: "#F59E0B",
+      gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0) 100%)",
+    },
+    {
+      label: "Total Selesai",
+      value: String(completedCount),
+      change: "Proyek sukses",
+      icon: DollarSign, // Using DollarSign for success/revenue vibe
+      color: "#10B981",
+      gradient: "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 100%)",
+    },
+  ];
+
   return (
     <div style={{ 
       display: "grid", 
@@ -57,70 +75,29 @@ export default function FreelancerStatsCards() {
           className="glass-card"
           style={{
             padding: "24px",
-            position: "relative",
-            overflow: "hidden",
             background: "rgba(15, 27, 46, 0.6)",
             border: "1px solid rgba(255, 255, 255, 0.05)",
             display: "flex",
             flexDirection: "column",
-            minWidth: 0 // Allow content to shrink
+            minWidth: 0
           }}
         >
-          {/* Efek Glow Tipis pada Latar Belakang */}
-          <div style={{
-            position: "absolute",
-            top: "-20px",
-            right: "-20px",
-            width: "100px",
-            height: "100px",
-            background: stat.gradient,
-            filter: "blur(30px)",
-            opacity: 0.5,
-            pointerEvents: "none"
-          }} />
-
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
             <div style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "12px",
-              background: `${stat.color}15`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: stat.color,
-              border: `1px solid ${stat.color}30`,
-              flexShrink: 0
+              width: "44px", height: "44px", borderRadius: "12px",
+              background: `${stat.color}15`, display: "flex", alignItems: "center", justifyContent: "center",
+              color: stat.color, border: `1px solid ${stat.color}30`,
             }}>
               <stat.icon size={22} />
             </div>
-            {stat.label !== "Waiting DP" && (
-              <div style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "4px", 
-                fontSize: "11px", 
-                fontWeight: "700", 
-                color: stat.color,
-                background: `${stat.color}10`,
-                padding: "4px 8px",
-                borderRadius: "6px",
-                whiteSpace: "nowrap"
-              }}>
-                <TrendingUp size={10} />
-                {stat.change.split(' ')[0]}
-              </div>
-            )}
           </div>
-
-          <div style={{ fontSize: "24px", fontWeight: "900", color: "#fff", marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontSize: "24px", fontWeight: "900", color: "#fff", marginBottom: "4px" }}>
             {stat.value}
           </div>
           <div style={{ fontSize: "12px", fontWeight: "600", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
             {stat.label}
           </div>
-          
-          <div style={{ fontSize: "11px", color: "rgba(226, 232, 240, 0.3)", marginTop: "12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontSize: "11px", color: "rgba(226, 232, 240, 0.3)", marginTop: "12px" }}>
             {stat.change}
           </div>
         </motion.div>

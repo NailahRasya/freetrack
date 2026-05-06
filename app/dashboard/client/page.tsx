@@ -6,8 +6,10 @@ import ActiveProjects from "../../components/dashboard/ActiveProjects";
 import PaymentTracker from "../../components/dashboard/PaymentTracker";
 import MessagesPreview from "../../components/dashboard/MessagesPreview";
 import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
+import { useUser } from "../layout";
 
 export default function DashboardPage() {
+  const { user } = useUser();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* Bagian Header */}
@@ -24,7 +26,7 @@ export default function DashboardPage() {
             letterSpacing: "-0.5px",
             marginBottom: "8px"
           }}>
-            Selamat datang kembali, <span className="gradient-text">Alex Rivera</span>
+            Selamat datang kembali, <span className="gradient-text">{user?.profile?.full_name || "Client"}</span>
           </h1>
           <p style={{ color: "rgba(226, 232, 240, 0.4)", fontSize: "15px" }}>
             Berikut adalah apa yang terjadi dengan proyek Anda hari ini.

@@ -409,8 +409,9 @@
   }
   
   .hero-grid {
-    grid-template-columns: 1fr;
-    gap: 60px;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 40px;
   }
   
   .hero-copy {
@@ -440,7 +441,7 @@
   
   .hero-visual {
     height: auto;
-    margin-top: 20px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: center;
   }

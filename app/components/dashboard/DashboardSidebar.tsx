@@ -9,12 +9,15 @@ import {
   Settings, 
   PlusCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Users,
+  User
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSidebar } from "../../dashboard/layout";
+import { useSidebar, useUser } from "../../dashboard/layout";
+import { useProjects } from "@/lib/hooks/useProjects";
 
 /**
  * Item menu navigasi untuk sidebar dashboard.
@@ -22,9 +25,11 @@ import { useSidebar } from "../../dashboard/layout";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dasbor", href: "/dashboard" },
   { icon: Briefcase, label: "Proyek Saya", href: "/dashboard/projects" },
+  { icon: Users, label: "Kontak", href: "/dashboard/contacts" },
   { icon: Wallet, label: "Pembayaran", href: "/dashboard/payments" },
   { icon: Flag, label: "Target Pencapaian", href: "/dashboard/milestones" },
   { icon: MessageSquare, label: "Pesan", href: "/dashboard/messages" },
+  { icon: User, label: "Profil Saya", href: "/dashboard/profile" },
   { icon: Settings, label: "Pengaturan", href: "/dashboard/settings" },
 ];
 
@@ -33,7 +38,14 @@ const menuItems = [
  */
 export default function DashboardSidebar() {
   const { collapsed, setCollapsed } = useSidebar();
+  const { role } = useUser();
+  const { projects } = useProjects();
   const pathname = usePathname();
+
+  const hasActionableProjects = projects.some(p => 
+    (role === "client" && p.status === "pending_client") ||
+    (role === "freelancer" && p.status === "pending_freelancer")
+  );
 
   return (
     <motion.aside
@@ -131,6 +143,19 @@ export default function DashboardSidebar() {
                   />
                 )}
                 <item.icon size={20} style={{ flexShrink: 0 }} />
+                {item.label === "Proyek Saya" && hasActionableProjects && (
+                  <span style={{
+                    position: "absolute",
+                    top: collapsed ? "8px" : "12px",
+                    left: collapsed ? "45px" : "28px",
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: "#FF4D6A",
+                    boxShadow: "0 0 10px #FF4D6A",
+                    zIndex: 10
+                  }} />
+                )}
                 {!collapsed && (
                   <span style={{ fontSize: "14px", fontWeight: "600" }}>{item.label}</span>
                 )}
@@ -142,43 +167,6 @@ export default function DashboardSidebar() {
 
       {/* Aksi Bawah */}
       <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "12px" }}>
-        {!collapsed ? (
-          <motion.button 
-            className="btn-primary"
-            whileHover={{ scale: 1.02, boxShadow: "0 0 25px rgba(26, 54, 240, 0.5)" }}
-            whileTap={{ scale: 0.96 }}
-            style={{ 
-              width: "100%", 
-              justifyContent: "center", 
-              padding: "12px", 
-              fontSize: "14px",
-              boxShadow: "0 0 20px rgba(26, 54, 240, 0.3)",
-              cursor: "pointer",
-              border: "none"
-            }}
-          >
-            <PlusCircle size={18} />
-            <span>Buat Proyek</span>
-          </motion.button>
-        ) : (
-          <motion.button 
-            className="btn-primary"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            style={{ 
-              width: "48px", 
-              height: "48px",
-              padding: "0",
-              justifyContent: "center",
-              margin: "0 auto",
-              cursor: "pointer",
-              border: "none"
-            }}
-          >
-            <PlusCircle size={24} />
-          </motion.button>
-        )}
-
         <motion.button
           onClick={() => setCollapsed(!collapsed)}
           whileHover={{ background: "rgba(255, 255, 255, 0.08)", color: "#fff" }}

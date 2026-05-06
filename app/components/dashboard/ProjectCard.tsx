@@ -1,23 +1,33 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { MoreVertical, Users, Calendar, DollarSign, ExternalLink } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MoreVertical, Users, Calendar, DollarSign, Pencil, Trash2, Send, CheckCircle2, X, MessageSquare, RefreshCw } from "lucide-react";
+import Swal from "sweetalert2";
 import { useUser } from "../../dashboard/layout";
 
 interface ProjectCardProps {
   project: {
     id: number;
+    projectId: string;
     name: string;
+    client: string;
     freelancer: string;
     progress: number;
     budget: string;
     deadline: string;
     status: string;
     statusColor: string;
+    description?: string;
+    rejection_reason?: string;
+    negotiation_count?: number;
   };
+  onEdit?: (project: any) => void;
+  onDelete?: (id: number) => void;
+  onSendToClient?: (id: number, status?: string, reason?: string) => void;
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, onEdit, onDelete, onSendToClient }: ProjectCardProps) {
   const { role } = useUser();
   const isClient = role === "client";
 
@@ -35,13 +45,12 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         borderRadius: "20px",
         cursor: "pointer",
         position: "relative",
-        overflow: "hidden",
+        overflow: "visible",
         display: "flex",
         flexDirection: "column",
         transition: "border-color 0.3s ease"
       }}
     >
-      {/* Background Glow */}
       <div style={{
         position: "absolute",
         top: "-10%",
@@ -51,16 +60,32 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         background: project.statusColor,
         filter: "blur(60px)",
         opacity: 0.05,
-        pointerEvents: "none"
+        pointerEvents: "none",
+        borderRadius: "50%",
       }} />
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", gap: "12px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", gap: "12px" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h4 style={{ 
-            fontSize: "17px", 
-            fontWeight: "800", 
-            color: "#fff", 
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            background: "rgba(77, 99, 255, 0.1)",
+            border: "1px solid rgba(77, 99, 255, 0.2)",
+            borderRadius: "6px",
+            padding: "2px 8px",
+            fontSize: "10px",
+            fontWeight: "700",
+            color: "#4D63FF",
+            letterSpacing: "0.5px",
+            marginBottom: "8px",
+            fontFamily: "monospace"
+          }}>
+            {project.projectId}
+          </div>
+          <h4 style={{
+            fontSize: "17px",
+            fontWeight: "800",
+            color: "#fff",
             marginBottom: "6px",
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -72,29 +97,68 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Users size={12} />
             </div>
-            <span>{project.freelancer}</span>
+            <span>{isClient ? project.freelancer : project.client}</span>
           </div>
         </div>
-        <div style={{ 
-          padding: "5px 12px", 
-          borderRadius: "8px", 
-          fontSize: "11px", 
-          fontWeight: "800", 
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-          background: `${project.statusColor}15`,
-          color: project.statusColor,
-          border: `1px solid ${project.statusColor}30`,
-          whiteSpace: "nowrap"
-        }}>
-          {project.status}
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+          {project.negotiation_count && project.negotiation_count > 0 ? (
+            <div style={{
+              padding: "5px 10px",
+              borderRadius: "8px",
+              fontSize: "11px",
+              fontWeight: "800",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              background: "rgba(255, 191, 0, 0.15)",
+              color: "#FFBF00",
+              border: "1px solid rgba(255, 191, 0, 0.3)",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}>
+              <RefreshCw size={12} /> Nego {project.negotiation_count}x
+            </div>
+          ) : null}
+          <div style={{
+            padding: "5px 12px",
+            borderRadius: "8px",
+            fontSize: "11px",
+            fontWeight: "800",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            background: `${project.statusColor}15`,
+            color: project.statusColor,
+            border: `1px solid ${project.statusColor}30`,
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}>
+            {project.status}
+          </div>
         </div>
       </div>
 
-      {/* Progress */}
+      {project.rejection_reason && (
+        <div style={{ 
+          marginBottom: "16px", 
+          padding: "12px", 
+          background: "rgba(255, 77, 106, 0.05)", 
+          border: "1px solid rgba(255, 77, 106, 0.15)", 
+          borderRadius: "12px",
+          fontSize: "12px",
+          color: "#FF4D6A"
+        }}>
+          <div style={{ fontWeight: "700", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
+            <MessageSquare size={12} /> Alasan Revisi:
+          </div>
+          {project.rejection_reason}
+        </div>
+      )}
+
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "12px", fontWeight: "700" }}>
-          <span style={{ color: "rgba(226, 232, 240, 0.4)" }}>Milestones</span>
+          <span style={{ color: "rgba(226, 232, 240, 0.4)" }}>Progres</span>
           <span style={{ color: project.statusColor }}>{project.progress}%</span>
         </div>
         <div style={{ height: "8px", background: "rgba(255, 255, 255, 0.04)", borderRadius: "4px", overflow: "hidden" }}>
@@ -111,11 +175,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
       </div>
 
-      {/* Footer Info */}
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "1fr 1fr", 
-        paddingTop: "20px", 
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        paddingTop: "20px",
         borderTop: "1px solid rgba(255, 255, 255, 0.05)",
         gap: "12px"
       }}>
@@ -135,21 +198,296 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
       </div>
 
-      {/* Action Menu - Bottom Row */}
-      {!isClient && (
-        <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-          <button style={{ 
-            background: "rgba(255,255,255,0.03)", 
-            border: "1px solid rgba(255,255,255,0.06)", 
-            color: "rgba(226, 232, 240, 0.4)",
-            padding: "6px",
-            borderRadius: "8px",
-            cursor: "pointer"
-          }}>
-            <MoreVertical size={16} />
-          </button>
+      <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "10px", width: "100%" }}>
+        {/* Tombol Diskusi via Chat - Muncul selama proyek belum selesai / bukan draf */}
+        {project.rawStatus !== "draft" && project.rawStatus !== "completed" ? (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={(e) => { e.stopPropagation(); window.location.href = "/dashboard/messages"; }}
+            style={{
+              background: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              color: "rgba(226, 232, 240, 0.8)",
+              padding: "8px 14px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            <MessageSquare size={14} /> Diskusi
+          </motion.button>
+        ) : <div />}
+
+        {isClient ? (
+          project.rawStatus === "draft" ? (
+            <div style={{ display: "flex", gap: "10px", width: "100%" }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={(e) => { e.stopPropagation(); onEdit?.(project); }}
+                style={{
+                  flex: 1,
+                  background: "rgba(124, 58, 237, 0.1)",
+                  border: "1px solid rgba(124, 58, 237, 0.2)",
+                  color: "#7C3AED",
+                  padding: "12px",
+                  borderRadius: "12px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px"
+                }}
+              >
+                <Pencil size={15} /> Edit Draf
+              </motion.button>
+              {project.freelancer !== "-" && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    Swal.fire({
+                      title: "Kirim Proyek?",
+                      text: "Proyek ini akan dikirim ke freelancer untuk ditinjau.",
+                      icon: "question",
+                      showCancelButton: true,
+                      confirmButtonColor: "#4D63FF",
+                      cancelButtonColor: "rgba(255,255,255,0.1)",
+                      confirmButtonText: "Ya, Kirim!",
+                      cancelButtonText: "Batal",
+                      background: "#0F1B2E",
+                      color: "#fff",
+                      customClass: {
+                        popup: "glass-card",
+                      }
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        onSendToClient?.(project.id, "pending_freelancer");
+                      }
+                    });
+                  }}
+                  style={{
+                    flex: 1,
+                    background: "rgba(77, 99, 255, 0.1)",
+                    border: "1px solid rgba(77, 99, 255, 0.2)",
+                    color: "#4D63FF",
+                    padding: "12px",
+                    borderRadius: "12px",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px"
+                  }}
+                >
+                  <Send size={15} /> Kirim
+                </motion.button>
+              )}
+            </div>
+          ) : project.rawStatus === "pending_client" ? (
+            <div style={{ display: "flex", gap: "10px", width: "100%" }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={(e) => { e.stopPropagation(); onSendToClient?.(project.id, "active"); }}
+                style={{
+                  flex: 1,
+                  background: "rgba(0, 255, 163, 0.1)",
+                  border: "1px solid rgba(0, 255, 163, 0.2)",
+                  color: "#00FFA3",
+                  padding: "12px",
+                  borderRadius: "12px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px"
+                }}
+              >
+                <CheckCircle2 size={15} /> Setujui
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={(e) => { e.stopPropagation(); onEdit?.(project); }}
+                style={{
+                  flex: 1,
+                  background: "rgba(255, 191, 0, 0.1)",
+                  border: "1px solid rgba(255, 191, 0, 0.2)",
+                  color: "#FFBF00",
+                  padding: "12px",
+                  borderRadius: "12px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px"
+                }}
+              >
+                <Pencil size={15} /> Ajukan Nego
+              </motion.button>
+            </div>
+          ) : project.rawStatus === "pending_freelancer" ? (
+            <div style={{ display: "flex", width: "100%" }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  Swal.fire({
+                    title: "Tarik ke Draf?",
+                    text: "Proyek akan kembali menjadi draf dan tidak lagi terlihat oleh freelancer.",
+                    icon: "info",
+                    showCancelButton: true,
+                    confirmButtonColor: "#7C3AED",
+                    cancelButtonColor: "rgba(255,255,255,0.1)",
+                    confirmButtonText: "Ya, Tarik!",
+                    cancelButtonText: "Batal",
+                    background: "#0F1B2E",
+                    color: "#fff"
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      onSendToClient?.(project.id, "draft");
+                    }
+                  });
+                }}
+                style={{
+                  width: "100%",
+                  background: "rgba(124, 58, 237, 0.1)",
+                  border: "1px solid rgba(124, 58, 237, 0.2)",
+                  color: "#7C3AED",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px"
+                }}
+              >
+                <RefreshCw size={15} /> Tarik ke Draf
+              </motion.button>
+            </div>
+          ) : (
+            <div />
+          )
+        ) : (
+          <div style={{ width: "100%" }}>
+            {project.rawStatus === "pending_freelancer" && (
+              <div style={{ display: "flex", gap: "10px", width: "100%" }}>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={(e) => { e.stopPropagation(); onSendToClient?.(project.id, "active"); }}
+                  style={{
+                    flex: 1,
+                    background: "rgba(0, 255, 163, 0.1)",
+                    border: "1px solid rgba(0, 255, 163, 0.2)",
+                    color: "#00FFA3",
+                    padding: "12px",
+                    borderRadius: "12px",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px"
+                  }}
+                >
+                  <CheckCircle2 size={15} /> Setujui
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={(e) => { e.stopPropagation(); onEdit?.(project); }}
+                  style={{
+                    flex: 1,
+                    background: "rgba(255, 191, 0, 0.1)",
+                    border: "1px solid rgba(255, 191, 0, 0.2)",
+                    color: "#FFBF00",
+                    padding: "12px",
+                    borderRadius: "12px",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px"
+                  }}
+                >
+                  <Pencil size={15} /> Ajukan Nego
+                </motion.button>
+              </div>
+            )}
+          </div>
+        )}
         </div>
-      )}
+
+        {(project.rawStatus === "draft" || !isClient) && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              Swal.fire({
+                title: project.rawStatus === "draft" ? "Hapus Draf?" : "Nonaktifkan Proyek?",
+                text: "Tindakan ini tidak dapat dibatalkan.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#FF4D6A",
+                cancelButtonColor: "rgba(255,255,255,0.1)",
+                confirmButtonText: "Ya, Hapus!",
+                cancelButtonText: "Batal",
+                background: "#0F1B2E",
+                color: "#fff",
+                customClass: {
+                  popup: "glass-card",
+                }
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  onDelete?.(project.id);
+                }
+              });
+            }}
+            style={{
+              width: "100%",
+              justifyContent: "center",
+              background: "rgba(255, 77, 106, 0.1)",
+              border: "1px solid rgba(255, 77, 106, 0.2)",
+              color: "#FF4D6A",
+              padding: "10px 14px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: "700",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            <Trash2 size={15} /> {project.rawStatus === "draft" ? "Hapus Draf" : "Nonaktifkan Proyek"}
+          </motion.button>
+        )}
+      </div>
     </motion.div>
   );
 }

@@ -8,8 +8,10 @@ import ChangeRequestModal from "../../components/dashboard/freelancer/ChangeRequ
 import PaymentTracker from "../../components/dashboard/PaymentTracker";
 import MessagesPreview from "../../components/dashboard/MessagesPreview";
 import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
+import { useUser } from "../layout";
 
 export default function FreelancerDashboardPage() {
+  const { user } = useUser();
   const [isChangeRequestOpen, setIsChangeRequestOpen] = useState(false);
 
   return (
@@ -28,7 +30,7 @@ export default function FreelancerDashboardPage() {
             letterSpacing: "-0.5px",
             marginBottom: "8px"
           }}>
-            Selamat datang kembali, <span className="gradient-text-emerald">Sarah Jenkins</span>
+            Selamat datang kembali, <span className="gradient-text-emerald">{user?.profile?.full_name || "Freelancer"}</span>
           </h1>
           <p style={{ color: "rgba(226, 232, 240, 0.4)", fontSize: "15px" }}>
             Berikut adalah apa yang terjadi di ruang kerja pribadi Anda hari ini.

@@ -6,17 +6,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Swal from "sweetalert2";
+import { useUser } from "../../dashboard/layout";
 
 export default function DashboardNavbar() {
   const [showProfile, setShowProfile] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
+  const { user } = useUser();
+
+  const fullName = user?.profile?.full_name || "User";
+  const initials = fullName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
 
   const handleLogout = async () => {
     try {
       setShowProfile(false);
       
-      // Validasi Konfirmasi Logout menggunakan SweetAlert2
       const result = await Swal.fire({
         title: "Konfirmasi Logout",
         text: "Apakah anda yakin ingin keluar dari sistem?",
@@ -26,19 +35,17 @@ export default function DashboardNavbar() {
         cancelButtonText: "Batal",
         background: "#0F1B2E",
         color: "#fff",
-        confirmButtonColor: "#EF4444", // Warna merah untuk aksi destruktif
+        confirmButtonColor: "#EF4444",
         cancelButtonColor: "rgba(255,255,255,0.1)",
         customClass: {
           popup: "glass-card",
         }
       });
 
-      // Jika user membatalkan, hentikan proses
       if (!result.isConfirmed) return;
 
       setIsLoggingOut(true);
       
-      // Tampilkan loading state menggunakan SweetAlert2 untuk pengalaman premium
       Swal.fire({
         title: "Sedang keluar...",
         text: "Mohon tunggu sementara kami mengamankan sesi Anda.",
@@ -55,13 +62,8 @@ export default function DashboardNavbar() {
       });
 
       await supabase.auth.signOut();
-      
-      // Bersihkan local storage untuk memastikan tidak ada data tersisa
       localStorage.clear();
-
-      // Gunakan window.location agar halaman refresh total dan state auth benar-benar bersih
       window.location.href = "/login";
-      
       Swal.close();
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -93,7 +95,7 @@ export default function DashboardNavbar() {
         width: "100%"
       }}
     >
-      {/* Search Bar - Responsive width */}
+      {/* Search Bar */}
       <div style={{ position: "relative", width: "100%", maxWidth: "400px", marginRight: "20px" }}>
         <Search 
           size={18} 
@@ -119,14 +121,6 @@ export default function DashboardNavbar() {
             outline: "none",
             transition: "all 0.3s ease",
           }}
-          onFocus={(e) => {
-            e.target.style.borderColor = "var(--cyan)";
-            e.target.style.background = "rgba(255, 255, 255, 0.05)";
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = "rgba(255, 255, 255, 0.08)";
-            e.target.style.background = "rgba(255, 255, 255, 0.03)";
-          }}
         />
       </div>
 
@@ -136,8 +130,6 @@ export default function DashboardNavbar() {
         <motion.button
           whileHover={{ 
             background: "rgba(6, 182, 212, 0.12)",
-            borderColor: "rgba(6, 182, 212, 0.4)",
-            color: "#22D3EE",
             scale: 1.06
           }}
           whileTap={{ scale: 0.94 }}
@@ -152,8 +144,7 @@ export default function DashboardNavbar() {
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            position: "relative",
-            transition: "background 0.2s ease, border-color 0.2s ease"
+            position: "relative"
           }}
         >
           <Bell size={20} />
@@ -165,8 +156,7 @@ export default function DashboardNavbar() {
             height: "8px",
             background: "var(--accent)",
             borderRadius: "50%",
-            border: "2px solid #0B1220",
-            boxShadow: "0 0 10px var(--accent)"
+            border: "2px solid #0B1220"
           }} />
         </motion.button>
 
@@ -187,16 +177,15 @@ export default function DashboardNavbar() {
               borderRadius: "12px",
               background: "rgba(255, 255, 255, 0.03)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
-              cursor: "pointer",
-              transition: "background 0.2s ease, border-color 0.2s ease"
+              cursor: "pointer"
             }}
           >
-            <span style={{ fontSize: "13px", fontWeight: "600", color: "#E2E8F0", display: "none" }} className="desktop-only">Alex Rivera</span>
+            <span style={{ fontSize: "13px", fontWeight: "600", color: "#E2E8F0" }}>{fullName}</span>
             <div style={{
               width: "32px",
               height: "32px",
               borderRadius: "8px",
-              background: "var(--gradient-primary)",
+              background: "linear-gradient(135deg, #4D63FF, #06B6D4)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -204,7 +193,7 @@ export default function DashboardNavbar() {
               color: "#fff",
               fontSize: "12px"
             }}>
-              AR
+              {initials}
             </div>
             <ChevronDown size={14} style={{ color: "rgba(226, 232, 240, 0.4)" }} />
           </motion.button>
@@ -230,16 +219,11 @@ export default function DashboardNavbar() {
                 }}
               >
                 {[
-                  { icon: User, label: "Profil", action: () => {} },
-                  { icon: SettingsIcon, label: "Pengaturan", action: () => {} },
+                  { icon: User, label: "Profil", action: () => { router.push("/dashboard/profile"); setShowProfile(false); } },
+                  { icon: SettingsIcon, label: "Pengaturan", action: () => { router.push("/dashboard/settings"); setShowProfile(false); } },
                   { icon: LogOut, label: isLoggingOut ? "Sedang keluar..." : "Keluar", color: "#EF4444", action: handleLogout }
                 ].map((item, idx) => (
                   <motion.button
-                    onClick={() => {
-                      if (item.label === "Logout") {
-                        handleLogout();
-                      }
-                    }}
                     key={idx}
                     whileHover={{ 
                       background: item.color 
@@ -262,12 +246,9 @@ export default function DashboardNavbar() {
                       color: item.color || "rgba(226, 232, 240, 0.8)",
                       fontSize: "13px",
                       fontWeight: "500",
-                      cursor: isLoggingOut && item.label.includes("Log") ? "not-allowed" : "pointer",
-                      transition: "all 0.2s ease",
-                      opacity: isLoggingOut && item.label.includes("Log") ? 0.7 : 1
+                      cursor: "pointer",
+                      textAlign: "left"
                     }}
-                    onMouseEnter={(e) => { if (!isLoggingOut) e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)" }}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     <item.icon size={16} />
                     {item.label}
@@ -278,11 +259,6 @@ export default function DashboardNavbar() {
           </AnimatePresence>
         </div>
       </div>
-      <style jsx>{`
-        @media (min-width: 1024px) {
-          .desktop-only { display: block !important; }
-        }
-      `}</style>
     </header>
   );
 }

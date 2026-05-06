@@ -37,7 +37,6 @@ export default function DashboardLayout({
         const { data: { user }, error } = await supabase.auth.getUser();
         
         if (error) {
-          // Jika refresh token tidak ditemukan, kemungkinan session sudah dihapus di server
           if (error.message.includes("Refresh Token Not Found")) {
             console.warn("Session expired, redirecting to login...");
             await supabase.auth.signOut();
@@ -48,10 +47,16 @@ export default function DashboardLayout({
         }
 
         if (user) {
-          setUser(user);
-          setRole(user.user_metadata?.role || "client");
+          // Ambil data profile real dari tabel public.profiles
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
+          setUser({ ...user, profile });
+          setRole(user.user_metadata?.role || profile?.role || "client");
         } else {
-          // Jika tidak ada user dan tidak ada error spesifik, tetap redirect ke login
           window.location.href = "/login";
         }
       } catch (error) {
