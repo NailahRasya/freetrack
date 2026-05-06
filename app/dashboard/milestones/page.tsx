@@ -1,65 +1,69 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion } from "framer-motion";
 import ClientProjectHeader from "../../components/dashboard/milestones/ClientProjectHeader";
 import ClientMilestoneCard from "../../components/dashboard/milestones/ClientMilestoneCard";
+import ProgressTrackerCard from "../../components/dashboard/ProgressTrackerCard";
+import MilestoneManager from "../../components/dashboard/freelancer/MilestoneManager";
 import { useUser } from "../layout";
-import { Flag, ShieldAlert, Loader2 } from "lucide-react";
+import { useContacts } from "@/lib/hooks/useContacts";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { Flag, ShieldAlert, Loader2, Users, FolderPlus } from "lucide-react";
 import { useAccessDeniedToast } from "@/lib/hooks/useAccessDeniedToast";
-
-// ── Mock Data ────────────────────────────────────────────────────────────────
-const MOCK_PROJECT = {
-  name: "E-Commerce Platform Redesign",
-  totalBudget: "Rp 12.5M",
-  completionPercentage: 45,
-};
-
-const MOCK_MILESTONES_INIT: any[] = [
-  {
-    id: "1",
-    title: "Phase 1: Wireframing & UX Design",
-    description:
-      "Complete all low-fidelity wireframes for the main user flows (Home, Category, Product Page, Checkout).\nIncludes 2 rounds of revisions based on client feedback.",
-    deadline: "Oct 15, 2023",
-    status: "Completed",
-    paymentStatus: "Released",
-  },
-  {
-    id: "2",
-    title: "Phase 2: High-Fidelity UI Mockups",
-    description:
-      "Apply branding guidelines to wireframes. Deliver Figma prototypes for desktop and mobile views.\nColor tokens, typography, and component library must be documented.",
-    deadline: "Oct 28, 2023",
-    status: "Waiting for Approval",
-    paymentStatus: "Escrowed",
-  },
-  {
-    id: "3",
-    title: "Phase 3: Frontend Development Handoff",
-    description:
-      "Export all assets, prepare design system documentation, and conduct a handoff meeting with the engineering team.",
-    deadline: "Nov 10, 2023",
-    status: "In Progress",
-    paymentStatus: "Escrowed",
-  },
-];
 
 // ── Inner component (needs Suspense for useSearchParams) ─────────────────────
 function MilestonesContent() {
-  const { role, loading } = useUser();
-  const [milestones, setMilestones] = useState(MOCK_MILESTONES_INIT);
+  const { role, loading: userLoading } = useUser();
+  const { contacts, loading: contactsLoading } = useContacts();
+  const { projects, loading: projectsLoading } = useProjects();
+  
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [milestones, setMilestones] = useState<any[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [isFetchingMilestones, setIsFetchingMilestones] = useState(false);
+
+  const selectedContact = contacts.find(c => c.id === selectedContactId);
+  
+  // Filter projects for the selected contact/client
+  const filteredProjects = useMemo(() => {
+    if (!selectedContact) return [];
+    return projects.filter(p => p.client_id === (selectedContact.client?.id || selectedContact.client_id));
+  }, [projects, selectedContact]);
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Fetch milestones when project changes or refreshKey changes
+  useEffect(() => {
+    const fetchMilestones = async () => {
+      if (!selectedProjectId) {
+        setMilestones([]);
+        return;
+      }
+      setIsFetchingMilestones(true);
+      try {
+        const res = await fetch(`/api/milestones`);
+        const json = await res.json();
+        const filtered = (json.data ?? []).filter((m: any) => m.project_id === selectedProjectId);
+        setMilestones(filtered);
+      } catch (err) {
+        console.error("Failed to fetch milestones:", err);
+      } finally {
+        setIsFetchingMilestones(false);
+      }
+    };
+    fetchMilestones();
+  }, [selectedProjectId, refreshKey]);
 
   // Reads ?error= from middleware RBAC redirect → shows toast
   useAccessDeniedToast();
 
-  const completedCount = milestones.filter((m) => m.status === "Completed").length;
+  const completedCount = milestones.filter((m) => m.status === "Completed" || m.status === "Disetujui" || m.status === "Approved").length;
+  const progressPercentage = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
 
-  /**
-   * Approve a milestone by calling the secure API route (PUT /api/milestones).
-   * Clients can only set status to 'Approved' — the API enforces this.
-   */
+  const loading = userLoading || contactsLoading || projectsLoading;
+
   const handleApprove = async (id: string) => {
     setActionError(null);
     try {
@@ -75,10 +79,9 @@ function MilestonesContent() {
         return;
       }
 
-      // Optimistic UI update after successful API call
       setMilestones((prev) =>
         prev.map((m) =>
-          m.id === id ? { ...m, status: "Completed", paymentStatus: "Released" } : m
+          m.id === id ? { ...m, status: "Approved" } : m
         )
       );
     } catch {
@@ -87,11 +90,9 @@ function MilestonesContent() {
   };
 
   const handleReview = (id: string) => {
-    // TODO: open review modal / drawer
     console.log("Review deliverables for milestone:", id);
   };
 
-  // ── Loading state ──
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", gap: "12px", color: "rgba(226,232,240,0.4)" }}>
@@ -101,15 +102,177 @@ function MilestonesContent() {
     );
   }
 
-  // ── Freelancer placeholder ──
+  const PageHeader = () => (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ marginBottom: "28px" }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+        <div style={{
+          width: "36px", height: "36px", borderRadius: "10px",
+          background: "rgba(26,54,240,0.12)",
+          border: "1px solid rgba(26,54,240,0.2)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Flag size={18} style={{ color: "var(--cyan)" }} />
+        </div>
+        <h2 style={{ fontSize: "22px", fontWeight: "900", color: "#fff", letterSpacing: "-0.5px" }}>
+          Target Pencapaian (Milestone)
+        </h2>
+      </div>
+      <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.4)", paddingLeft: "46px" }}>
+        Pantau kemajuan proyek dan kelola tahapan pengerjaan secara transparan.
+      </p>
+    </motion.div>
+  );
+
   if (role === "freelancer") {
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", gap: "16px" }}>
-        <ShieldAlert size={52} style={{ color: "rgba(226,232,240,0.2)" }} />
-        <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#E2E8F0" }}>Freelancer Workspace</h2>
-        <p style={{ color: "rgba(226,232,240,0.4)", fontSize: "14px" }}>
-          The Freelancer milestone view is under construction.
-        </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+        <PageHeader />
+        
+        {/* Client & Project Selection */}
+        <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", display: "flex", flexDirection: "column", gap: "20px" }}>
+           <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+               <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Pilih Klien</label>
+               <select 
+                 value={selectedContactId || ""} 
+                 onChange={(e) => {
+                   setSelectedContactId(e.target.value);
+                   setSelectedProjectId(null); // Reset project when client changes
+                 }}
+                 style={{
+                   background: "rgba(255,255,255,0.05)",
+                   border: "1px solid rgba(255,255,255,0.1)",
+                   padding: "10px 16px",
+                   borderRadius: "12px",
+                   color: "#fff",
+                   outline: "none",
+                   fontSize: "14px",
+                   minWidth: "240px"
+                 }}
+               >
+                 <option value="" style={{ background: "#0B1220" }}>Pilih klien terhubung...</option>
+                 {contacts.map(contact => {
+                   const clientProfile = contact.client;
+                   return (
+                     <option key={contact.id} value={contact.id} style={{ background: "#0B1220" }}>
+                       {clientProfile?.full_name || clientProfile?.email || "Klien Tanpa Nama"}
+                     </option>
+                   );
+                 })}
+               </select>
+             </div>
+
+             {selectedContact && (
+               <motion.div 
+                 initial={{ opacity: 0, x: 10 }}
+                 animate={{ opacity: 1, x: 0 }}
+                 style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+               >
+                 <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Pilih Proyek</label>
+                 <select 
+                   value={selectedProjectId || ""} 
+                   onChange={(e) => setSelectedProjectId(e.target.value)}
+                   style={{
+                     background: "rgba(255,255,255,0.05)",
+                     border: "1px solid rgba(255,255,255,0.1)",
+                     padding: "10px 16px",
+                     borderRadius: "12px",
+                     color: "#fff",
+                     outline: "none",
+                     fontSize: "14px",
+                     minWidth: "240px"
+                   }}
+                 >
+                   <option value="" style={{ background: "#0B1220" }}>Pilih proyek aktif...</option>
+                   {filteredProjects.map(project => (
+                     <option key={project.id} value={project.id} style={{ background: "#0B1220" }}>
+                       {project.title}
+                     </option>
+                   ))}
+                 </select>
+               </motion.div>
+             )}
+           </div>
+
+           {contacts.length === 0 && (
+             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--warning)" }}>
+               <ShieldAlert size={14} />
+               <span>Belum ada kontak yang terhubung.</span>
+             </div>
+           )}
+           
+           {selectedContact && filteredProjects.length === 0 && (
+             <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "10px", background: "rgba(245, 158, 11, 0.05)", border: "1px solid rgba(245, 158, 11, 0.1)" }}>
+               <FolderPlus size={16} style={{ color: "var(--warning)" }} />
+               <span style={{ fontSize: "13px", color: "var(--warning)" }}>
+                 Belum ada proyek aktif dengan <strong>{selectedContact.client?.full_name || selectedContact.client?.email}</strong>. 
+                 Silakan buat proyek terlebih dahulu di tab "Proyek Saya".
+               </span>
+             </div>
+           )}
+        </div>
+
+        {selectedProjectId ? (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "32px" }}>
+             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                <ProgressTrackerCard 
+                  percentage={progressPercentage} 
+                  completedCount={completedCount} 
+                  totalCount={milestones.length}
+                  nextMilestone={milestones.find(m => m.status !== "Completed" && m.status !== "Disetujui" && m.status !== "Approved")?.title}
+                />
+                <div className="glass-card" style={{ padding: "24px", background: "rgba(26, 54, 240, 0.05)", border: "1px solid rgba(26, 54, 240, 0.1)" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "800", color: "#fff", marginBottom: "12px" }}>Tips Milestone</h4>
+                  <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.5)", lineHeight: "1.6" }}>
+                    Mengelola proyek <strong>{filteredProjects.find(p => p.id === selectedProjectId)?.title}</strong>. 
+                    Pastikan setiap milestone memiliki deskripsi yang jelas untuk mempermudah persetujuan klien.
+                  </p>
+                </div>
+             </div>
+             
+             <div style={{ minWidth: 0 }}>
+               <MilestoneManager 
+                 clientName={selectedContact?.client?.full_name || selectedContact?.client?.email} 
+                 projectId={selectedProjectId}
+                 initialMilestones={milestones}
+                 onMilestoneCreated={() => setRefreshKey(prev => prev + 1)}
+               />
+             </div>
+          </div>
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="glass-card"
+            style={{ padding: "80px 40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}
+          >
+            <div style={{ width: "64px", height: "64px", borderRadius: "20px", background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.1)" }}>
+              {selectedContact ? <FolderPlus size={32} /> : <Users size={32} />}
+            </div>
+            <div>
+              <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", marginBottom: "8px" }}>
+                {selectedContact ? "Pilih Proyek Aktif" : "Pilih Klien Terlebih Dahulu"}
+              </h3>
+              <p style={{ fontSize: "14px", color: "rgba(226, 232, 240, 0.4)", maxWidth: "400px" }}>
+                {selectedContact 
+                  ? "Silakan pilih salah satu proyek aktif Anda dengan klien ini untuk mulai mengelola target pencapaian."
+                  : "Silakan pilih klien terhubung untuk mulai mengelola target pencapaian (milestone)."}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        <style jsx>{`
+          @media (max-width: 1024px) {
+            div[style*="gridTemplateColumns: 1fr 2fr"] {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
       </div>
     );
   }
@@ -147,38 +310,23 @@ function MilestonesContent() {
         </motion.div>
       )}
 
-      {/* Page heading */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ marginBottom: "28px" }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-          <div style={{
-            width: "36px", height: "36px", borderRadius: "10px",
-            background: "rgba(26,54,240,0.12)",
-            border: "1px solid rgba(26,54,240,0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <Flag size={18} style={{ color: "var(--cyan)" }} />
-          </div>
-          <h2 style={{ fontSize: "22px", fontWeight: "900", color: "#fff", letterSpacing: "-0.5px" }}>
-            Milestone Tracking
-          </h2>
-        </div>
-        <p style={{ fontSize: "13px", color: "rgba(226,232,240,0.4)", paddingLeft: "46px" }}>
-          Monitor project progress, review submissions, and manage approvals.
-        </p>
-      </motion.div>
+      <PageHeader />
 
-      {/* Project header */}
-      <ClientProjectHeader
-        projectName={MOCK_PROJECT.name}
-        totalBudget={MOCK_PROJECT.totalBudget}
-        completionPercentage={MOCK_PROJECT.completionPercentage}
-        completedCount={completedCount}
-        totalCount={milestones.length}
-      />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "32px", marginBottom: "32px" }}>
+        <ProgressTrackerCard 
+          percentage={progressPercentage} 
+          completedCount={completedCount} 
+          totalCount={milestones.length}
+          nextMilestone={milestones.find(m => m.status !== "Completed" && m.status !== "Disetujui")?.title}
+        />
+        <ClientProjectHeader
+          projectName={MOCK_PROJECT.name}
+          totalBudget={MOCK_PROJECT.totalBudget}
+          completionPercentage={progressPercentage}
+          completedCount={completedCount}
+          totalCount={milestones.length}
+        />
+      </div>
 
       {/* Section label */}
       <div style={{
@@ -186,7 +334,7 @@ function MilestonesContent() {
         marginBottom: "20px",
       }}>
         <h3 style={{ fontSize: "15px", fontWeight: "800", color: "rgba(226,232,240,0.7)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-          Project Milestones
+          Daftar Milestone Proyek
           <span style={{
             marginLeft: "10px",
             fontSize: "11px", fontWeight: "700",
@@ -214,10 +362,10 @@ function MilestonesContent() {
         >
           <Flag size={44} style={{ color: "rgba(226,232,240,0.12)" }} />
           <p style={{ fontSize: "16px", fontWeight: "700", color: "rgba(226,232,240,0.3)" }}>
-            No milestones yet
+            Belum ada milestone
           </p>
           <p style={{ fontSize: "13px", color: "rgba(226,232,240,0.2)" }}>
-            Your freelancer hasn't created any milestones for this project.
+            Freelancer Anda belum membuat milestone untuk proyek ini.
           </p>
         </motion.div>
       ) : (
@@ -237,6 +385,14 @@ function MilestonesContent() {
           ))}
         </div>
       )}
+
+      <style jsx>{`
+          @media (max-width: 1200px) {
+            div[style*="gridTemplateColumns: 1fr 2fr"] {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
     </div>
   );
 }

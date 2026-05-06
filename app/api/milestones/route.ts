@@ -89,13 +89,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { title, description, deadline, project_id, status } = body as any;
+  const { title, description, deadline, project_id, status, amount, client_id } = body as any;
 
   if (!title || !project_id) {
     return NextResponse.json(
       { error: "Missing required fields: title, project_id." },
       { status: 400 }
     );
+  }
+
+  // If client_id is not provided, try to fetch it from the project
+  let finalClientId = client_id;
+  if (!finalClientId) {
+    const { data: project } = await supabase
+      .from("projects")
+      .select("client_id")
+      .eq("id", project_id)
+      .single();
+    finalClientId = project?.client_id;
   }
 
   const { data, error } = await supabase
@@ -105,9 +116,11 @@ export async function POST(request: NextRequest) {
       description,
       deadline,
       project_id,
+      amount: amount || null,
       status: status ?? "In Progress",
       payment_status: "Escrowed",
       freelancer_id: user.id,
+      client_id: finalClientId,
       created_by: user.id,
     })
     .select()

@@ -5,78 +5,140 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Edit2, Trash2, CheckCircle2, Lock, UploadCloud, Clock } from "lucide-react";
 import UploadEvidenceModal from "./UploadEvidenceModal";
 
-type MilestoneStatus = "Menunggu DP" | "Dalam Pengerjaan" | "Menunggu Persetujuan" | "Disetujui";
+import CreateMilestoneModal from "./CreateMilestoneModal";
+
+import { formatRupiah, parseRupiah } from "@/utils/format";
 
 interface Milestone {
-  id: number;
+  id: string;
   title: string;
-  price: string;
+  amount?: string;
+  price?: string; // mapping for UI compatibility
   deadline: string;
-  status: MilestoneStatus;
+  status: string;
+  description?: string;
 }
 
-const initialMilestones: Milestone[] = [
-  { id: 1, title: "Wireframing & UI Design", price: "Rp 3.000.000", deadline: "2026-05-10", status: "Disetujui" },
-  { id: 2, title: "Frontend Development", price: "Rp 5.000.000", deadline: "2026-05-20", status: "Dalam Pengerjaan" },
-  { id: 3, title: "Backend Integration", price: "Rp 4.000.000", deadline: "2026-06-05", status: "Menunggu DP" }
-];
-
-export default function MilestoneManager() {
-  const [milestones, setMilestones] = useState<Milestone[]>(initialMilestones);
-  const [isEditingId, setIsEditingId] = useState<number | null>(null);
+export default function MilestoneManager({ 
+  clientName, 
+  projectId, 
+  initialMilestones = [],
+  onMilestoneCreated
+}: { 
+  clientName?: string; 
+  projectId: string;
+  initialMilestones?: any[];
+  onMilestoneCreated?: () => void;
+}) {
+  const [isEditingId, setIsEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Milestone>>({});
-  const [isAdding, setIsAdding] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [uploadModalState, setUploadModalState] = useState<{isOpen: boolean, milestoneId: number | null, title: string}>({
+  const [uploadModalState, setUploadModalState] = useState<{isOpen: boolean, milestoneId: string | null, title: string}>({
     isOpen: false,
     milestoneId: null,
     title: ""
   });
 
-  // Menghitung persentase progres
+  const milestones = useMemo(() => {
+    return initialMilestones.map(m => ({
+      ...m,
+      price: m.amount ? formatRupiah(m.amount) : (m.price || "Rp 0")
+    }));
+  }, [initialMilestones]);
+
   const progressPercentage = useMemo(() => {
     if (milestones.length === 0) return 0;
-    const approvedCount = milestones.filter(m => m.status === "Disetujui").length;
+    const approvedCount = milestones.filter(m => m.status === "Approved" || m.status === "Disetujui").length;
     return Math.round((approvedCount / milestones.length) * 100);
   }, [milestones]);
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleCreateMilestone = async (data: { title: string; price: string; deadline: string; description: string }) => {
+    setIsSubmitting(true);
+    try {
+      const amount = parseRupiah(data.price);
+      const res = await fetch("/api/milestones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          amount, // Sending as numeric string/number
+          project_id: projectId,
+          status: "Menunggu DP"
+        }),
+      });
+
+      if (res.ok) {
+        onMilestoneCreated?.();
+      }
+    } catch (err) {
+      console.error("Failed to create milestone:", err);
+    } finally {
+      setIsSubmitting(false);
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editForm.title || !editForm.price || !editForm.deadline) return;
+    if (!isEditingId) return;
     
-    const newId = Math.max(...milestones.map(m => m.id), 0) + 1;
-    setMilestones([...milestones, {
-      id: newId,
-      title: editForm.title,
-      price: editForm.price,
-      deadline: editForm.deadline,
-      status: "Menunggu DP" // Milestone baru default ke Menunggu DP sampai klien menyetujui kontrak
-    }]);
-    setIsAdding(false);
-    setEditForm({});
+    setIsSubmitting(true);
+    try {
+      const payload = { ...editForm, id: isEditingId };
+      if (editForm.price) {
+        (payload as any).amount = parseRupiah(editForm.price);
+      }
+      
+      const res = await fetch("/api/milestones", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        onMilestoneCreated?.();
+        setIsEditingId(null);
+      }
+    } catch (err) {
+      console.error("Failed to update milestone:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setMilestones(milestones.map(m => 
-      m.id === isEditingId 
-        ? { ...m, ...editForm } as Milestone 
-        : m
-    ));
-    setIsEditingId(null);
-    setEditForm({});
+  const handleEditPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = parseRupiah(e.target.value);
+    const formattedValue = formatRupiah(rawValue);
+    setEditForm({ ...editForm, price: formattedValue });
   };
 
-  const handleDelete = (id: number) => {
-    setMilestones(milestones.filter(m => m.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm("Hapus milestone ini?")) return;
+    
+    try {
+      const res = await fetch(`/api/milestones?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        onMilestoneCreated?.();
+      }
+    } catch (err) {
+      console.error("Failed to delete milestone:", err);
+    }
   };
 
-  const getStatusColor = (status: MilestoneStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case "Disetujui": return "var(--accent)"; // Emerald
-      case "Dalam Pengerjaan": return "var(--cyan)";
-      case "Menunggu Persetujuan": return "var(--primary-light)";
-      case "Menunggu DP": return "var(--warning)"; // Orange
+      case "Approved":
+      case "Disetujui": return "var(--accent)"; 
+      case "Dalam Pengerjaan": 
+      case "In Progress": return "var(--cyan)";
+      case "Menunggu Persetujuan": 
+      case "Review": return "var(--primary-light)";
+      case "Menunggu DP": return "var(--warning)"; 
       default: return "#E2E8F0";
     }
   };
@@ -89,15 +151,15 @@ export default function MilestoneManager() {
         <div style={{ marginBottom: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <div>
-              <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Target Pencapaian Proyek</h3>
-              <p style={{ color: "rgba(226, 232, 240, 0.5)", fontSize: "13px" }}>Kelola tahapan dan unggah bukti.</p>
+              <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Target Pencapaian {clientName ? `— ${clientName}` : ""}</h3>
+              <p style={{ color: "rgba(226, 232, 240, 0.5)", fontSize: "13px" }}>Kelola tahapan dan unggah bukti proyek.</p>
             </div>
             <button 
-              onClick={() => { setIsAdding(true); setEditForm({}); setIsEditingId(null); }}
+              onClick={() => setIsModalOpen(true)}
               className="btn-primary"
-              style={{ padding: "8px 16px", fontSize: "13px" }}
+              style={{ padding: "8px 16px", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}
             >
-              <Plus size={16} /> Tambah Target
+              <Plus size={16} /> Buat Milestone
             </button>
           </div>
 
@@ -121,37 +183,6 @@ export default function MilestoneManager() {
           </div>
         </div>
 
-        {/* Formulir Tambah Inline */}
-        <AnimatePresence>
-          {isAdding && (
-            <motion.form 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              onSubmit={handleAddSubmit}
-              style={{
-                background: "rgba(26, 54, 240, 0.05)",
-                border: "1px solid rgba(26, 54, 240, 0.2)",
-                borderRadius: "16px",
-                padding: "20px",
-                marginBottom: "20px",
-                overflow: "hidden"
-              }}
-            >
-              <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#fff", marginBottom: "12px" }}>Buat Target Baru</h4>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                <input required placeholder="Judul Target" value={editForm.title || ""} onChange={e => setEditForm({...editForm, title: e.target.value})} style={inputStyle} />
-                <input required placeholder="Harga (Rp)" value={editForm.price || ""} onChange={e => setEditForm({...editForm, price: e.target.value})} style={inputStyle} />
-                <input required type="date" value={editForm.deadline || ""} onChange={e => setEditForm({...editForm, deadline: e.target.value})} style={inputStyle} />
-              </div>
-              <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={() => setIsAdding(false)} style={cancelBtnStyle}>Batal</button>
-                <button type="submit" style={saveBtnStyle}>Simpan</button>
-              </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
-
         {/* Daftar Milestone */}
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <AnimatePresence>
@@ -169,7 +200,7 @@ export default function MilestoneManager() {
                   >
                     <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                       <input required value={editForm.title || ""} onChange={e => setEditForm({...editForm, title: e.target.value})} style={inputStyle} />
-                      <input required value={editForm.price || ""} onChange={e => setEditForm({...editForm, price: e.target.value})} style={inputStyle} />
+                      <input required value={editForm.price || ""} onChange={handleEditPriceChange} style={inputStyle} />
                       <input required type="date" value={editForm.deadline || ""} onChange={e => setEditForm({...editForm, deadline: e.target.value})} style={inputStyle} />
                     </div>
                     <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
@@ -273,7 +304,7 @@ export default function MilestoneManager() {
                       {!isLocked && (
                         <>
                           <button 
-                            onClick={() => { setIsEditingId(milestone.id); setEditForm(milestone); setIsAdding(false); }}
+                            onClick={() => { setIsEditingId(milestone.id); setEditForm(milestone); }}
                             style={iconBtnStyle}
                           >
                             <Edit2 size={14} />
@@ -294,6 +325,12 @@ export default function MilestoneManager() {
           </AnimatePresence>
         </div>
       </div>
+
+      <CreateMilestoneModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateMilestone}
+      />
 
       <UploadEvidenceModal 
         isOpen={uploadModalState.isOpen} 

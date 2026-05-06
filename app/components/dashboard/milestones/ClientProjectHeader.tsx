@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Briefcase, DollarSign, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Briefcase, TrendingUp, CheckCircle2 } from "lucide-react";
+import { formatRupiah } from "@/utils/format";
 
 interface ClientProjectHeaderProps {
   projectName: string;
@@ -86,8 +87,8 @@ export default function ClientProjectHeader({
               Total Budget
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#fff", fontWeight: "800", fontSize: "18px" }}>
-              <DollarSign size={16} style={{ color: "var(--cyan)" }} />
-              {totalBudget}
+              <span style={{ color: "var(--cyan)", fontSize: "14px" }}>Rp</span>
+              {formatRupiah(totalBudget).replace("Rp", "").trim()}
             </div>
           </div>
 

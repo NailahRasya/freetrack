@@ -8,11 +8,20 @@ import ChangeRequestModal from "../../components/dashboard/freelancer/ChangeRequ
 import PaymentTracker from "../../components/dashboard/PaymentTracker";
 import MessagesPreview from "../../components/dashboard/MessagesPreview";
 import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
+import ProgressTrackerCard from "../../components/dashboard/ProgressTrackerCard";
 import { useUser } from "../layout";
 
 export default function FreelancerDashboardPage() {
   const { user } = useUser();
   const [isChangeRequestOpen, setIsChangeRequestOpen] = useState(false);
+
+  // Mock data for progress - in real app would come from API/Context
+  const progressData = {
+    percentage: 65,
+    completedCount: 2,
+    totalCount: 3,
+    nextMilestone: "Backend Integration"
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
@@ -65,6 +74,13 @@ export default function FreelancerDashboardPage() {
 
         {/* Kolom Kanan */}
         <div style={{ display: "flex", flexDirection: "column", gap: "32px", minWidth: 0 }}>
+          <ProgressTrackerCard 
+            percentage={progressData.percentage}
+            completedCount={progressData.completedCount}
+            totalCount={progressData.totalCount}
+            nextMilestone={progressData.nextMilestone}
+          />
+
           <PaymentTracker />
           
           {/* Aksi Cepat / Kontrol Scope Card */}
