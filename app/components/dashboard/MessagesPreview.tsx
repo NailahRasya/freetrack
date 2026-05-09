@@ -131,6 +131,7 @@ export default function MessagesPreview() {
       }}>
         <input 
           placeholder="Balas cepat..." 
+          suppressHydrationWarning
           style={{ 
             background: "transparent", 
             border: "none", 
@@ -141,18 +142,20 @@ export default function MessagesPreview() {
             padding: "4px 8px"
           }} 
         />
-        <button style={{ 
-          width: "28px", 
-          height: "28px", 
-          borderRadius: "8px", 
-          background: "var(--gradient-primary)", 
-          border: "none", 
-          color: "#fff", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center",
-          cursor: "pointer"
-        }}>
+        <button 
+          suppressHydrationWarning
+          style={{ 
+            width: "28px", 
+            height: "28px", 
+            borderRadius: "8px", 
+            background: "var(--gradient-primary)", 
+            border: "none", 
+            color: "#fff", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            cursor: "pointer"
+          }}>
           <Send size={14} />
         </button>
       </div>

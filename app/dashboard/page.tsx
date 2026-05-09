@@ -14,8 +14,10 @@ export default function DashboardRedirect() {
       if (user) {
         const role = user.user_metadata?.role;
         if (role === "client") {
+          sessionStorage.setItem("show_greeting", "true");
           router.replace("/dashboard/client");
         } else if (role === "freelancer") {
+          sessionStorage.setItem("show_greeting", "true");
           router.replace("/dashboard/freelancer");
         } else {
           // Fallback if no role or unknown role

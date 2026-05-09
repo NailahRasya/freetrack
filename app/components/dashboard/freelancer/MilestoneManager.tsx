@@ -6,6 +6,7 @@ import { Plus, Edit2, Trash2, CheckCircle2, Lock, UploadCloud, Clock } from "luc
 import UploadEvidenceModal from "./UploadEvidenceModal";
 
 import CreateMilestoneModal from "./CreateMilestoneModal";
+import { useProjects } from "@/lib/hooks/useProjects";
 
 import { formatRupiah, parseRupiah } from "@/utils/format";
 
@@ -26,14 +27,20 @@ export default function MilestoneManager({
   onMilestoneCreated
 }: { 
   clientName?: string; 
-  projectId: string;
+  projectId?: string;
   initialMilestones?: any[];
   onMilestoneCreated?: () => void;
 }) {
+  const { projects } = useProjects();
   const [isEditingId, setIsEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Milestone>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Filter only active/pending projects for selection
+  const activeProjects = useMemo(() => {
+    return projects.filter(p => p.status !== "draft" && p.status !== "completed");
+  }, [projects]);
   
   const [uploadModalState, setUploadModalState] = useState<{isOpen: boolean, milestoneId: string | null, title: string}>({
     isOpen: false,
@@ -50,33 +57,48 @@ export default function MilestoneManager({
 
   const progressPercentage = useMemo(() => {
     if (milestones.length === 0) return 0;
-    const approvedCount = milestones.filter(m => m.status === "Approved" || m.status === "Disetujui").length;
+    const approvedCount = milestones.filter(m => 
+      ["Approved", "Disetujui", "Completed", "Waiting for Approval", "Menunggu Persetujuan"].includes(m.status)
+    ).length;
     return Math.round((approvedCount / milestones.length) * 100);
   }, [milestones]);
 
-  const handleCreateMilestone = async (data: { title: string; price: string; deadline: string; description: string }) => {
+  const handleCreateMilestone = async (data: { title: string; price: string; deadline: string; description: string; project_id?: string }) => {
     setIsSubmitting(true);
     try {
       const amount = parseRupiah(data.price);
+      const finalProjectId = data.project_id || projectId;
+
+      if (!finalProjectId) {
+        alert("Silakan pilih proyek/klien terlebih dahulu.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const res = await fetch("/api/milestones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          amount, // Sending as numeric string/number
-          project_id: projectId,
+          amount,
+          project_id: finalProjectId,
           status: "Menunggu DP"
         }),
       });
 
       if (res.ok) {
         onMilestoneCreated?.();
+        setIsModalOpen(false); // Only close on success
+      } else {
+        const errorData = await res.json();
+        console.error("Server error creating milestone:", errorData.error);
+        alert("Gagal membuat milestone: " + (errorData.error || "Terjadi kesalahan server"));
       }
     } catch (err) {
-      console.error("Failed to create milestone:", err);
+      console.error("Network error creating milestone:", err);
+      alert("Gagal membuat milestone: Masalah koneksi jaringan");
     } finally {
       setIsSubmitting(false);
-      setIsModalOpen(false);
     }
   };
 
@@ -186,7 +208,23 @@ export default function MilestoneManager({
         {/* Daftar Milestone */}
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <AnimatePresence>
-            {milestones.map((milestone) => {
+            {milestones.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{
+                  padding: "40px 20px",
+                  textAlign: "center",
+                  background: "rgba(255,255,255,0.01)",
+                  borderRadius: "16px",
+                  border: "1px dashed rgba(255,255,255,0.1)",
+                  color: "rgba(226, 232, 240, 0.3)",
+                  fontSize: "14px"
+                }}
+              >
+                Belum ada milestone untuk proyek ini.
+              </motion.div>
+            ) : milestones.map((milestone) => {
               const isLocked = milestone.status === "Disetujui" || milestone.status === "Menunggu Persetujuan";
               const isEditing = isEditingId === milestone.id;
 
@@ -327,9 +365,12 @@ export default function MilestoneManager({
       </div>
 
       <CreateMilestoneModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
         onSubmit={handleCreateMilestone}
+        isSubmitting={isSubmitting}
+        projects={projectId ? undefined : activeProjects}
+        defaultProjectId={projectId}
       />
 
       <UploadEvidenceModal 
@@ -337,6 +378,7 @@ export default function MilestoneManager({
         onClose={() => setUploadModalState({ ...uploadModalState, isOpen: false })} 
         milestoneId={uploadModalState.milestoneId}
         milestoneTitle={uploadModalState.title}
+        onSuccess={onMilestoneCreated}
       />
     </>
   );

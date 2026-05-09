@@ -1,44 +1,41 @@
 "use client";
 
-import { useState, createContext, useContext } from "react";
-import { useEffect } from "react";
-import { supabase } from "../../lib/supabase";
-
-const SidebarContext = createContext({
-  collapsed: false,
-  setCollapsed: (val: boolean) => {},
-});
-
-const UserContext = createContext({
-  user: null as any,
-  role: null as string | null,
-  loading: true,
-});
-
-export const useSidebar = () => useContext(SidebarContext);
-export const useUser = () => useContext(UserContext);
-
+import { useState, useEffect, createContext, useContext, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
+
+const UserContext = createContext<any>(null);
+const SidebarContext = createContext<any>(null);
+
+export const useUser = () => useContext(UserContext);
+export const useSidebar = () => useContext(SidebarContext);
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<"client" | "freelancer">("client");
   const [loading, setLoading] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function getUser() {
       try {
+        setLoading(true);
         const { data: { user }, error } = await supabase.auth.getUser();
-        
+
         if (error) {
-          if (error.message.includes("Refresh Token Not Found")) {
-            console.warn("Session expired, redirecting to login...");
+          if (error.message.includes("JWN invalid")) {
             await supabase.auth.signOut();
             window.location.href = "/login";
             return;
@@ -47,14 +44,47 @@ export default function DashboardLayout({
         }
 
         if (user) {
-          // Ambil data profile real dari tabel public.profiles
-          const { data: profile } = await supabase
+          // Ambil data profile dasar
+          const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("*")
             .eq("id", user.id)
-            .single();
+            .maybeSingle();
 
-          setUser({ ...user, profile });
+          if (profileError) console.error("Profile fetch error:", profileError.message);
+
+          let userSkills: string[] = [];
+          
+          if (profile) {
+            if (profile.role === "freelancer") {
+              const { data: obData } = await supabase
+                .from("onboarding_freelancer")
+                .select("skill_categories, tools")
+                .eq("user_id", user.id)
+                .maybeSingle();
+              
+              userSkills = [
+                ...(profile.skills || []), 
+                ...(obData?.skill_categories || []),
+                ...(obData?.tools || [])
+              ];
+            } else {
+              const { data: obData } = await supabase
+                .from("onboarding_client")
+                .select("project_categories, required_skills")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+              userSkills = [
+                ...(obData?.project_categories || []),
+                ...(obData?.required_skills || [])
+              ];
+            }
+          }
+
+          userSkills = Array.from(new Set(userSkills.filter(Boolean)));
+
+          setUser({ ...user, profile: profile ? { ...profile, skills: userSkills } : null });
           setRole(user.user_metadata?.role || profile?.role || "client");
         } else {
           window.location.href = "/login";
@@ -66,7 +96,7 @@ export default function DashboardLayout({
       }
     }
     getUser();
-  }, []);
+  }, [pathname]);
 
   return (
     <UserContext.Provider value={{ user, role, loading }}>
@@ -115,7 +145,7 @@ export default function DashboardLayout({
               gap: "32px",
               boxSizing: "border-box"
             }}>
-              {children}
+              {mounted ? children : <div style={{ opacity: 0 }}>{children}</div>}
             </div>
           </main>
         </div>

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { title, client_id, freelancer_id, budget, deadline, description, send_to_client } = body;
+  const { title, client_id, freelancer_id, budget, deadline, description, send_to_client, category_id, required_skills, status: bodyStatus } = body;
 
   if (!title?.trim()) {
     return NextResponse.json({ error: "Nama proyek wajib diisi" }, { status: 400 });
@@ -62,8 +62,12 @@ export async function POST(request: NextRequest) {
   let final_client_id = client_id;
 
   if (role === "client") {
-    // Klien buat proyek: langsung ke status pending_freelancer agar freelancer bisa buat milestone
-    status = send_to_client ? "pending_freelancer" : "draft";
+    // Jika ada status published eksplisit (dari marketplace post)
+    if (bodyStatus === "published") {
+      status = "published";
+    } else {
+      status = send_to_client ? "pending_freelancer" : "draft";
+    }
     final_client_id = user.id;
     final_freelancer_id = freelancer_id;
   } else {
@@ -84,6 +88,8 @@ export async function POST(request: NextRequest) {
       status,
       freelancer_id: final_freelancer_id || null,
       client_id: final_client_id || null,
+      category_id: category_id || null,
+      required_skills: required_skills || [],
     })
     .select()
     .single();
@@ -144,6 +150,8 @@ export async function PATCH(request: NextRequest) {
     if (payload.deadline !== undefined) updateData.deadline = payload.deadline;
     if (payload.description !== undefined) updateData.description = payload.description;
     if (payload.freelancer_id !== undefined) updateData.freelancer_id = payload.freelancer_id;
+    if (payload.category_id !== undefined) updateData.category_id = payload.category_id;
+    if (payload.required_skills !== undefined) updateData.required_skills = payload.required_skills;
 
     const { data, error } = await supabase
       .from("projects")
@@ -153,7 +161,15 @@ export async function PATCH(request: NextRequest) {
       .select()
       .single();
       
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("Supabase update error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!data) {
+      console.warn("No rows updated. Check if ID and ClientID match:", { id, client_id: user.id });
+      return NextResponse.json({ error: "Proyek tidak ditemukan atau Anda bukan pemiliknya" }, { status: 404 });
+    }
 
     if (payload.status === "pending_freelancer" && data.freelancer_id) {
       const isInitiation = currentProject?.status === "draft";

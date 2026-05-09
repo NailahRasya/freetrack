@@ -69,7 +69,19 @@ function LoginContent() {
 
       // Validasi input email dan password
       if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        await swal({ icon: "warning", title: "Email tidak valid", text: "Masukkan alamat email yang benar.", confirmButtonColor: roleConfig.color });
+        await swal({ 
+          icon: "info", 
+          title: "Belum Punya Akun?", 
+          text: "Email yang Anda masukkan tidak terdaftar. Silakan lakukan onboarding terlebih dahulu untuk mendaftar.", 
+          confirmButtonColor: roleConfig.color,
+          showCancelButton: true,
+          confirmButtonText: "Mulai Onboarding",
+          cancelButtonText: "Coba Lagi"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push("/onboarding");
+          }
+        });
         return;
       }
       if (password.length < 8) {
@@ -114,12 +126,29 @@ function LoginContent() {
         router.push(roleConfig.dashboard);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Terjadi kesalahan.";
-        await swal({ 
-          icon: "error", 
-          title: "Login Gagal", 
-          text: msg, 
-          confirmButtonColor: roleConfig.color 
-        });
+        
+        if (msg.includes("Invalid login credentials") || msg.includes("User tidak ditemukan")) {
+          await swal({ 
+            icon: "question", 
+            title: "Akun Tidak Ditemukan", 
+            text: "Sepertinya Anda belum terdaftar. Ingin memulai perjalanan Anda di FreeTrack?", 
+            confirmButtonColor: roleConfig.color,
+            showCancelButton: true,
+            confirmButtonText: "Daftar",
+            cancelButtonText: "Cek Email Lagi"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              router.push("/onboarding");
+            }
+          });
+        } else {
+          await swal({ 
+            icon: "error", 
+            title: "Login Gagal", 
+            text: msg, 
+            confirmButtonColor: roleConfig.color 
+          });
+        }
       } finally {
         setLoading(false); // Menghentikan status loading
       }
@@ -163,7 +192,7 @@ function LoginContent() {
           </h1>
           <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.45)", marginBottom: "32px" }}>
             Belum punya akun?{" "}
-            <Link href={`/register?role=${role}`} style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>
+            <Link href="/onboarding" style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>
               Daftar sekarang
             </Link>
           </p>
@@ -251,7 +280,7 @@ function LoginContent() {
           <div style={{ marginTop: "24px", textAlign: "center", display: "flex", flexDirection: "column", gap: "10px" }}>
              <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.45)", margin: 0 }}>
               Butuh akun baru? {" "}
-              <Link href={`/register?role=${role}`} style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>
+              <Link href="/onboarding" style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>
                 Daftar di sini
               </Link>
             </p>

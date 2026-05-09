@@ -2,23 +2,26 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Target, DollarSign, Calendar, AlignLeft, Send, Loader2 } from "lucide-react";
+import { X, Target, DollarSign, Calendar, AlignLeft, Send, Loader2, Briefcase } from "lucide-react";
 
 import { formatRupiah, parseRupiah } from "@/utils/format";
 
 interface CreateMilestoneModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (milestone: { title: string; price: string; deadline: string; description: string }) => void;
+  onSubmit: (milestone: { title: string; price: string; deadline: string; description: string; project_id?: string }) => void;
   isSubmitting?: boolean;
+  projects?: any[];
+  defaultProjectId?: string;
 }
 
-export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubmitting }: CreateMilestoneModalProps) {
+export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubmitting, projects, defaultProjectId }: CreateMilestoneModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     price: "",
     deadline: "",
-    description: ""
+    description: "",
+    project_id: defaultProjectId || ""
   });
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,8 +32,12 @@ export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubm
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (projects && projects.length > 0 && !formData.project_id) {
+      alert("Silakan pilih proyek/klien terlebih dahulu.");
+      return;
+    }
     onSubmit(formData);
-    setFormData({ title: "", price: "", deadline: "", description: "" });
+    setFormData({ title: "", price: "", deadline: "", description: "", project_id: defaultProjectId || "" });
     onClose();
   };
 
@@ -100,6 +107,26 @@ export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubm
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px", position: "relative" }}>
+              {/* Project Selection (Conditional) */}
+              {projects && projects.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label style={labelStyle}><Briefcase size={14} /> Pilih Proyek / Klien</label>
+                  <select
+                    required
+                    style={inputStyle}
+                    value={formData.project_id}
+                    onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                  >
+                    <option value="" style={{ background: "#0F172A" }}>-- Pilih Proyek Aktif --</option>
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id} style={{ background: "#0F172A" }}>
+                        {p.title} ({p.client?.full_name || "Tanpa Nama"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <label style={labelStyle}><Target size={14} /> Judul Milestone</label>
                 <input
@@ -113,7 +140,7 @@ export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubm
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label style={labelStyle}><DollarSign size={14} /> Nilai (IDR)</label>
+                  <label style={labelStyle}><span style={{ fontSize: "11px", fontWeight: "900", color: "rgba(226, 232, 240, 0.4)" }}>Rp</span> Nilai (IDR)</label>
                   <input
                     required
                     placeholder="Rp 0"

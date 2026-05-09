@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   CheckCircle2,
   Clock,
@@ -11,6 +12,7 @@ import {
   ThumbsUp,
   AlertCircle,
   LockKeyhole,
+  Wallet,
 } from "lucide-react";
 
 interface Milestone {
@@ -18,8 +20,9 @@ interface Milestone {
   title: string;
   description: string;
   deadline: string;
-  status: "In Progress" | "Waiting for Approval" | "Completed";
-  paymentStatus: "Escrowed" | "Released";
+  status: string;
+  payment_status?: "Escrowed" | "Released";
+  paymentStatus?: "Escrowed" | "Released"; // Support both naming conventions
 }
 
 interface ClientMilestoneCardProps {
@@ -30,7 +33,7 @@ interface ClientMilestoneCardProps {
 }
 
 const STATUS_CONFIG: Record<
-  Milestone["status"],
+  string,
   { color: string; bg: string; border: string; icon: React.ElementType; label: string }
 > = {
   "Completed": {
@@ -38,21 +41,49 @@ const STATUS_CONFIG: Record<
     bg: "rgba(16,185,129,0.08)",
     border: "rgba(16,185,129,0.2)",
     icon: CheckCircle2,
-    label: "Completed",
+    label: "Selesai",
+  },
+  "Approved": {
+    color: "var(--accent-light)",
+    bg: "rgba(16,185,129,0.08)",
+    border: "rgba(16,185,129,0.2)",
+    icon: CheckCircle2,
+    label: "Disetujui",
+  },
+  "Disetujui": {
+    color: "var(--accent-light)",
+    bg: "rgba(16,185,129,0.08)",
+    border: "rgba(16,185,129,0.2)",
+    icon: CheckCircle2,
+    label: "Disetujui",
   },
   "Waiting for Approval": {
     color: "var(--warning)",
     bg: "rgba(245,158,11,0.08)",
     border: "rgba(245,158,11,0.2)",
     icon: Loader2,
-    label: "Waiting for Approval",
+    label: "Menunggu Persetujuan",
+  },
+  "Menunggu Persetujuan": {
+    color: "var(--warning)",
+    bg: "rgba(245,158,11,0.08)",
+    border: "rgba(245,158,11,0.2)",
+    icon: Loader2,
+    label: "Menunggu Persetujuan",
   },
   "In Progress": {
     color: "var(--cyan)",
     bg: "rgba(6,182,212,0.08)",
     border: "rgba(6,182,212,0.2)",
     icon: Clock,
-    label: "In Progress",
+    label: "Dalam Pengerjaan",
+  },
+  "Menunggu DP": {
+    color: "var(--warning)",
+    bg: "rgba(245,158,11,0.08)",
+    border: "rgba(245,158,11,0.2)",
+    icon: Clock,
+    label: "Menunggu DP",
   },
 };
 
@@ -80,10 +111,19 @@ export default function ClientMilestoneCard({
   onApprove,
   onReview,
 }: ClientMilestoneCardProps) {
-  const isActionable = milestone.status === "Waiting for Approval";
-  const isCompleted = milestone.status === "Completed";
-  const statusCfg = STATUS_CONFIG[milestone.status];
-  const paymentCfg = PAYMENT_CONFIG[milestone.paymentStatus];
+  const isActionable = milestone.status === "Waiting for Approval" || milestone.status === "Menunggu Persetujuan";
+  const isCompleted = ["Completed", "Approved", "Disetujui"].includes(milestone.status);
+  
+  const statusCfg = STATUS_CONFIG[milestone.status] || {
+    color: "#E2E8F0",
+    bg: "rgba(226,232,240,0.05)",
+    border: "rgba(226,232,240,0.1)",
+    icon: AlertCircle,
+    label: milestone.status,
+  };
+
+  const paymentStatus = milestone.payment_status || milestone.paymentStatus || "Escrowed";
+  const paymentCfg = PAYMENT_CONFIG[paymentStatus as "Released" | "Escrowed"] || PAYMENT_CONFIG["Escrowed"];
   const StatusIcon = statusCfg.icon;
 
   return (
@@ -160,7 +200,7 @@ export default function ClientMilestoneCard({
               fontSize: "11px", fontWeight: "700",
               color: paymentCfg.color,
             }}>
-              <DollarSign size={11} />
+              <span style={{ fontSize: "10px", fontWeight: "900", opacity: 0.7 }}>Rp</span>
               {paymentCfg.label}
             </div>
           </div>
@@ -268,6 +308,30 @@ export default function ClientMilestoneCard({
               Approve
             </motion.button>
           </div>
+        ) : milestone.status === "Menunggu DP" ? (
+          <Link href="/dashboard/payments" style={{ textDecoration: "none" }}>
+            <motion.button
+              whileHover={{ scale: 1.03, x: 4 }}
+              whileTap={{ scale: 0.97 }}
+              style={{ 
+                padding: "10px 22px", 
+                fontSize: "13px", 
+                borderRadius: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                background: "var(--warning)",
+                color: "#fff",
+                border: "none",
+                fontWeight: "700",
+                boxShadow: "0 8px 20px rgba(245, 158, 11, 0.25)",
+                cursor: "pointer"
+              }}
+            >
+              <Wallet size={16} />
+              Bayar DP Sekarang
+            </motion.button>
+          </Link>
         ) : (
           <div style={{
             display: "flex", alignItems: "center", gap: "6px",

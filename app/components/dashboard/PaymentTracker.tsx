@@ -132,6 +132,7 @@ export default function PaymentTracker() {
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                suppressHydrationWarning
                 style={{
                   background: "var(--accent)",
                   border: "none",
@@ -159,6 +160,7 @@ export default function PaymentTracker() {
           color: "#22D3EE"
         }}
         whileTap={{ scale: 0.98 }}
+        suppressHydrationWarning
         style={{
           width: "100%",
           marginTop: "20px",

@@ -25,12 +25,25 @@ function MilestonesContent() {
   const [isFetchingMilestones, setIsFetchingMilestones] = useState(false);
 
   const selectedContact = contacts.find(c => c.id === selectedContactId);
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
   
-  // Filter projects for the selected contact/client
+  // Filter projects for the selected contact/client (Freelancer)
   const filteredProjects = useMemo(() => {
     if (!selectedContact) return [];
     return projects.filter(p => p.client_id === (selectedContact.client?.id || selectedContact.client_id));
   }, [projects, selectedContact]);
+
+  // Projects available for Client view
+  const clientProjects = useMemo(() => {
+    return projects; // Assume backend filters for current user
+  }, [projects]);
+
+  // Auto-select first project for clients if only one exists
+  useEffect(() => {
+    if (role === "client" && !selectedProjectId && clientProjects.length > 0) {
+      setSelectedProjectId(clientProjects[0].id);
+    }
+  }, [role, selectedProjectId, clientProjects]);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -43,9 +56,9 @@ function MilestonesContent() {
       }
       setIsFetchingMilestones(true);
       try {
-        const res = await fetch(`/api/milestones`);
+        const res = await fetch(`/api/milestones${selectedProjectId ? `?project_id=${selectedProjectId}` : ""}`);
         const json = await res.json();
-        const filtered = (json.data ?? []).filter((m: any) => m.project_id === selectedProjectId);
+        const filtered = json.data ?? [];
         setMilestones(filtered);
       } catch (err) {
         console.error("Failed to fetch milestones:", err);
@@ -59,7 +72,9 @@ function MilestonesContent() {
   // Reads ?error= from middleware RBAC redirect → shows toast
   useAccessDeniedToast();
 
-  const completedCount = milestones.filter((m) => m.status === "Completed" || m.status === "Disetujui" || m.status === "Approved").length;
+  const completedCount = milestones.filter((m) => 
+    ["Completed", "Disetujui", "Approved", "Waiting for Approval", "Menunggu Persetujuan"].includes(m.status)
+  ).length;
   const progressPercentage = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
 
   const loading = userLoading || contactsLoading || projectsLoading;
@@ -312,78 +327,129 @@ function MilestonesContent() {
 
       <PageHeader />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "32px", marginBottom: "32px" }}>
-        <ProgressTrackerCard 
-          percentage={progressPercentage} 
-          completedCount={completedCount} 
-          totalCount={milestones.length}
-          nextMilestone={milestones.find(m => m.status !== "Completed" && m.status !== "Disetujui")?.title}
-        />
-        <ClientProjectHeader
-          projectName={MOCK_PROJECT.name}
-          totalBudget={MOCK_PROJECT.totalBudget}
-          completionPercentage={progressPercentage}
-          completedCount={completedCount}
-          totalCount={milestones.length}
-        />
+      {/* Project Selector for Client */}
+      <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", marginBottom: "32px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Pilih Proyek Anda</label>
+          <select 
+            value={selectedProjectId || ""} 
+            onChange={(e) => setSelectedProjectId(e.target.value)}
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              padding: "12px 16px",
+              borderRadius: "12px",
+              color: "#fff",
+              outline: "none",
+              fontSize: "14px",
+              maxWidth: "400px"
+            }}
+          >
+            <option value="" style={{ background: "#0B1220" }}>Pilih proyek yang ingin dipantau...</option>
+            {clientProjects.map(project => (
+              <option key={project.id} value={project.id} style={{ background: "#0B1220" }}>
+                {project.title}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Section label */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: "20px",
-      }}>
-        <h3 style={{ fontSize: "15px", fontWeight: "800", color: "rgba(226,232,240,0.7)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-          Daftar Milestone Proyek
-          <span style={{
-            marginLeft: "10px",
-            fontSize: "11px", fontWeight: "700",
-            color: "var(--cyan)",
-            background: "rgba(6,182,212,0.1)",
-            border: "1px solid rgba(6,182,212,0.2)",
-            padding: "2px 8px", borderRadius: "6px",
+      {selectedProjectId ? (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "32px", marginBottom: "32px" }}>
+            <ProgressTrackerCard 
+              percentage={progressPercentage} 
+              completedCount={completedCount} 
+              totalCount={milestones.length}
+              nextMilestone={milestones.find(m => m.status !== "Completed" && m.status !== "Disetujui")?.title}
+            />
+            <ClientProjectHeader
+              projectName={selectedProject?.title || "Proyek Tidak Teridentifikasi"}
+              totalBudget={selectedProject?.budget?.toString() || "0"}
+              completionPercentage={progressPercentage}
+              completedCount={completedCount}
+              totalCount={milestones.length}
+            />
+          </div>
+
+          {/* Section label */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            marginBottom: "20px",
           }}>
-            {milestones.length} total
-          </span>
-        </h3>
-      </div>
+            <h3 style={{ fontSize: "15px", fontWeight: "800", color: "rgba(226,232,240,0.7)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+              Daftar Milestone Proyek
+              <span style={{
+                marginLeft: "10px",
+                fontSize: "11px", fontWeight: "700",
+                color: "var(--cyan)",
+                background: "rgba(6,182,212,0.1)",
+                border: "1px solid rgba(6,182,212,0.2)",
+                padding: "2px 8px", borderRadius: "6px",
+              }}>
+                {milestones.length} total
+              </span>
+            </h3>
+          </div>
 
-      {/* Milestone cards grid */}
-      {milestones.length === 0 ? (
-        <motion.div
+          {/* Milestone cards grid */}
+          {milestones.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="glass-card"
+              style={{
+                padding: "60px 32px",
+                textAlign: "center",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: "12px",
+              }}
+            >
+              <Flag size={44} style={{ color: "rgba(226,232,240,0.12)" }} />
+              <p style={{ fontSize: "16px", fontWeight: "700", color: "rgba(226,232,240,0.3)" }}>
+                Belum ada milestone
+              </p>
+              <p style={{ fontSize: "13px", color: "rgba(226,232,240,0.2)" }}>
+                Freelancer Anda belum membuat milestone untuk proyek ini.
+              </p>
+            </motion.div>
+          ) : (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+              gap: "20px",
+            }}>
+              {milestones.map((milestone, idx) => (
+                <ClientMilestoneCard
+                  key={milestone.id}
+                  milestone={milestone}
+                  index={idx}
+                  onApprove={handleApprove}
+                  onReview={handleReview}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="glass-card"
-          style={{
-            padding: "60px 32px",
-            textAlign: "center",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: "12px",
-          }}
+          style={{ padding: "80px 40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}
         >
-          <Flag size={44} style={{ color: "rgba(226,232,240,0.12)" }} />
-          <p style={{ fontSize: "16px", fontWeight: "700", color: "rgba(226,232,240,0.3)" }}>
-            Belum ada milestone
-          </p>
-          <p style={{ fontSize: "13px", color: "rgba(226,232,240,0.2)" }}>
-            Freelancer Anda belum membuat milestone untuk proyek ini.
-          </p>
+          <div style={{ width: "64px", height: "64px", borderRadius: "20px", background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.1)" }}>
+            <FolderPlus size={32} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", marginBottom: "8px" }}>
+              Silakan Pilih Proyek
+            </h3>
+            <p style={{ fontSize: "14px", color: "rgba(226, 232, 240, 0.4)", maxWidth: "400px" }}>
+              Pilih salah satu proyek aktif Anda untuk melihat perkembangan milestone dan memberikan persetujuan.
+            </p>
+          </div>
         </motion.div>
-      ) : (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-          gap: "20px",
-        }}>
-          {milestones.map((milestone, idx) => (
-            <ClientMilestoneCard
-              key={milestone.id}
-              milestone={milestone}
-              index={idx}
-              onApprove={handleApprove}
-              onReview={handleReview}
-            />
-          ))}
-        </div>
       )}
 
       <style jsx>{`

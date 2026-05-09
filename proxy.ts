@@ -15,23 +15,14 @@ import {
 } from "@/lib/rbac";
 
 export default async function middleware(request: NextRequest) {
-  // ── 1. Segarkan cookie sesi Supabase ──────────────────────────────────────
-  const { supabase, response } = await updateSession(request);
-
-  // ── 2. Ambil data user dari sesi saat ini ──────────────────────────────
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  // Jika ada error terkait sesi (seperti Refresh Token Not Found), 
-  // kita anggap user tidak terautentikasi tanpa memunculkan error fatal.
-  if (error) {
-    // Error ini biasanya log otomatis ke console oleh library, 
-    // tapi kita pastikan navigasi tetap aman.
-  }
+  // ── 1. Segarkan cookie sesi Supabase & ambil user ─────────────────────────
+  // updateSession kini menangani sinkronisasi cookie secara aman.
+  const { supabaseResponse, user } = await updateSession(request);
 
   const url = request.nextUrl.clone();
   const path = url.pathname;
 
-  // ── 3. Gerbang autentikasi Dashboard ─────────────────────────────────────
+  // ── 2. Gerbang autentikasi Dashboard ─────────────────────────────────────
   if (path.startsWith("/dashboard")) {
     if (!user) {
       url.pathname = "/login";
@@ -41,7 +32,7 @@ export default async function middleware(request: NextRequest) {
 
     const userRole: string = user.user_metadata?.role ?? "client";
 
-    // ── 3a. Perlindungan sub-dashboard spesifik peran ───────────────────────
+    // ── 2a. Perlindungan sub-dashboard spesifik peran ───────────────────────
     if (path.startsWith("/dashboard/client") && userRole !== "client") {
       url.pathname = "/login";
       url.searchParams.set("role", "client");
@@ -57,7 +48,7 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // ── 3b. Pembatasan jalur Milestone (RBAC Client) ──────────────────────
+    // ── 2b. Pembatasan jalur Milestone (RBAC Client) ──────────────────────
     if (userRole === "client" && isBlockedForClient(path)) {
       url.pathname = CLIENT_FALLBACK_PATH;
       // Parameter query dibaca oleh halaman untuk menampilkan notifikasi toast.
@@ -69,8 +60,8 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  // ── 4. Izinkan permintaan berlanjut ───────────────────────────────────────────
-  return response;
+  // ── 3. Izinkan permintaan berlanjut dengan cookie yang sudah diperbarui ────────
+  return supabaseResponse;
 }
 
 // ── Konfigurasi Matcher ───────────────────────────────────────────────────────
@@ -80,4 +71,3 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };
-

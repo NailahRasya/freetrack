@@ -7,27 +7,44 @@ import { X, UploadCloud, Link as LinkIcon, FileText, CheckCircle } from "lucide-
 interface UploadEvidenceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  milestoneId: number | null;
+  milestoneId: string | null;
   milestoneTitle: string;
+  onSuccess?: () => void;
 }
 
-export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, milestoneTitle }: UploadEvidenceModalProps) {
+export default function UploadEvidenceModal({ isOpen, onClose, milestoneId, milestoneTitle, onSuccess }: UploadEvidenceModalProps) {
   const [activeTab, setActiveTab] = useState<"file" | "link">("file");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!milestoneId) return;
+    
     setIsSubmitting(true);
-    // Simulasi penundaan upload
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/milestones", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: milestoneId,
+          status: "Waiting for Approval"
+        }),
+      });
+
+      if (res.ok) {
+        setIsSuccess(true);
+        onSuccess?.();
+        setTimeout(() => {
+          setIsSuccess(false);
+          onClose();
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("Failed to upload evidence:", err);
+    } finally {
       setIsSubmitting(false);
-      setIsSuccess(true);
-      setTimeout(() => {
-        setIsSuccess(false);
-        onClose();
-      }, 1500);
-    }, 1500);
+    }
   };
 
   return (

@@ -1,5 +1,5 @@
 "use client";
-
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -11,19 +11,22 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  User
+  User,
+  Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar, useUser } from "../../dashboard/layout";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Item menu navigasi untuk sidebar dashboard.
  */
 const menuItems = [
   { icon: LayoutDashboard, label: "Dasbor", href: "/dashboard" },
+  { icon: Sparkles, label: "Marketplace", href: "/dashboard/market" },
   { icon: Briefcase, label: "Proyek Saya", href: "/dashboard/projects" },
   { icon: Users, label: "Kontak", href: "/dashboard/contacts" },
   { icon: Wallet, label: "Pembayaran", href: "/dashboard/payments" },
@@ -37,10 +40,44 @@ const menuItems = [
  * Komponen Sidebar untuk dashboard utama, mendukung mode ciut (collapsed).
  */
 export default function DashboardSidebar() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  
   const { collapsed, setCollapsed } = useSidebar();
-  const { role } = useUser();
+  const { user, role } = useUser();
   const { projects } = useProjects();
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Hitung awal
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("receiver_id", user.id)
+        .eq("is_read", false);
+      setUnreadCount(count || 0);
+    };
+    fetchUnread();
+
+    // Subscribe ke pesan baru
+    const channel = supabase
+      .channel("unread-messages")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "messages",
+        filter: `receiver_id=eq.${user.id}`
+      }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
 
   const hasActionableProjects = projects.some(p => 
     (role === "client" && p.status === "pending_client") ||
@@ -143,7 +180,20 @@ export default function DashboardSidebar() {
                   />
                 )}
                 <item.icon size={20} style={{ flexShrink: 0 }} />
-                {item.label === "Proyek Saya" && hasActionableProjects && (
+                {mounted && item.label === "Proyek Saya" && hasActionableProjects && (
+                  <span style={{
+                    position: "absolute",
+                    top: collapsed ? "8px" : "12px",
+                    left: collapsed ? "45px" : "28px",
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: "#FF4D6A",
+                    boxShadow: "0 0 10px #FF4D6A",
+                    zIndex: 10
+                  }} />
+                )}
+                {mounted && item.label === "Pesan" && unreadCount > 0 && (
                   <span style={{
                     position: "absolute",
                     top: collapsed ? "8px" : "12px",
@@ -171,6 +221,7 @@ export default function DashboardSidebar() {
           onClick={() => setCollapsed(!collapsed)}
           whileHover={{ background: "rgba(255, 255, 255, 0.08)", color: "#fff" }}
           whileTap={{ scale: 0.9 }}
+          suppressHydrationWarning
           style={{
             background: "rgba(255, 255, 255, 0.03)",
             border: "1px solid rgba(255, 255, 255, 0.06)",

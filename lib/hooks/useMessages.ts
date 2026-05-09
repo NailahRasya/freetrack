@@ -53,5 +53,18 @@ export function useMessages(userId?: string) {
     }
   };
 
-  return { messages, loading, sendMessage, refetch: fetchMessages };
+  const markAsRead = async () => {
+    if (!userId) return;
+    try {
+      await window.fetch("/api/messages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sender_id: userId }),
+      });
+    } catch (e) {
+      console.error("Failed to mark messages as read:", e);
+    }
+  };
+
+  return { messages, loading, sendMessage, markAsRead, refetch: fetchMessages };
 }

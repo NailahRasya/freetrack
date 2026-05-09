@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 export async function updateSession(request: NextRequest) {
   // Buat respons default
-  let response = NextResponse.next({
+  let supabaseResponse = NextResponse.next({
     request,
   });
 
@@ -25,18 +25,21 @@ export async function updateSession(request: NextRequest) {
             request.cookies.set(name, value)
           );
           // Buat respons baru dengan request yang sudah di-update
-          response = NextResponse.next({
+          supabaseResponse = NextResponse.next({
             request,
           });
           // Update response cookies untuk dikirim ke browser
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options)
           );
         },
       },
     }
   );
 
-  return { supabase, response };
+  // Memanggil getUser() akan memicu setAll() jika sesi perlu disegarkan.
+  const { data: { user } } = await supabase.auth.getUser();
+
+  return { supabaseResponse, user };
 }
 

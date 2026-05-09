@@ -150,7 +150,7 @@ export default function ProjectCard({ project, onEdit, onDelete, onSendToClient 
           color: "#FF4D6A"
         }}>
           <div style={{ fontWeight: "700", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <MessageSquare size={12} /> Alasan Revisi:
+            <MessageSquare size={12} /> Catatan Negosiasi:
           </div>
           {project.rejection_reason}
         </div>
@@ -185,7 +185,7 @@ export default function ProjectCard({ project, onEdit, onDelete, onSendToClient 
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <span style={{ fontSize: "10px", color: "rgba(226, 232, 240, 0.3)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Budget</span>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#fff", fontWeight: "700", fontSize: "14px" }}>
-            <DollarSign size={14} style={{ color: "var(--cyan)" }} />
+            <span style={{ fontSize: "12px", fontWeight: "900", color: "var(--cyan)", opacity: 0.8 }}>Rp</span>
             {project.budget}
           </div>
         </div>

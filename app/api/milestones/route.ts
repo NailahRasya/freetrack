@@ -42,6 +42,44 @@ function unauthorized(message: string, status = 403) {
   return NextResponse.json({ error: message }, { status });
 }
 
+async function updateProjectProgress(supabase: any, projectId: string) {
+  if (!projectId) return;
+
+  // 1. Fetch all milestones for this project
+  const { data: milestones, error: fetchError } = await supabase
+    .from("milestones")
+    .select("status")
+    .eq("project_id", projectId);
+
+  if (fetchError || !milestones) {
+    console.error("Error fetching milestones for progress update:", fetchError);
+    return;
+  }
+
+  // 2. Calculate progress
+  const total = milestones.length;
+  if (total === 0) {
+    await supabase.from("projects").update({ progress: 0 }).eq("id", projectId);
+    return;
+  }
+
+  const completed = milestones.filter((m: any) => 
+    ["Approved", "Disetujui", "Completed", "Waiting for Approval", "Menunggu Persetujuan"].includes(m.status)
+  ).length;
+
+  const progress = Math.round((completed / total) * 100);
+
+  // 3. Update projects table
+  const { error: updateError } = await supabase
+    .from("projects")
+    .update({ progress })
+    .eq("id", projectId);
+
+  if (updateError) {
+    console.error("Error updating project progress:", updateError);
+  }
+}
+
 // ── GET /api/milestones ───────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
@@ -51,12 +89,21 @@ export async function GET(request: NextRequest) {
     return unauthorized("Unauthorized: Please sign in.", 401);
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   // RLS on the DB table enforces row-level visibility.
   // The query below will automatically return only the rows the user may see.
-  const { data, error } = await supabase
+  let query = supabase
     .from("milestones")
     .select("*")
     .order("created_at", { ascending: true });
+
+  if (projectId) {
+    query = query.eq("project_id", projectId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -98,23 +145,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // If client_id is not provided, try to fetch it from the project
+  // Resolve client_id: try body first, then fallback to project data
   let finalClientId = client_id;
-  if (!finalClientId) {
-    const { data: project } = await supabase
+  if (!finalClientId && project_id) {
+    const { data: project, error: projectError } = await supabase
       .from("projects")
       .select("client_id")
       .eq("id", project_id)
       .single();
-    finalClientId = project?.client_id;
+    
+    if (projectError) {
+      console.error("Failed to fetch project for client_id resolution:", projectError);
+    } else {
+      finalClientId = project?.client_id;
+    }
+  }
+
+  if (!finalClientId) {
+    return NextResponse.json({ error: "Gagal menghubungkan milestone ke klien. Pastikan proyek memiliki klien yang valid." }, { status: 400 });
   }
 
   const { data, error } = await supabase
     .from("milestones")
     .insert({
-      title,
-      description,
-      deadline,
+      title: title?.trim(),
+      description: description?.trim() || null,
+      deadline: deadline || null,
       project_id,
       amount: amount || null,
       status: status ?? "In Progress",
@@ -129,6 +185,9 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Update project progress
+  await updateProjectProgress(supabase, project_id);
 
   return NextResponse.json({ data }, { status: 201 });
 }
@@ -157,6 +216,13 @@ export async function PUT(request: NextRequest) {
       { status: 400 }
     );
   }
+
+  // Fetch current milestone to get project_id before update
+  const { data: currentMilestone } = await supabase
+    .from("milestones")
+    .select("project_id")
+    .eq("id", id)
+    .single();
 
   // ── Security Shield: Client payload validation ────────────────────────────
   if (role === "client") {
@@ -193,6 +259,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Update project progress
+    if (currentMilestone?.project_id) {
+      await updateProjectProgress(supabase, currentMilestone.project_id);
+    }
+
     return NextResponse.json({ data });
   }
 
@@ -207,6 +278,11 @@ export async function PUT(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Update project progress
+  if (currentMilestone?.project_id) {
+    await updateProjectProgress(supabase, currentMilestone.project_id);
   }
 
   return NextResponse.json({ data });
@@ -239,6 +315,13 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
+  // Fetch current milestone to get project_id before delete
+  const { data: currentMilestone } = await supabase
+    .from("milestones")
+    .select("project_id")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("milestones")
     .delete()
@@ -249,5 +332,11 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Update project progress
+  if (currentMilestone?.project_id) {
+    await updateProjectProgress(supabase, currentMilestone.project_id);
+  }
+
   return NextResponse.json({ success: true });
 }
+

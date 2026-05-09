@@ -2,13 +2,16 @@
 
 import { Search, Bell, ChevronDown, User, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Swal from "sweetalert2";
 import { useUser } from "../../dashboard/layout";
 
 export default function DashboardNavbar() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  
   const [showProfile, setShowProfile] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
@@ -63,7 +66,7 @@ export default function DashboardNavbar() {
 
       await supabase.auth.signOut();
       localStorage.clear();
-      window.location.href = "/login";
+      window.location.href = "/";
       Swal.close();
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -110,6 +113,7 @@ export default function DashboardNavbar() {
         <input 
           type="text" 
           placeholder="Cari..."
+          suppressHydrationWarning
           style={{
             width: "100%",
             background: "rgba(255, 255, 255, 0.03)",
@@ -133,6 +137,7 @@ export default function DashboardNavbar() {
             scale: 1.06
           }}
           whileTap={{ scale: 0.94 }}
+          suppressHydrationWarning
           style={{
             width: "40px",
             height: "40px",
@@ -169,6 +174,7 @@ export default function DashboardNavbar() {
               borderColor: "rgba(6, 182, 212, 0.3)"
             }}
             whileTap={{ scale: 0.97 }}
+            suppressHydrationWarning
             style={{
               display: "flex",
               alignItems: "center",
@@ -180,7 +186,7 @@ export default function DashboardNavbar() {
               cursor: "pointer"
             }}
           >
-            <span style={{ fontSize: "13px", fontWeight: "600", color: "#E2E8F0" }}>{fullName}</span>
+            <span style={{ fontSize: "13px", fontWeight: "600", color: "#E2E8F0" }}>{mounted ? fullName : "..."}</span>
             <div style={{
               width: "32px",
               height: "32px",
@@ -193,7 +199,7 @@ export default function DashboardNavbar() {
               color: "#fff",
               fontSize: "12px"
             }}>
-              {initials}
+              {mounted ? initials : "?"}
             </div>
             <ChevronDown size={14} style={{ color: "rgba(226, 232, 240, 0.4)" }} />
           </motion.button>

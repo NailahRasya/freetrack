@@ -104,6 +104,10 @@ export function useAccessDeniedToast() {
     const cleanUrl = params.toString()
       ? `${pathname}?${params.toString()}`
       : pathname;
-    router.replace(cleanUrl, { scroll: false });
+    
+    // Defer router action to avoid "Router action dispatched before initialization"
+    setTimeout(() => {
+      router.replace(cleanUrl, { scroll: false });
+    }, 0);
   }, [searchParams, router, pathname]);
 }

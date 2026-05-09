@@ -1,39 +1,110 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Send, User, Loader2, MessageSquare, MoreVertical, Trash2, UserMinus } from "lucide-react";
+import ContractInitiationModal from "../../components/dashboard/ContractInitiationModal";
+import ContractReviewModal from "../../components/dashboard/ContractReviewModal";
+import { Search, Send, User, Loader2, MessageSquare, MoreVertical, Trash2, UserMinus, ShieldCheck } from "lucide-react";
 import { useUser } from "../layout";
 import { useContacts } from "@/lib/hooks/useContacts";
 import { useMessages } from "@/lib/hooks/useMessages";
 import { useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
+import { supabase } from "@/lib/supabase";
 
 export default function Messages() {
   const { user, role } = useUser();
   const { contacts, loading: contactsLoading } = useContacts();
   const searchParams = useSearchParams();
-  const initialUserId = searchParams.get("userId");
+  const initialUserId = searchParams.get("chat") || searchParams.get("userId");
+  const projectId = searchParams.get("project");
 
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(initialUserId);
   const [searchQuery, setSearchQuery] = useState("");
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, loading: messagesLoading, sendMessage, refetch: refetchMessages } = useMessages(selectedUserId || undefined);
+  const { messages, loading: messagesLoading, sendMessage, markAsRead, refetch: refetchMessages } = useMessages(selectedUserId || undefined);
   const { refetch: refetchContacts } = useContacts();
   const [showOptions, setShowOptions] = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
+  const [newChatUser, setNewChatUser] = useState<any>(null);
+  const [loadingNewUser, setLoadingNewUser] = useState(false);
+  const [projectContext, setProjectContext] = useState<any>(null);
+  const [loadingProject, setLoadingProject] = useState(false);
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
-    if (initialUserId && !selectedUserId) {
+    if (initialUserId && selectedUserId !== initialUserId) {
       setSelectedUserId(initialUserId);
     }
-  }, [initialUserId, selectedUserId]);
+  }, [initialUserId]);
+
+  useEffect(() => {
+    if (selectedUserId && messages.length > 0) {
+      const hasUnread = messages.some((m: any) => m.receiver_id === user?.id && !m.is_read);
+      if (hasUnread) {
+        markAsRead();
+      }
+    }
+  }, [selectedUserId, messages, user?.id, markAsRead]);
 
   useEffect(() => {
     // Scroll to bottom when messages update
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Fetch info user baru jika belum ada di kontak
+  useEffect(() => {
+    async function fetchUserInfo() {
+      if (!selectedUserId) return;
+      
+      // Cek apakah sudah ada di kontak
+      const isInContacts = contacts.some((c: any) => {
+        const target = role === "client" ? c.freelancer : c.client;
+        return target?.id === selectedUserId;
+      });
+
+      if (!isInContacts && !contactsLoading) {
+        setLoadingNewUser(true);
+        try {
+          const res = await fetch(`/api/users/${selectedUserId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setNewChatUser(data.data);
+          }
+        } catch (err) {
+          console.error("Failed to fetch new chat user info:", err);
+        } finally {
+          setLoadingNewUser(false);
+        }
+      } else {
+        setNewChatUser(null);
+      }
+    }
+    fetchUserInfo();
+  }, [selectedUserId, contacts, contactsLoading, role]);
+
+  // Fetch project context
+  useEffect(() => {
+    async function fetchProject() {
+      if (!projectId) return;
+      setLoadingProject(true);
+      try {
+        const { data: proj, error } = await supabase
+          .from("projects")
+          .select("*, client:client_id(full_name, avatar_url)")
+          .eq("id", projectId)
+          .single();
+        if (proj) setProjectContext(proj);
+      } catch (err) {
+        console.error("Failed to fetch project context:", err);
+      } finally {
+        setLoadingProject(false);
+      }
+    }
+    fetchProject();
+  }, [projectId]);
 
   const filteredContacts = contacts.filter((c: any) => {
     const target = role === "client" ? c.freelancer : c.client;
@@ -46,7 +117,9 @@ export default function Messages() {
     return target?.id === selectedUserId;
   });
 
-  const selectedTarget = selectedContact ? (role === "client" ? selectedContact.freelancer : selectedContact.client) : null;
+  const selectedTarget = selectedContact 
+    ? (role === "client" ? selectedContact.freelancer : selectedContact.client) 
+    : newChatUser;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,8 +225,35 @@ export default function Messages() {
         <div style={{ flex: 1, overflowY: "auto", padding: "0 10px 20px" }}>
           {contactsLoading ? (
             <div style={{ padding: "20px", textAlign: "center", color: "rgba(226,232,240,0.4)" }}>Memuat kontak...</div>
-          ) : filteredContacts.length > 0 ? (
+          ) : (filteredContacts.length > 0 || selectedUserId) ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              {/* Jika sedang chat dengan orang baru yang belum ada di kontak, tampilkan dia di paling atas */}
+              {selectedUserId && !filteredContacts.some((c: any) => {
+                const target = role === "client" ? c.freelancer : c.client;
+                return target?.id === selectedUserId;
+              }) && (
+                <motion.button
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  onClick={() => setSelectedUserId(selectedUserId)}
+                  style={{
+                    width: "100%", textAlign: "left", padding: "12px", borderRadius: "14px", border: "1px solid rgba(77, 99, 255, 0.3)",
+                    background: "rgba(77, 99, 255, 0.15)", cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px"
+                  }}
+                >
+                  <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "700", fontSize: "15px", flexShrink: 0 }}>
+                    {newChatUser?.full_name?.charAt(0) || "!"}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: "#fff", fontWeight: "700", fontSize: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {loadingNewUser ? "Memuat..." : (newChatUser?.full_name || "Diskusi Baru")}
+                    </div>
+                    <div style={{ color: "#4D63FF", fontSize: "11px", fontWeight: "600" }}>{newChatUser?.email || "Memulai percakapan..."}</div>
+                  </div>
+                </motion.button>
+              )}
+
               {filteredContacts.map((c: any) => {
                 const target = role === "client" ? c.freelancer : c.client;
                 const isSelected = selectedUserId === target.id;
@@ -185,7 +285,8 @@ export default function Messages() {
       </div>
 
       {/* Main Chat Area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "rgba(15, 27, 46, 0.2)" }}>
+      <div style={{ flex: 1, display: "flex", background: "rgba(15, 27, 46, 0.2)" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", borderRight: projectContext ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
         {selectedUserId ? (
           <>
             {/* Chat Header */}
@@ -253,17 +354,18 @@ export default function Messages() {
                     <motion.div key={m.id || i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                       style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start", width: "100%" }}>
                       <div style={{
-                        maxWidth: "70%",
-                        padding: "14px 18px",
-                        borderRadius: "20px",
-                        borderBottomRightRadius: isMe ? "4px" : "20px",
-                        borderBottomLeftRadius: !isMe ? "4px" : "20px",
-                        background: isMe ? "linear-gradient(135deg, #4D63FF, #3b50e3)" : "rgba(255, 255, 255, 0.05)",
+                        maxWidth: "75%",
+                        padding: "12px 20px",
+                        borderRadius: "22px",
+                        borderBottomRightRadius: isMe ? "4px" : "22px",
+                        borderBottomLeftRadius: !isMe ? "4px" : "22px",
+                        background: isMe ? "linear-gradient(135deg, rgba(77, 99, 255, 0.9), rgba(59, 80, 227, 0.9))" : "rgba(255, 255, 255, 0.05)",
+                        backdropFilter: "blur(8px)",
                         color: "#fff",
-                        fontSize: "14.5px",
-                        lineHeight: "1.5",
-                        boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-                        border: isMe ? "none" : "1px solid rgba(255, 255, 255, 0.05)",
+                        fontSize: "14px",
+                        lineHeight: "1.6",
+                        boxShadow: isMe ? "0 8px 20px rgba(77, 99, 255, 0.2)" : "0 4px 15px rgba(0,0,0,0.1)",
+                        border: isMe ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(255, 255, 255, 0.05)",
                       }}>
                         {m.content}
                       </div>
@@ -304,7 +406,7 @@ export default function Messages() {
             </div>
           </>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", opacity: 0.8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", width: "100%", opacity: 0.8 }}>
             <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" }}>
               <MessageSquare size={32} style={{ color: "rgba(226,232,240,0.2)" }} />
             </div>
@@ -314,9 +416,120 @@ export default function Messages() {
             </p>
           </div>
         )}
+        </div>
+
+        {/* Project Context Sidebar */}
+        <AnimatePresence>
+          {selectedUserId && projectContext && (
+            <motion.div 
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 340, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              style={{ background: "rgba(10, 20, 45, 0.4)", display: "flex", flexDirection: "column", overflow: "hidden" }}
+            >
+              <div style={{ padding: "24px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                  <div style={{ padding: "6px", borderRadius: "8px", background: "rgba(77, 99, 255, 0.1)", color: "#4D63FF" }}>
+                    <Search size={16} />
+                  </div>
+                  <h4 style={{ fontSize: "14px", fontWeight: "800", color: "#fff", textTransform: "uppercase", letterSpacing: "1px" }}>Konteks Proyek</h4>
+                </div>
+                
+                <div className="glass-card" style={{ padding: "20px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <h5 style={{ fontSize: "16px", fontWeight: "800", color: "#fff", marginBottom: "8px" }}>{projectContext.title}</h5>
+                  <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.4)", lineHeight: "1.6", marginBottom: "16px" }}>{projectContext.description}</p>
+                  
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", background: "rgba(0,255,163,0.05)", borderRadius: "10px", border: "1px solid rgba(0,255,163,0.1)" }}>
+                    <span style={{ fontSize: "11px", fontWeight: "700", color: "rgba(0,255,163,0.6)", textTransform: "uppercase" }}>Budget</span>
+                    <span style={{ fontSize: "15px", fontWeight: "900", color: "#00FFA3" }}>{projectContext.budget}</span>
+                  </div>
+                </div>
+
+                {role === "freelancer" && (
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowContractModal(true)}
+                    style={{
+                      width: "100%", marginTop: "24px", padding: "14px", background: "linear-gradient(135deg, #10B981, #06B6D4)",
+                      color: "#fff", border: "none", borderRadius: "14px", fontSize: "14px", fontWeight: "800",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                      boxShadow: "0 10px 20px rgba(16, 185, 129, 0.2)"
+                    }}
+                  >
+                    <Send size={18} />
+                    Apply with Contract
+                  </motion.button>
+                )}
+
+                {role === "client" && projectContext.status === "contract_pending" && (
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowReviewModal(true)}
+                    style={{
+                      width: "100%", marginTop: "24px", padding: "14px", background: "linear-gradient(135deg, #10B981, #06B6D4)",
+                      color: "#fff", border: "none", borderRadius: "14px", fontSize: "14px", fontWeight: "800",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                      boxShadow: "0 10px 20px rgba(16, 185, 129, 0.2)"
+                    }}
+                  >
+                    <ShieldCheck size={18} />
+                    Review Contract
+                  </motion.button>
+                )}
+              </div>
+              
+              <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
+                <h6 style={{ fontSize: "11px", fontWeight: "800", color: "rgba(226, 232, 240, 0.3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>Rangkuman Preferensi</h6>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={contextBadgeStyle}><span>Level:</span> <strong>{projectContext.required_skills?.find((s:string) => s.startsWith("EXP:"))?.replace("EXP:", "") || "Umum"}</strong></div>
+                  <div style={contextBadgeStyle}><span>Tipe:</span> <strong>{projectContext.required_skills?.find((s:string) => s.startsWith("WORK:"))?.replace("WORK:", "") === 'ongoing' ? 'Berkelanjutan' : 'Satu Kali'}</strong></div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Contract Initiation Modal */}
+        {projectContext && (
+          <ContractInitiationModal
+            isOpen={showContractModal}
+            onClose={() => setShowContractModal(false)}
+            project={projectContext}
+            onSuccess={() => {
+              // Optionally refresh project context or status
+              console.log("Contract sent successfully");
+            }}
+          />
+        )}
+
+        {projectContext && (
+          <ContractReviewModal
+            isOpen={showReviewModal}
+            onClose={() => setShowReviewModal(false)}
+            project={projectContext}
+            onSuccess={() => {
+              // Refresh logic
+              console.log("Contract approved successfully");
+            }}
+          />
+        )}
       </div>
 
       <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 }
+
+const contextBadgeStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  background: "rgba(255, 255, 255, 0.02)",
+  padding: "10px 14px",
+  borderRadius: "12px",
+  border: "1px solid rgba(255, 255, 255, 0.05)",
+  fontSize: "13px",
+  color: "rgba(226, 232, 240, 0.6)"
+};

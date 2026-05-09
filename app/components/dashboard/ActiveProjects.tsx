@@ -10,11 +10,13 @@ const STATUS_COLOR: Record<string, string> = {
   draft: "#7C3AED", pending_client: "#F59E0B",
   active: "#00E5FF", review: "#F59E0B",
   completed: "#00FFA3", rejected: "#FF4D6A",
+  published: "#4D63FF",
 };
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draf", pending_client: "Menunggu Klien",
   active: "Aktif", review: "Tinjauan",
   completed: "Selesai", rejected: "Ditolak",
+  published: "Dipublikasikan",
 };
 
 export default function ActiveProjects() {
@@ -22,9 +24,9 @@ export default function ActiveProjects() {
   const { projects, loading } = useProjects();
   const isClient = role === "client";
 
-  // Filter untuk menampilkan hanya proyek yang butuh perhatian (Active, Review, atau Pending Client)
+  // Filter untuk menampilkan hanya proyek yang butuh perhatian (Active, Review, Pending Client, Published, atau Draft)
   const activeProjects = projects
-    .filter(p => ["active", "review", "pending_client"].includes(p.status))
+    .filter(p => ["active", "review", "pending_client", "published", "draft"].includes(p.status))
     .slice(0, 3); // Hanya tampilkan 3 teratas di dashboard
 
   if (loading) return (
@@ -120,7 +122,7 @@ export default function ActiveProjects() {
                       <span style={{ whiteSpace: "nowrap" }}>{project.deadline ?? "-"}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "rgba(226, 232, 240, 0.4)" }}>
-                      <DollarSign size={12} />
+                      <span style={{ fontSize: "11px", fontWeight: "900", color: "rgba(226, 232, 240, 0.3)" }}>Rp</span>
                       <span style={{ whiteSpace: "nowrap" }}>{project.budget ?? "-"}</span>
                     </div>
                   </div>

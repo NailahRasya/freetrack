@@ -17,6 +17,7 @@ const STATUS_COLOR: Record<string, string> = {
   review: "#F59E0B",
   completed: "#00FFA3", 
   rejected: "#FF4D6A",
+  published: "#4D63FF",
 };
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draf", 
@@ -26,6 +27,7 @@ const STATUS_LABEL: Record<string, string> = {
   review: "Tinjauan",
   completed: "Selesai", 
   rejected: "Ditolak / Revisi",
+  published: "Dipublikasikan",
 };
 
 export default function ProjectsPage() {
@@ -38,8 +40,8 @@ export default function ProjectsPage() {
   const [projectToEdit, setProjectToEdit] = useState<any>(null);
 
   const tabs = role === "freelancer"
-    ? ["all", "draft", "pending_freelancer", "pending_client", "active", "review", "completed"]
-    : ["all", "draft", "pending_freelancer", "pending_client", "active", "review", "completed"];
+    ? ["all", "draft", "published", "pending_freelancer", "pending_client", "active", "review", "completed"]
+    : ["all", "draft", "published", "pending_freelancer", "pending_client", "active", "review", "completed"];
 
   const filtered = projects.filter(p => {
     const matchTab = tab === "all" || p.status === tab;
@@ -91,13 +93,6 @@ export default function ProjectsPage() {
           </h1>
           <p style={{ color: "rgba(226, 232, 240, 0.4)", fontSize: "15px" }}>Kelola dan pantau semua proyek Anda</p>
         </motion.div>
-        {role === "client" && (
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            className="btn-primary" onClick={() => setShowCreate(true)}
-            style={{ padding: "12px 24px", borderRadius: "14px", fontSize: "14px", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" }}>
-            <Plus size={18} /> Inisiasi Proyek
-          </motion.button>
-        )}
       </div>
 
       {/* Stats */}

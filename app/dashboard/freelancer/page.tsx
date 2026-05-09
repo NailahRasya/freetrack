@@ -9,7 +9,10 @@ import PaymentTracker from "../../components/dashboard/PaymentTracker";
 import MessagesPreview from "../../components/dashboard/MessagesPreview";
 import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
 import ProgressTrackerCard from "../../components/dashboard/ProgressTrackerCard";
+import ProjectMarketFeed from "../../components/dashboard/ProjectMarketFeed";
 import { useUser } from "../layout";
+
+import OnboardingWelcomeBanner from "../../components/dashboard/OnboardingWelcomeBanner";
 
 export default function FreelancerDashboardPage() {
   const { user } = useUser();
@@ -25,6 +28,9 @@ export default function FreelancerDashboardPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+      {/* Onboarding Welcome Banner */}
+      <OnboardingWelcomeBanner role="freelancer" />
+
       {/* Bagian Header */}
       <header>
         <motion.div
@@ -60,6 +66,7 @@ export default function FreelancerDashboardPage() {
       }}>
         {/* Kolom Kiri */}
         <div style={{ display: "flex", flexDirection: "column", gap: "32px", minWidth: 0 }}>
+          <ProjectMarketFeed />
           <MilestoneManager />
           
           <div style={{ 

@@ -1,8 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Briefcase, DollarSign, Flag, Clock, TrendingUp, Loader2 } from "lucide-react";
+import { Briefcase, Clock, Flag, Loader2 } from "lucide-react";
 import { useProjects } from "@/lib/hooks/useProjects";
+
+const RpIcon = ({ size }: { size: number }) => (
+  <span style={{ fontSize: `${size * 0.7}px`, fontWeight: "900", lineHeight: 1 }}>Rp</span>
+);
 
 export default function FreelancerStatsCards() {
   const { projects, loading } = useProjects();
@@ -51,7 +55,7 @@ export default function FreelancerStatsCards() {
       label: "Total Selesai",
       value: String(completedCount),
       change: "Proyek sukses",
-      icon: DollarSign, // Using DollarSign for success/revenue vibe
+      icon: RpIcon, // Using RpIcon for success/revenue vibe
       color: "#10B981",
       gradient: "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 100%)",
     },

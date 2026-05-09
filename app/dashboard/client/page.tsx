@@ -2,16 +2,23 @@
 
 import { motion } from "framer-motion";
 import StatsCards from "../../components/dashboard/StatsCards";
+import ProjectMarketFeed from "../../components/dashboard/ProjectMarketFeed";
 import ActiveProjects from "../../components/dashboard/ActiveProjects";
 import PaymentTracker from "../../components/dashboard/PaymentTracker";
 import MessagesPreview from "../../components/dashboard/MessagesPreview";
 import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
 import { useUser } from "../layout";
 
+import OnboardingWelcomeBanner from "../../components/dashboard/OnboardingWelcomeBanner";
+import RecommendedFreelancers from "../../components/dashboard/RecommendedFreelancers";
+
 export default function DashboardPage() {
   const { user } = useUser();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+      {/* Onboarding Welcome Banner */}
+      <OnboardingWelcomeBanner role="client" />
+
       {/* Bagian Header */}
       <header>
         <motion.div
@@ -36,6 +43,12 @@ export default function DashboardPage() {
 
       {/* Ringkasan Statistik (Stats Overview) */}
       <StatsCards />
+
+      {/* Rekomendasi Freelancer (Berdasarkan Onboarding) */}
+      <RecommendedFreelancers />
+
+      {/* Project Market Feed (Postingan Saya) */}
+      <ProjectMarketFeed />
 
       {/* Layout Grid Utama */}
       <div style={{ 

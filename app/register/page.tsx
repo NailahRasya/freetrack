@@ -120,6 +120,7 @@ function RegisterContent() {
           password,
           options: {
             data: { full_name: fullName, role },
+            emailRedirectTo: `${window.location.origin}/auth/callback?role=${role}`,
           },
         });
 
@@ -128,9 +129,9 @@ function RegisterContent() {
         // Menampilkan notifikasi sukses jika berhasil
         await swal({
           icon: "success",
-          title: "Pendaftaran Berhasil! 🎉",
-          html: `<p style="color:#94a3b8">Akun kamu berhasil dibuat.<br/>Silakan login untuk melanjutkan.</p>`,
-          confirmButtonText: "Login Sekarang",
+          title: "Cek Email Kamu! 📧",
+          html: `<p style="color:#94a3b8">Link konfirmasi telah dikirim ke <b>${email}</b>.<br/>Klik link di email untuk masuk otomatis ke Dashboard.</p>`,
+          confirmButtonText: "Buka Email",
           confirmButtonColor: roleConfig.color,
         });
         // Mengarahkan ke halaman login setelah daftar berhasil

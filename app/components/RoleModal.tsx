@@ -1,6 +1,7 @@
 "use client"; // Menandakan komponen dijalankan di sisi klien
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { X, Briefcase, User2, ArrowRight } from "lucide-react"; // Mengimpor ikon untuk peran dan interaksi
 
 // Definisi tipe data untuk props yang diterima oleh RoleModal
@@ -25,30 +26,34 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
+  const router = useRouter();
+
   // Jika status modal tidak terbuka, jangan render apapun
   if (!isOpen) return null;
 
-  // Konfigurasi pilihan peran (Role) yang tersedia
+  const handleRoleSelect = (roleId: "client" | "freelancer") => {
+    onClose();
+    router.push(`/onboarding?role=${roleId}`);
+  };
+
   const roles = [
     {
-      id: "client",
+      id: "client" as const,
       icon: <Briefcase size={32} />,
       title: "Saya seorang Client",
       desc: "Saya ingin memposting proyek, menemukan freelancer terbaik, dan memastikan pembayaran aman.",
       color: "#4D63FF",
       colorSoft: "rgba(77,99,255,0.12)",
       colorBorder: "rgba(77,99,255,0.3)",
-      href: "/register?role=client",
     },
     {
-      id: "freelancer",
+      id: "freelancer" as const,
       icon: <User2 size={32} />,
       title: "Saya seorang Freelancer",
       desc: "Saya ingin menemukan proyek, mengelola pekerjaan, dan menerima pembayaran dengan transparansi penuh.",
       color: "#10B981",
       colorSoft: "rgba(16,185,129,0.12)",
       colorBorder: "rgba(16,185,129,0.3)",
-      href: "/register?role=freelancer",
     },
   ];
 
@@ -170,10 +175,10 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
           {/* Daftar Pilihan Peran (Client vs Freelancer) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }} className="role-grid">
             {roles.map((role) => (
-              <a
+              <div
                 key={role.id}
                 id={`role-option-${role.id}`}
-                href={role.href}
+                onClick={() => handleRoleSelect(role.id)}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -248,7 +253,7 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
                 }}>
                   Pilih <ArrowRight size={14} />
                 </div>
-              </a>
+              </div>
             ))}
           </div>
 
