@@ -179,6 +179,17 @@ export default function ProfilePage() {
 
             if (response.error) throw response.error;
 
+            // UPDATE UI INSTAN (Agar langsung muncul di layar)
+            setSelectedSubSkills(rawSkills);
+            setSelectedCats(derivedCats);
+            setExpandedCats(derivedCats);
+            setYearsOfExp(obData.yearsOfExperience || 1);
+            setExpLevel(obData.experienceLevel || "mid");
+            setPortfolioUrl(obData.portfolioUrl || "");
+            setTools(obData.tools || []);
+            setPreferredScales(obData.preferredClientScales || []);
+            setWorkTypePrefs(obData.workTypePreference || []);
+
             await supabase.from("profiles").update({
               skills: Array.from(new Set([...derivedCats, ...rawSkills])),
               experience_level: obData.experienceLevel || "mid",
@@ -188,6 +199,8 @@ export default function ProfilePage() {
 
           } else {
             const rawSkills = obData.projectCategories || [];
+            const derivedCats = Array.from(new Set(rawSkills.map((id: string) => getCategoryIdBySkillId(id)).filter(Boolean))) as string[];
+            
             const payload = {
               user_id: user.id,
               project_categories: rawSkills,
@@ -207,6 +220,13 @@ export default function ProfilePage() {
             }
 
             if (response.error) throw response.error;
+
+            // UPDATE UI INSTAN (Client)
+            setBusinessScale(obData.businessScale || "UMKM");
+            setWorkType(obData.workType || "one-time");
+            setExpPreference(obData.experiencePreference || "mid");
+            setSelectedCats(derivedCats);
+            setSelectedSubSkills(rawSkills);
 
             await supabase.from("profiles").update({
               onboarding_completed: true
@@ -238,11 +258,26 @@ export default function ProfilePage() {
       }
 
       // CASE B: Load Data dari Database
+      console.log(`📡 [CASE B] Loading ${role} data from DB for:`, user.id);
+      
       if (role === "freelancer") {
-        const { data } = await supabase.from("onboarding_freelancer").select("*").eq("user_id", user.id).maybeSingle();
+        // Ambil salah satu data jika ada duplikat (tanpa order karena created_at tidak ada)
+        const { data, error } = await supabase
+          .from("onboarding_freelancer")
+          .select("*")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("❌ [CASE B] Error fetching freelancer data:", error);
+        }
+
         if (data) {
+          console.log("✅ [CASE B] Freelancer data found:", data);
           const rawSkills = data.skill_categories || [];
           const derivedCats = Array.from(new Set(rawSkills.map((id: string) => getCategoryIdBySkillId(id)).filter(Boolean))) as string[];
+          
           setSelectedSubSkills(rawSkills);
           setSelectedCats(derivedCats);
           setExpandedCats(derivedCats);
@@ -252,10 +287,23 @@ export default function ProfilePage() {
           setTools(data.tools || []);
           setPreferredScales(data.preferred_client_scales || []);
           setWorkTypePrefs(data.work_type_preference || []);
+        } else {
+          console.warn("⚠️ [CASE B] No freelancer data found in DB for this user.");
         }
       } else {
-        const { data } = await supabase.from("onboarding_client").select("*").eq("user_id", user.id).maybeSingle();
+        const { data, error } = await supabase
+          .from("onboarding_client")
+          .select("*")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("❌ [CASE B] Error fetching client data:", error);
+        }
+
         if (data) {
+          console.log("✅ [CASE B] Client data found:", data);
           setBusinessScale(data.business_scale || "UMKM");
           setWorkType(data.work_type || "one-time");
           setExpPreference(data.experience_preference || "mid");
@@ -263,6 +311,8 @@ export default function ProfilePage() {
           const derivedCats = Array.from(new Set(rawSkills.map((id: string) => getCategoryIdBySkillId(id)).filter(Boolean))) as string[];
           setSelectedCats(derivedCats);
           setSelectedSubSkills(rawSkills);
+        } else {
+          console.warn("⚠️ [CASE B] No client data found in DB.");
         }
       }
     };
@@ -282,31 +332,74 @@ export default function ProfilePage() {
         
         console.log("🚀 AUTO-SYNC: Syncing pending local data to database...");
 
-        // 1. Update DB
-        await Promise.all([
-          supabase.from("profiles").update({
-            skills: Array.from(new Set([...derivedCats, ...rawSkills])),
-            onboarding_completed: true
-          }).eq("id", user.id),
-          supabase.from("onboarding_freelancer").upsert({
+        if (obData.role === "freelancer") {
+          const rawSkills = obData.skillCategories || [];
+          const derivedCats = Array.from(new Set(rawSkills.map((id: string) => getCategoryIdBySkillId(id)).filter(Boolean))) as string[];
+          
+          const payload = {
             user_id: user.id,
             skill_categories: rawSkills,
             years_of_experience: obData.yearsOfExperience,
             experience_level: obData.experienceLevel,
-            portfolio_url: obData.portfolioUrl,
+            portfolio_url: obData.portfolioUrl || "",
             tools: obData.tools || [],
             preferred_client_scales: obData.preferredClientScales || [],
             work_type_preference: obData.workTypePreference || []
-          })
-        ]);
+          };
 
-        // 2. Update Local State
-        setSelectedCats(derivedCats);
-        setSelectedSubSkills(rawSkills);
-        setExpandedCats(derivedCats);
-        setYearsOfExp(obData.yearsOfExperience || 1);
-        setExpLevel(obData.experienceLevel || "mid");
-        
+          // Manual Upsert
+          const { data: existing } = await supabase.from("onboarding_freelancer").select("user_id").eq("user_id", user.id).maybeSingle();
+          if (existing) {
+            await supabase.from("onboarding_freelancer").update(payload).eq("user_id", user.id);
+          } else {
+            await supabase.from("onboarding_freelancer").insert(payload);
+          }
+
+          await supabase.from("profiles").update({
+            skills: Array.from(new Set([...derivedCats, ...rawSkills])),
+            onboarding_completed: true
+          }).eq("id", user.id);
+
+          // 2. Update Local State (LENGKAP)
+          setSelectedCats(derivedCats);
+          setSelectedSubSkills(rawSkills);
+          setExpandedCats(derivedCats);
+          setYearsOfExp(obData.yearsOfExperience || 1);
+          setExpLevel(obData.experienceLevel || "mid");
+          setPortfolioUrl(obData.portfolioUrl || "");
+          setTools(obData.tools || []);
+          setPreferredScales(obData.preferredClientScales || []);
+          setWorkTypePrefs(obData.workTypePreference || []);
+          
+        } else {
+          // Logic Client
+          const rawSkills = obData.projectCategories || [];
+          const derivedCats = Array.from(new Set(rawSkills.map((id: string) => getCategoryIdBySkillId(id)).filter(Boolean))) as string[];
+          const payload = {
+            user_id: user.id,
+            project_categories: rawSkills,
+            business_scale: obData.businessScale || "",
+            work_type: obData.workType || "",
+            experience_preference: obData.experiencePreference || "mid"
+          };
+
+          const { data: existing } = await supabase.from("onboarding_client").select("user_id").eq("user_id", user.id).maybeSingle();
+          if (existing) {
+            await supabase.from("onboarding_client").update(payload).eq("user_id", user.id);
+          } else {
+            await supabase.from("onboarding_client").insert(payload);
+          }
+
+          setBusinessScale(obData.businessScale || "UMKM");
+          setWorkType(obData.workType || "one-time");
+          setExpPreference(obData.experiencePreference || "mid");
+          setSelectedCats(derivedCats);
+          setSelectedSubSkills(rawSkills);
+        }
+
+        localStorage.removeItem(STORAGE_KEY);
+        setHasLocalData(false);
+
         Swal.fire({
           icon: 'success',
           title: 'Sync Berhasil!',
@@ -314,10 +407,16 @@ export default function ProfilePage() {
           background: '#0F1B2E',
           color: '#fff'
         });
-        setHasLocalData(false);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("❌ Force Sync Error:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Sinkronisasi',
+        text: err.message,
+        background: '#0F1B2E',
+        color: '#fff'
+      });
     } finally {
       setIsSyncing(false);
     }

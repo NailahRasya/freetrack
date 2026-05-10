@@ -129,12 +129,15 @@ function RegisterContent() {
         // Menampilkan notifikasi sukses jika berhasil
         await swal({
           icon: "success",
-          title: "Cek Email Kamu! 📧",
-          html: `<p style="color:#94a3b8">Link konfirmasi telah dikirim ke <b>${email}</b>.<br/>Klik link di email untuk masuk otomatis ke Dashboard.</p>`,
-          confirmButtonText: "Buka Email",
-          confirmButtonColor: roleConfig.color,
+          title: "Pendaftaran Berhasil! 🎉",
+          text: "Akun kamu sudah aktif. Silakan masuk untuk melanjutkan.",
+          timer: 2000,
+          showConfirmButton: false,
+          background: '#0F1B2E',
+          color: '#fff'
         });
-        // Mengarahkan ke halaman login setelah daftar berhasil
+
+        // Mengarahkan ke halaman login
         router.push(`/login?role=${role}`);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Terjadi kesalahan. Coba lagi.";
