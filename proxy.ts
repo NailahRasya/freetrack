@@ -65,9 +65,9 @@ export default async function middleware(request: NextRequest) {
 }
 
 // ── Konfigurasi Matcher ───────────────────────────────────────────────────────
-// Berjalan pada semua rute KECUALI internal Next.js dan aset statis.
+// Berjalan pada semua rute KECUALI internal Next.js, API, dan aset statis (gambar, dll).
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

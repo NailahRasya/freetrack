@@ -132,123 +132,117 @@ export default function ProfilePage() {
     const syncAndFetchData = async () => {
       console.log("🔄 Profile Sync & Fetch started for role:", role);
       
-      // 1. Initial Profile Setup
       if (user.profile) {
         setFullName(user.profile.full_name || "");
       }
 
-      const localRaw = localStorage.getItem("freetrack_onboarding");
+      const localRaw = localStorage.getItem(STORAGE_KEY);
       const obData = localRaw ? JSON.parse(localRaw) : null;
 
-      console.log("🔍 Checking localStorage for:", STORAGE_KEY, obData);
-
-      // --- CASE A: SYNC DATA DARI ONBOARDING ---
+      // CASE A: Sinkronisasi Data Onboarding Lokal ke Database
       if (obData && obData.role === role) {
         Swal.fire({
-          title: 'Data Onboarding Ditemukan!',
-          text: 'Sedang menyambungkan pilihan Anda ke profil...',
+          title: 'Data Onboarding!',
+          text: 'Menyambungkan pilihan Anda...',
           icon: 'info',
-          timer: 2000,
+          timer: 1500,
           showConfirmButton: false,
           background: '#0F1B2E',
           color: '#fff'
         });
-        
-        if (role === "freelancer") {
+
+        try {
+          if (role === "freelancer") {
             const rawSkills = obData.skillCategories || [];
             const derivedCats = Array.from(new Set(rawSkills.map((id: string) => getCategoryIdBySkillId(id)).filter(Boolean))) as string[];
             
-            // 1. Tampilkan di UI langsung (Instant)
-            setSelectedSubSkills(rawSkills);
-            setSelectedCats(derivedCats);
-            setExpandedCats(derivedCats);
-            setYearsOfExp(obData.yearsOfExperience || 1);
-            setExpLevel(obData.experienceLevel || "mid");
-            setPortfolioUrl(obData.portfolioUrl || "");
-            setTools(obData.tools || []);
-            setPreferredScales(obData.preferredClientScales || []);
-            setWorkTypePrefs(obData.workTypePreference || []);
+            const freelancerPayload = {
+              user_id: user.id,
+              skill_categories: rawSkills,
+              years_of_experience: obData.yearsOfExperience,
+              experience_level: obData.experienceLevel || "mid",
+              portfolio_url: obData.portfolioUrl || "",
+              tools: obData.tools || [],
+              preferred_client_scales: obData.preferredClientScales || [],
+              work_type_preference: obData.workTypePreference || []
+            };
 
-            // 2. Coba simpan ke DB
-            try {
-              const freelancerPayload = {
-                user_id: user.id,
-                skill_categories: rawSkills,
-                years_of_experience: obData.yearsOfExperience,
-                experience_level: obData.experienceLevel || "mid",
-                portfolio_url: obData.portfolioUrl || "",
-                tools: obData.tools || [],
-                preferred_client_scales: obData.preferredClientScales || [],
-                work_type_preference: obData.workTypePreference || []
-              };
-
-              const { error: syncErr } = await supabase.from("onboarding_freelancer").upsert(freelancerPayload);
-              if (syncErr) throw syncErr;
-
-              await supabase.from("profiles").update({
-                skills: Array.from(new Set([...derivedCats, ...rawSkills])),
-                experience_level: obData.experienceLevel || "mid",
-                years_of_experience: obData.yearsOfExperience || 1,
-                onboarding_completed: true
-              }).eq("id", user.id);
-
-              // BERHASIL: Baru boleh hapus local storage
-              localStorage.removeItem("freetrack_onboarding");
-              console.log("✅ AUTO-SYNC: Success!");
-              
-              Swal.fire({
-                icon: 'success',
-                title: 'Sinkronisasi Berhasil!',
-                text: 'Data profil Anda sekarang sudah permanen.',
-                timer: 2000,
-                background: '#0F1B2E',
-                color: '#fff'
-              });
-            } catch (err: any) {
-              console.error("❌ SYNC ERROR:", err);
-              // JANGAN hapus local storage agar data tidak hilang saat refresh
-              Swal.fire({
-                icon: 'error',
-                title: 'Gagal Sinkron ke Database',
-                text: 'Data Anda tetap aman di browser, tapi gagal simpan ke server: ' + err.message,
-                background: '#0F1B2E',
-                color: '#fff'
-              });
+            // CEK EKSISTENSI (Manual Upsert)
+            const { data: existing } = await supabase.from("onboarding_freelancer").select("user_id").eq("user_id", user.id).maybeSingle();
+            
+            let response;
+            if (existing) {
+              response = await supabase.from("onboarding_freelancer").update(freelancerPayload).eq("user_id", user.id);
+            } else {
+              response = await supabase.from("onboarding_freelancer").insert(freelancerPayload);
             }
+
+            if (response.error) throw response.error;
+
+            await supabase.from("profiles").update({
+              skills: Array.from(new Set([...derivedCats, ...rawSkills])),
+              experience_level: obData.experienceLevel || "mid",
+              years_of_experience: obData.yearsOfExperience || 1,
+              onboarding_completed: true
+            }).eq("id", user.id);
+
           } else {
-            // Logic Client Sync (Sama polanya)
-            try {
-              const rawSkills = obData.projectCategories || [];
-              const derivedCats = Array.from(new Set(rawSkills.map((id: string) => getCategoryIdBySkillId(id)).filter(Boolean))) as string[];
+            const rawSkills = obData.projectCategories || [];
+            const payload = {
+              user_id: user.id,
+              project_categories: rawSkills,
+              business_scale: obData.businessScale || "",
+              work_type: obData.workType || "",
+              experience_preference: obData.experiencePreference || "mid"
+            };
 
-              setBusinessScale(obData.businessScale || "UMKM");
-              setWorkType(obData.workType || "one-time");
-              setExpPreference(obData.experiencePreference || "mid");
-              setSelectedCats(derivedCats);
-              setSelectedSubSkills(rawSkills);
+            // CEK EKSISTENSI (Manual Upsert)
+            const { data: existing } = await supabase.from("onboarding_client").select("user_id").eq("user_id", user.id).maybeSingle();
+            
+            let response;
+            if (existing) {
+              response = await supabase.from("onboarding_client").update(payload).eq("user_id", user.id);
+            } else {
+              response = await supabase.from("onboarding_client").insert(payload);
+            }
 
-              const { error: syncErr } = await supabase.from("onboarding_client").upsert({
-                user_id: user.id,
-                project_categories: rawSkills,
-                business_scale: obData.businessScale || "",
-                work_type: obData.workType || "",
-                experience_preference: obData.experiencePreference || "mid"
-              });
-              if (syncErr) throw syncErr;
+            if (response.error) throw response.error;
 
-              localStorage.removeItem("freetrack_onboarding");
-            } catch (err) { console.error(err); }
+            await supabase.from("profiles").update({
+              onboarding_completed: true
+            }).eq("id", user.id);
           }
-          return;
-        }
 
-      // --- CASE B: LOAD DARI DATABASE (EXISTING USER) ---
+          localStorage.removeItem(STORAGE_KEY);
+          Swal.fire({
+            icon: 'success',
+            title: 'Sinkronisasi Berhasil!',
+            text: 'Data onboarding Anda telah tersimpan permanen.',
+            timer: 1500,
+            background: '#0F1B2E',
+            color: '#fff'
+          });
+        } catch (err: any) {
+          console.error("❌ CRITICAL SYNC ERROR:", err);
+          const detailedError = err.message || JSON.stringify(err);
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal Sinkron ke Database',
+            text: detailedError,
+            footer: `Object: ${JSON.stringify(err).substring(0, 100)}...`,
+            background: '#0F1B2E',
+            color: '#fff'
+          });
+        }
+      }
+
+      // CASE B: Load Data dari Database
       if (role === "freelancer") {
         const { data } = await supabase.from("onboarding_freelancer").select("*").eq("user_id", user.id).maybeSingle();
         if (data) {
           const rawSkills = data.skill_categories || [];
           const derivedCats = Array.from(new Set(rawSkills.map((id: string) => getCategoryIdBySkillId(id)).filter(Boolean))) as string[];
-          
           setSelectedSubSkills(rawSkills);
           setSelectedCats(derivedCats);
           setExpandedCats(derivedCats);

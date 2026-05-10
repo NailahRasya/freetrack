@@ -87,7 +87,7 @@ export default function FreelancerStep2WorkPreferences({ data, updateData }: Fre
               <SelectionChip
                 key={item.id}
                 active={data.workTypePreference?.includes(item.id)}
-                onClick={() => toggleList("workTypePreference", item.id)}
+                onClick={() => updateData({ workTypePreference: [item.id] })}
                 icon={item.icon}
                 label={item.label}
                 accent="#34D399"
