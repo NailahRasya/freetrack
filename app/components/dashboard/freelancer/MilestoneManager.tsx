@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Edit2, Trash2, CheckCircle2, Lock, UploadCloud, Clock } from "lucide-react";
 import UploadEvidenceModal from "./UploadEvidenceModal";
 
 import CreateMilestoneModal from "./CreateMilestoneModal";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { useContacts } from "@/lib/hooks/useContacts";
+import { ChevronDown, User, Briefcase as BriefcaseIcon } from "lucide-react";
 
 import { formatRupiah, parseRupiah } from "@/utils/format";
 
@@ -23,7 +25,7 @@ interface Milestone {
 export default function MilestoneManager({ 
   clientName, 
   projectId, 
-  initialMilestones = [],
+  initialMilestones,
   onMilestoneCreated,
   readOnly = false
 }: { 
@@ -33,16 +35,60 @@ export default function MilestoneManager({
   onMilestoneCreated?: () => void;
   readOnly?: boolean;
 }) {
+  const { contacts } = useContacts();
   const { projects } = useProjects();
   const [isEditingId, setIsEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Milestone>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter only active/pending projects for selection
+  // Internal selection state for dashboard usage
+  const [localProjectId, setLocalProjectId] = useState<string | null>(projectId || null);
+  const [localMilestones, setLocalMilestones] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Sync prop changes
+  useEffect(() => {
+    if (projectId) setLocalProjectId(projectId);
+  }, [projectId]);
+
+  // Fetch milestones if using local selection
+  useEffect(() => {
+    const fetchMilestones = async () => {
+      const pid = projectId || localProjectId;
+      if (!pid) {
+        setLocalMilestones([]);
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/milestones?project_id=${pid}`);
+        const json = await res.json();
+        setLocalMilestones(json.data || []);
+      } catch (err) {
+        console.error("Failed to fetch milestones:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Only fetch if we don't have initialMilestones from props
+    if (!initialMilestones || initialMilestones.length === 0) {
+       fetchMilestones();
+    }
+  }, [projectId, localProjectId, !!initialMilestones]);
+
   const activeProjects = useMemo(() => {
     return projects.filter(p => p.status !== "draft" && p.status !== "completed");
   }, [projects]);
+
+  // Projects filtered by selected client (if any)
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const clientFilteredProjects = useMemo(() => {
+    if (!selectedClientId) return activeProjects;
+    return activeProjects.filter(p => p.client_id === selectedClientId);
+  }, [activeProjects, selectedClientId]);
   
   const [uploadModalState, setUploadModalState] = useState<{isOpen: boolean, milestoneId: string | null, title: string}>({
     isOpen: false,
@@ -51,11 +97,12 @@ export default function MilestoneManager({
   });
 
   const milestones = useMemo(() => {
-    return initialMilestones.map(m => ({
+    const source = (initialMilestones && initialMilestones.length > 0) ? initialMilestones : localMilestones;
+    return source.map(m => ({
       ...m,
       price: m.amount ? formatRupiah(m.amount) : (m.price || "Rp 0")
     }));
-  }, [initialMilestones]);
+  }, [initialMilestones, localMilestones]);
 
   const progressPercentage = useMemo(() => {
     if (milestones.length === 0) return 0;
@@ -69,7 +116,7 @@ export default function MilestoneManager({
     setIsSubmitting(true);
     try {
       const amount = parseRupiah(data.price);
-      const finalProjectId = data.project_id || projectId;
+      const finalProjectId = data.project_id || projectId || localProjectId;
 
       if (!finalProjectId) {
         alert("Silakan pilih proyek/klien terlebih dahulu.");
@@ -89,6 +136,12 @@ export default function MilestoneManager({
       });
 
       if (res.ok) {
+        // Refresh local milestones if we are managing them
+        if (!initialMilestones || initialMilestones.length === 0) {
+          const r = await fetch(`/api/milestones?project_id=${finalProjectId}`);
+          const j = await r.json();
+          setLocalMilestones(j.data || []);
+        }
         onMilestoneCreated?.();
         setIsModalOpen(false); // Only close on success
       } else {
@@ -173,32 +226,88 @@ export default function MilestoneManager({
         
         {/* Header & Progres Keseluruhan */}
         <div style={{ marginBottom: "24px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <div>
-              <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Target Pencapaian {clientName ? `— ${clientName}` : ""}</h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", gap: "16px" }}>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                Target Pencapaian {clientName || (localProjectId && activeProjects.find(p => p.id === localProjectId)?.client?.full_name) ? `— ${clientName || activeProjects.find(p => p.id === localProjectId)?.client?.full_name}` : ""}
+              </h3>
               <p style={{ color: "rgba(226, 232, 240, 0.5)", fontSize: "13px" }}>Kelola tahapan dan unggah bukti proyek.</p>
             </div>
             {!readOnly && (
               <button 
                 onClick={() => setIsModalOpen(true)}
                 style={{ 
-                  padding: "6px 12px", 
-                  fontSize: "11px", 
+                  padding: "8px 16px", 
+                  fontSize: "12px", 
                   display: "flex", 
                   alignItems: "center", 
                   gap: "6px",
                   background: "var(--gradient-primary)",
                   border: "none",
-                  borderRadius: "8px",
+                  borderRadius: "10px",
                   color: "#fff",
                   fontWeight: "700",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(26,54,240,0.3)"
                 }}
               >
                 <Plus size={14} /> Buat Milestone
               </button>
             )}
           </div>
+
+          {/* Selector Proyek (Muncul jika tidak ada projectId dari props) */}
+          {!projectId && (
+            <div style={{ 
+              display: "flex", 
+              gap: "12px", 
+              marginBottom: "20px", 
+              background: "rgba(255,255,255,0.03)", 
+              padding: "12px", 
+              borderRadius: "12px",
+              border: "1px solid rgba(255,255,255,0.05)"
+            }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: "800", color: "rgba(226,232,240,0.3)", textTransform: "uppercase" }}>Klien</label>
+                <div style={{ position: "relative" }}>
+                  <User size={12} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.2)" }} />
+                  <select 
+                    value={selectedClientId || ""} 
+                    onChange={(e) => {
+                      setSelectedClientId(e.target.value);
+                      setLocalProjectId(null);
+                    }}
+                    style={{ ...selectStyle, paddingLeft: "28px" }}
+                  >
+                    <option value="" style={{ background: "#0F172A" }}>Pilih Klien...</option>
+                    {contacts.map(c => (
+                      <option key={c.id} value={c.client?.id} style={{ background: "#0F172A" }}>
+                        {c.client?.full_name || "Tanpa Nama"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: "800", color: "rgba(226,232,240,0.3)", textTransform: "uppercase" }}>Proyek</label>
+                <div style={{ position: "relative" }}>
+                  <BriefcaseIcon size={12} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.2)" }} />
+                  <select 
+                    value={localProjectId || ""} 
+                    onChange={(e) => setLocalProjectId(e.target.value)}
+                    style={{ ...selectStyle, paddingLeft: "28px" }}
+                  >
+                    <option value="" style={{ background: "#0F172A" }}>Pilih Proyek...</option>
+                    {clientFilteredProjects.map(p => (
+                      <option key={p.id} value={p.id} style={{ background: "#0F172A" }}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div style={{ background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px", fontWeight: "700" }}>
@@ -237,7 +346,11 @@ export default function MilestoneManager({
                   fontSize: "14px"
                 }}
               >
-                Belum ada milestone untuk proyek ini.
+                {isLoading ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                    <Clock size={16} className="animate-spin" /> Memuat...
+                  </div>
+                ) : localProjectId || projectId ? "Belum ada milestone untuk proyek ini." : "Silakan pilih proyek untuk mengelola milestone."}
               </motion.div>
             ) : milestones.map((milestone) => {
               const isLocked = milestone.status === "Disetujui" || milestone.status === "Menunggu Persetujuan";
@@ -388,8 +501,8 @@ export default function MilestoneManager({
         onClose={() => setIsModalOpen(false)} 
         onSubmit={handleCreateMilestone}
         isSubmitting={isSubmitting}
-        projects={projectId ? undefined : activeProjects}
-        defaultProjectId={projectId}
+        projects={activeProjects}
+        defaultProjectId={projectId || localProjectId || undefined}
       />
 
       <UploadEvidenceModal 
@@ -449,4 +562,17 @@ const saveBtnStyle = {
   fontWeight: "700" as const,
   cursor: "pointer",
   boxShadow: "0 4px 12px rgba(26,54,240,0.2)"
+};
+
+const selectStyle = {
+  width: "100%",
+  padding: "8px 12px",
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid rgba(255,255,255,0.1)",
+  borderRadius: "8px",
+  color: "#fff",
+  fontSize: "12px",
+  outline: "none",
+  cursor: "pointer",
+  appearance: "none" as const
 };

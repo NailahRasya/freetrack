@@ -316,7 +316,26 @@ export default function Messages() {
             <div style={{ flex: 1, padding: "24px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}>
               {messages.map((m: any, i: number) => (
                 <div key={m.id || i} style={{ display: "flex", flexDirection: "column", alignItems: m.sender_id === user?.id ? "flex-end" : "flex-start" }}>
-                  <div style={{ maxWidth: "70%", padding: "12px 18px", borderRadius: m.sender_id === user?.id ? "20px 20px 4px 20px" : "20px 20px 20px 4px", background: m.sender_id === user?.id ? "linear-gradient(135deg, #4D63FF, #3B82F6)" : "rgba(255, 255, 255, 0.05)", color: "#fff", fontSize: "14px", lineHeight: "1.5" }}>{m.content}</div>
+                  <div style={{ 
+                    maxWidth: "70%", 
+                    padding: "12px 18px", 
+                    borderRadius: m.sender_id === user?.id ? "20px 20px 4px 20px" : "20px 20px 20px 4px", 
+                    background: m.sender_id === user?.id ? "linear-gradient(135deg, #4D63FF, #3B82F6)" : "rgba(255, 255, 255, 0.05)", 
+                    color: "#fff", 
+                    fontSize: "14px", 
+                    lineHeight: "1.5" 
+                  }}>
+                    {m.content}
+                  </div>
+                  <span style={{ 
+                    fontSize: "10px", 
+                    color: "rgba(226, 232, 240, 0.3)", 
+                    marginTop: "4px",
+                    marginRight: m.sender_id === user?.id ? "4px" : "0",
+                    marginLeft: m.sender_id === user?.id ? "0" : "4px"
+                  }}>
+                    {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
               ))}
               <div ref={messagesEndRef} />

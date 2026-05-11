@@ -524,11 +524,13 @@ export default function ProfilePage() {
           <div className="glass-card" style={{ padding: "32px", textAlign: "center", position: "sticky", top: "100px" }}>
             <div style={{ position: "relative", width: "140px", height: "140px", margin: "0 auto 24px" }}>
               <div style={{ width: "100%", height: "100%", borderRadius: "40px", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "48px", fontWeight: "800", color: "#fff", boxShadow: "0 20px 40px rgba(77, 99, 255, 0.2)" }}>
-                {fullName?.charAt(0).toUpperCase() || "?"}
+                {(fullName || user?.user_metadata?.full_name || "User")
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .substring(0, 2)}
               </div>
-              <button style={{ position: "absolute", bottom: "-4px", right: "-4px", width: "42px", height: "42px", borderRadius: "14px", background: "#4D63FF", border: "4px solid #0B1220", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
-                <Camera size={18} />
-              </button>
             </div>
             <h3 style={{ fontSize: "20px", fontWeight: "800", color: "#fff", marginBottom: "8px" }}>{fullName || "User"}</h3>
             <div style={{ display: "inline-flex", padding: "6px 16px", background: isClient ? "rgba(77, 99, 255, 0.1)" : "rgba(16, 185, 129, 0.1)", borderRadius: "20px", border: `1px solid ${isClient ? "rgba(77, 99, 255, 0.2)" : "rgba(16, 185, 129, 0.2)"}`, fontSize: "12px", fontWeight: "800", color: isClient ? "#4D63FF" : "#10B981", textTransform: "uppercase", letterSpacing: "1px" }}>
@@ -542,7 +544,7 @@ export default function ProfilePage() {
                </div>
                <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "rgba(226, 232, 240, 0.4)", fontSize: "14px" }}>
                   <Shield size={16} />
-                  <span>ID: {user?.id?.substring(0, 8)}...</span>
+                  <span>ID: {user?.id?.substring(0, 8)}</span>
                </div>
             </div>
           </div>

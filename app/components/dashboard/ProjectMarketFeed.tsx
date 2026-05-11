@@ -174,23 +174,40 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
                   cursor: "pointer"
                 }}
               >
-                {isClient && (
-                   <div style={{ position: "absolute", top: "14px", left: "14px", display: "flex", gap: "6px", zIndex: 30, background: "rgba(13, 25, 48, 0.6)", padding: "4px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                      <motion.button whileHover={{ scale: 1.1 }} onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(project); }} style={{ width: "26px", height: "26px", borderRadius: "6px", background: "transparent", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
-                        <Edit3 size={13} />
-                      </motion.button>
-                      <motion.button whileHover={{ scale: 1.1 }} onClick={(e) => { e.stopPropagation(); if (onDelete) onDelete(project.id); }} style={{ width: "26px", height: "26px", borderRadius: "6px", background: "transparent", border: "none", color: "rgba(239, 68, 68, 0.6)", cursor: "pointer" }}>
-                        <Trash2 size={13} />
-                      </motion.button>
-                   </div>
-                 )}
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: isClient ? "24px" : "0" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                 {/* Bagian Atas: Kategori & Aksi (Client) atau Budget */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <div style={{ padding: "6px 12px", background: "rgba(77, 99, 255, 0.08)", borderRadius: "8px", color: "#4D63FF", fontSize: "10px", fontWeight: "900", textTransform: "uppercase" }}>
                       {getLabelById(project.category_id) || "Design"}
                     </div>
+                    
+                    {isClient && (
+                      <div style={{ 
+                        display: "flex", 
+                        gap: "4px", 
+                        background: "rgba(255, 255, 255, 0.03)", 
+                        padding: "4px", 
+                        borderRadius: "10px", 
+                        border: "1px solid rgba(255, 255, 255, 0.05)"
+                      }}>
+                        <motion.button 
+                          whileHover={{ scale: 1.1, background: "rgba(255,255,255,0.05)" }} 
+                          onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(project); }} 
+                          style={{ width: "24px", height: "24px", borderRadius: "6px", background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                          <Edit3 size={12} />
+                        </motion.button>
+                        <motion.button 
+                          whileHover={{ scale: 1.1, background: "rgba(239,68,68,0.1)" }} 
+                          onClick={(e) => { e.stopPropagation(); if (onDelete) onDelete(project.id); }} 
+                          style={{ width: "24px", height: "24px", borderRadius: "6px", background: "transparent", border: "none", color: "rgba(239, 68, 68, 0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                          <Trash2 size={12} />
+                        </motion.button>
+                      </div>
+                    )}
                   </div>
+
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: "18px", fontWeight: "900", color: "#00FFA3" }}>{project.budget}</div>
                     <div style={{ fontSize: "10px", color: "rgba(226, 232, 240, 0.3)" }}>Est. Budget</div>
@@ -204,10 +221,21 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
                   </p>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    {project.cleanSkills?.slice(0, 2).map((skill: string) => (
-                      <span key={skill} style={{ fontSize: "11px", fontWeight: "700", color: "#10B981", background: "rgba(16, 185, 129, 0.06)", padding: "4px 10px", borderRadius: "8px" }}>#{skill}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxWidth: "60%" }}>
+                    {project.cleanSkills?.slice(0, 3).map((skill: string) => (
+                      <span key={skill} style={{ 
+                        fontSize: "10px", 
+                        fontWeight: "700", 
+                        color: "#10B981", 
+                        background: "rgba(16, 185, 129, 0.05)", 
+                        padding: "5px 10px", 
+                        borderRadius: "8px",
+                        whiteSpace: "nowrap",
+                        border: "1px solid rgba(16, 185, 129, 0.1)"
+                      }}>
+                        #{skill}
+                      </span>
                     ))}
                   </div>
 

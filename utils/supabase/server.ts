@@ -32,3 +32,20 @@ export async function createClient() {
   );
 }
 
+/**
+ * Membuat klien Supabase dengan hak akses Admin (Service Role).
+ * Gunakan ini HANYA di Route Handlers untuk operasi sensitif seperti menghapus user.
+ */
+export async function createAdminClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() { return []; },
+        setAll() {},
+      },
+    }
+  );
+}
+

@@ -456,38 +456,36 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
             </motion.div>
           )}
 
-          <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"12px 16px",background:"rgba(77,99,255,0.06)",border:"1px solid rgba(77,99,255,0.15)",borderRadius:"10px"}}>
-            <Target size={14} color="#4D63FF" />
-            <p style={{fontSize:"12px",color:"rgba(226,232,240,0.4)",margin:0}}>ID unik dibuat otomatis saat proyek disimpan</p>
-          </div>
 
           {err && <p style={{color:"#FF4D6A",fontSize:"13px",margin:0,fontWeight:"600"}}>⚠️ {err}</p>}
         </div>
 
         <div style={{display:"flex",gap:"10px",marginTop:"32px"}}>
           <button onClick={onClose} className="btn-secondary"
-            style={{padding:"12px 16px",borderRadius:"12px",fontSize:"14px",fontWeight:"700",cursor:"pointer"}}>Batal</button>
+            style={{padding:"10px 20px",borderRadius:"12px",fontSize:"13px",fontWeight:"700",cursor:"pointer", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)"}}>Batal</button>
+          <div style={{flex: 1}} />
           
           {(!initialData || initialData.status === "draft" || initialData.status === "published" || isNego) && (
             <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.98}} 
               onClick={isNego ? handleSend : handleDraft} disabled={loading}
               style={{
-                flex:1,padding:"12px",borderRadius:"12px",fontSize:"14px",fontWeight:"700",cursor:"pointer",
-                background: isNego ? "rgba(255, 191, 0, 0.15)" : "rgba(124,58,237,0.15)",
-                border: isNego ? "1px solid rgba(255, 191, 0, 0.3)" : "1px solid rgba(124,58,237,0.3)",
-                color: isNego ? "#FFBF00" : "#7C3AED",
-                display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"
+                padding:"10px 24px",borderRadius:"12px",fontSize:"13px",fontWeight:"700",cursor:"pointer",
+                background: isNego ? "rgba(255, 191, 0, 0.1)" : "rgba(124,58,237,0.1)",
+                border: isNego ? "1px solid rgba(255, 191, 0, 0.25)" : "1px solid rgba(124,58,237,0.25)",
+                color: isNego ? "#FFBF00" : "#A78BFA",
+                display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",
+                transition: "all 0.2s"
               }}>
-              <FileEdit size={15}/> {isNego ? "Ajukan Nego" : initialData ? "Simpan Perubahan" : "Simpan Draf"}
+              <FileEdit size={14}/> {isNego ? "Ajukan Nego" : initialData ? "Simpan Perubahan" : "Simpan Draf"}
             </motion.button>
           )}
 
           {(!initialData || initialData.status === "draft") && (
-            <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.98}} onClick={handleSend} disabled={loading}
+            <motion.button whileHover={{scale:1.02, y: -2}} whileTap={{scale:0.98}} onClick={handleSend} disabled={loading}
               className="btn-primary"
-              style={{flex:1,padding:"12px",borderRadius:"12px",fontSize:"14px",fontWeight:"700",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}>
+              style={{padding:"10px 28px",borderRadius:"12px",fontSize:"13px",fontWeight:"800",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px", boxShadow: "0 10px 20px rgba(77, 99, 255, 0.2)"}}>
               <Plus size={15}/> {role === "client" 
-                ? (form.clientId ? "Kirim ke Freelancer" : "Publikasikan ke Marketplace") 
+                ? (form.clientId ? "Kirim ke Freelancer" : "Publikasikan Proyek") 
                 : "Kirim ke Klien"}
             </motion.button>
           )}

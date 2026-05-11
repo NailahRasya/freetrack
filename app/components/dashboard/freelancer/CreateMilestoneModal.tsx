@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Target, DollarSign, Calendar, AlignLeft, Send, Loader2, Briefcase } from "lucide-react";
+import { X, Target, DollarSign, Calendar, AlignLeft, Send, Loader2, Briefcase, User } from "lucide-react";
 
 import { formatRupiah, parseRupiah } from "@/utils/format";
 
@@ -16,6 +16,32 @@ interface CreateMilestoneModalProps {
 }
 
 export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubmitting, projects, defaultProjectId }: CreateMilestoneModalProps) {
+  // Derive clients from projects prop
+  const clients = useMemo(() => {
+    if (!projects) return [];
+    const clientMap = new Map();
+    projects.forEach(p => {
+      if (p.client && !clientMap.has(p.client.id)) {
+        clientMap.set(p.client.id, p.client);
+      }
+    });
+    return Array.from(clientMap.values());
+  }, [projects]);
+
+  const [selectedClientId, setSelectedClientId] = useState(() => {
+    if (defaultProjectId && projects) {
+      const p = projects.find(proj => proj.id === defaultProjectId);
+      return p?.client_id || "";
+    }
+    return "";
+  });
+
+  const filteredProjects = useMemo(() => {
+    if (!projects) return [];
+    if (!selectedClientId) return projects;
+    return projects.filter(p => p.client_id === selectedClientId);
+  }, [projects, selectedClientId]);
+
   const [formData, setFormData] = useState({
     title: "",
     price: "",
@@ -23,6 +49,18 @@ export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubm
     description: "",
     project_id: defaultProjectId || ""
   });
+
+  // Effect to sync project selection when client changes
+  useEffect(() => {
+    if (selectedClientId) {
+      const projectsForClient = projects?.filter(p => p.client_id === selectedClientId) || [];
+      if (projectsForClient.length === 1) {
+        setFormData(prev => ({ ...prev, project_id: projectsForClient[0].id }));
+      } else if (!projectsForClient.find(p => p.id === formData.project_id)) {
+        setFormData(prev => ({ ...prev, project_id: "" }));
+      }
+    }
+  }, [selectedClientId, projects]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = parseRupiah(e.target.value);
@@ -107,23 +145,41 @@ export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubm
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px", position: "relative" }}>
-              {/* Project Selection (Conditional) */}
+              {/* Client & Project Selection (Split for clarity) */}
               {projects && projects.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label style={labelStyle}><Briefcase size={14} /> Pilih Proyek / Klien</label>
-                  <select
-                    required
-                    style={inputStyle}
-                    value={formData.project_id}
-                    onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                  >
-                    <option value="" style={{ background: "#0F172A" }}>-- Pilih Proyek Aktif --</option>
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id} style={{ background: "#0F172A" }}>
-                        {p.title} ({p.client?.full_name || "Tanpa Nama"})
-                      </option>
-                    ))}
-                  </select>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={labelStyle}><User size={14} /> Pilih Klien</label>
+                    <select
+                      required
+                      style={inputStyle}
+                      value={selectedClientId}
+                      onChange={(e) => setSelectedClientId(e.target.value)}
+                    >
+                      <option value="" style={{ background: "#0F172A" }}>-- Pilih Klien --</option>
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id} style={{ background: "#0F172A" }}>
+                          {c.full_name || "Tanpa Nama"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={labelStyle}><Briefcase size={14} /> Pilih Proyek</label>
+                    <select
+                      required
+                      style={inputStyle}
+                      value={formData.project_id}
+                      onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                    >
+                      <option value="" style={{ background: "#0F172A" }}>-- Pilih Proyek --</option>
+                      {filteredProjects.map(p => (
+                        <option key={p.id} value={p.id} style={{ background: "#0F172A" }}>
+                          {p.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
 

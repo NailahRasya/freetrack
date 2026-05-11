@@ -16,6 +16,11 @@ export default function MarketPage() {
   const { contacts } = useContacts();
   const [showCreate, setShowCreate] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleDelete = async (id: string) => {
     const result = await Swal.fire({
@@ -75,7 +80,7 @@ export default function MarketPage() {
             </p>
           </motion.div>
 
-          {role === "client" && (
+          {mounted && role === "client" && (
             <motion.button 
               whileHover={{ scale: 1.05 }} 
               whileTap={{ scale: 0.95 }}
@@ -97,11 +102,11 @@ export default function MarketPage() {
         </div>
       </header>
 
-      <ProjectMarketFeed onEdit={handleEdit} onDelete={handleDelete} />
+      {mounted && <ProjectMarketFeed onEdit={handleEdit} onDelete={handleDelete} />}
 
       {/* Modal Buat Proyek */}
       <AnimatePresence>
-        {showCreate && (
+        {mounted && showCreate && (
           <CreateProjectModal
             contacts={contacts}
             onClose={() => {

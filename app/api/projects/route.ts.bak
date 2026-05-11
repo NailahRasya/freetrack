@@ -18,6 +18,8 @@ async function getAuth(request: NextRequest) {
   return { user, role, supabase };
 }
 
+// ── GET ──────────────────────────────────────────────────────────────────────
+
 export async function GET(request: NextRequest) {
   const { user, supabase } = await getAuth(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -35,6 +37,8 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ data });
 }
 
+// ── POST ─────────────────────────────────────────────────────────────────────
+
 export async function POST(request: NextRequest) {
   const { user, role, supabase } = await getAuth(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,6 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Nama proyek wajib diisi" }, { status: 400 });
   }
 
+  // Generate project_code unik
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let suffix = "";
   for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
@@ -103,6 +108,8 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ data }, { status: 201 });
 }
+
+// ── PATCH ─────────────────────────────────────────────────────────────────────
 
 export async function PATCH(request: NextRequest) {
   const { user, role, supabase } = await getAuth(request);
@@ -175,6 +182,7 @@ export async function PATCH(request: NextRequest) {
       });
     }
   } else {
+    // Freelancer update
     const updateData: any = { updated_at: new Date().toISOString() };
     if (nextNegoCount > (currentProject?.negotiation_count || 0)) updateData.negotiation_count = nextNegoCount;
     if (payload.status) updateData.status = payload.status;
@@ -195,7 +203,7 @@ export async function PATCH(request: NextRequest) {
         .insert({
           project_code: `PRJ-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
           title: checkProject.title,
-          description: (checkProject.description || "") + `\n\n[source_id:${checkProject.id}]`,
+          description: checkProject.description,
           budget: checkProject.budget,
           deadline: checkProject.deadline,
           status: "pending_client",
@@ -261,29 +269,19 @@ export async function PATCH(request: NextRequest) {
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
 
-      // Cari ID postingan asli dari deskripsi
-      const sourceIdMatch = data.description?.match(/\[source_id:([a-f0-9-]+)\]/);
-      const sourceId = sourceIdMatch ? sourceIdMatch[1] : null;
-
-      if (sourceId) {
-        await supabaseAdmin
-          .from("projects")
-          .delete()
-          .eq("id", sourceId);
-      } else {
-        // Fallback: cari berdasarkan judul jika ID tidak ditemukan (untuk data lama)
-        await supabaseAdmin
-          .from("projects")
-          .delete()
-          .eq("client_id", data.client_id)
-          .eq("status", "published")
-          .ilike("title", data.title.trim());
-      }
+      await supabaseAdmin
+        .from("projects")
+        .delete()
+        .eq("client_id", data.client_id)
+        .eq("status", "published")
+        .ilike("title", data.title.trim());
     }
   }
 
   return NextResponse.json({ data });
 }
+
+// ── DELETE ────────────────────────────────────────────────────────────────────
 
 export async function DELETE(request: NextRequest) {
   const { user, role, supabase } = await getAuth(request);

@@ -21,30 +21,24 @@ import { useSidebar, useUser } from "../../dashboard/layout";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { supabase } from "@/lib/supabase";
 
-/**
- * Item menu navigasi untuk sidebar dashboard.
- */
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dasbor", href: "/dashboard" },
-  { icon: Sparkles, label: "Marketplace", href: "/dashboard/market" },
-  { icon: Briefcase, label: "Proyek Saya", href: "/dashboard/projects" },
-  { icon: Users, label: "Kontak", href: "/dashboard/contacts" },
-  { icon: Wallet, label: "Pembayaran", href: "/dashboard/payments" },
-  { icon: Flag, label: "Target Pencapaian", href: "/dashboard/milestones" },
-  { icon: MessageSquare, label: "Pesan", href: "/dashboard/messages" },
-  { icon: User, label: "Profil Saya", href: "/dashboard/profile" },
-  { icon: Settings, label: "Pengaturan", href: "/dashboard/settings" },
-];
-
-/**
- * Komponen Sidebar untuk dashboard utama, mendukung mode ciut (collapsed).
- */
 export default function DashboardSidebar() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   
   const { collapsed, setCollapsed } = useSidebar();
-  const { user, role } = useUser();
+  const { user, role, t } = useUser();
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: t("dashboard"), href: "/dashboard" },
+    { icon: Sparkles, label: t("marketplace"), href: "/dashboard/marketplace" },
+    { icon: Briefcase, label: t("my_projects"), href: "/dashboard/projects" },
+    { icon: Users, label: t("contacts"), href: "/dashboard/contacts" },
+    { icon: Wallet, label: t("payments"), href: "/dashboard/payments" },
+    { icon: Flag, label: t("milestones"), href: "/dashboard/milestones" },
+    { icon: MessageSquare, label: t("messages"), href: "/dashboard/messages" },
+    { icon: User, label: t("my_profile"), href: "/dashboard/profile" },
+    { icon: Settings, label: t("settings"), href: "/dashboard/settings" },
+  ];
   const { projects } = useProjects();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -91,8 +85,7 @@ export default function DashboardSidebar() {
       className="glass-card"
       style={{
         width: collapsed ? "80px" : "260px",
-        height: "calc(100vh - 32px)",
-        margin: "16px",
+        height: "100vh",
         position: "fixed",
         left: 0,
         top: 0,
@@ -102,8 +95,10 @@ export default function DashboardSidebar() {
         padding: "24px 12px",
         transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
         overflow: "hidden",
-        border: "1px solid var(--glass-border)",
-        background: "rgba(13, 27, 62, 0.8)",
+        borderRadius: 0,
+        border: "none",
+        borderRight: "1px solid var(--glass-border)",
+        background: "rgba(10, 15, 30, 0.95)",
         backdropFilter: "blur(20px)",
       }}
     >

@@ -16,6 +16,7 @@ import {
   Loader2
 } from "lucide-react";
 import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 import MilestoneManager from "./freelancer/MilestoneManager";
 import { formatRupiah, parseRupiah } from "@/utils/format";
 
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export default function NegotiationSidebar({ project, role, userId, onUpdate }: Props) {
+  const router = useRouter();
   const [isNegotiating, setIsNegotiating] = useState(false);
   const [negoBudget, setNegoBudget] = useState(project.budget || "");
   const [negoDeadline, setNegoDeadline] = useState(project.deadline || "");
@@ -121,6 +123,9 @@ export default function NegotiationSidebar({ project, role, userId, onUpdate }: 
       });
 
       if (res.ok) {
+        const result = await res.json();
+        const updatedProject = result.data;
+
         Swal.fire({ 
           title: "Berhasil", 
           text: newStatus === "agreed" ? "Kesepakatan telah disetujui!" : "Penawaran telah dikirim.", 
@@ -130,6 +135,14 @@ export default function NegotiationSidebar({ project, role, userId, onUpdate }: 
           background: "#0F1B2E", 
           color: "#fff" 
         });
+
+        // Jika ID berubah (misal: melamar dari marketplace membuat record baru)
+        if (updatedProject && updatedProject.id !== project.id) {
+          const params = new URLSearchParams(window.location.search);
+          params.set("project", updatedProject.id);
+          router.replace(`${window.location.pathname}?${params.toString()}`);
+        }
+
         onUpdate();
         setIsNegotiating(false);
       } else {

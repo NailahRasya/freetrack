@@ -5,11 +5,27 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
+import { Language, translations, TranslationKey } from "@/app/lib/i18n";
 
-const UserContext = createContext<any>(null);
+const UserContext = createContext<{
+  user: any;
+  role: "client" | "freelancer";
+  loading: boolean;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  systemNotifications: boolean;
+  setSystemNotifications: (enabled: boolean) => void;
+  t: (key: TranslationKey) => string;
+} | null>(null);
+
 const SidebarContext = createContext<any>(null);
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (!context) throw new Error("useUser must be used within a UserProvider");
+  return context;
+};
+
 export const useSidebar = () => useContext(SidebarContext);
 
 export default function DashboardLayout({
@@ -17,16 +33,40 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [language, setLanguage] = useState<Language>("id");
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<"client" | "freelancer">("client");
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [systemNotifications, setSystemNotifications] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);
+    const savedLang = localStorage.getItem("language") as Language;
+    if (savedLang && (savedLang === "id" || savedLang === "en")) {
+      setLanguage(savedLang);
+    }
+    const savedNotif = localStorage.getItem("systemNotifications");
+    if (savedNotif !== null) {
+      setSystemNotifications(savedNotif === "true");
+    }
   }, []);
+
+  const t = (key: TranslationKey): string => {
+    return translations[language][key] || key;
+  };
+
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
+    localStorage.setItem("language", lang);
+  };
+
+  const handleSetSystemNotifications = (enabled: boolean) => {
+    setSystemNotifications(enabled);
+    localStorage.setItem("systemNotifications", enabled.toString());
+  };
 
   useEffect(() => {
     async function getUser() {
@@ -99,7 +139,7 @@ export default function DashboardLayout({
   }, [pathname]);
 
   return (
-    <UserContext.Provider value={{ user, role, loading }}>
+    <UserContext.Provider value={{ user, role, loading, language, setLanguage: handleSetLanguage, systemNotifications, setSystemNotifications: handleSetSystemNotifications, t }}>
       <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
       <div style={{ 
         minHeight: "100vh", 
@@ -117,7 +157,7 @@ export default function DashboardLayout({
         {/* Layout Grid */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: collapsed ? "112px 1fr" : "292px 1fr",
+          gridTemplateColumns: collapsed ? "80px 1fr" : "260px 1fr",
           transition: "grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
           minHeight: "100vh",
           position: "relative",
