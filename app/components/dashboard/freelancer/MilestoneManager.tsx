@@ -24,12 +24,14 @@ export default function MilestoneManager({
   clientName, 
   projectId, 
   initialMilestones = [],
-  onMilestoneCreated
+  onMilestoneCreated,
+  readOnly = false
 }: { 
   clientName?: string; 
   projectId?: string;
   initialMilestones?: any[];
   onMilestoneCreated?: () => void;
+  readOnly?: boolean;
 }) {
   const { projects } = useProjects();
   const [isEditingId, setIsEditingId] = useState<string | null>(null);
@@ -176,13 +178,26 @@ export default function MilestoneManager({
               <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Target Pencapaian {clientName ? `— ${clientName}` : ""}</h3>
               <p style={{ color: "rgba(226, 232, 240, 0.5)", fontSize: "13px" }}>Kelola tahapan dan unggah bukti proyek.</p>
             </div>
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="btn-primary"
-              style={{ padding: "8px 16px", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <Plus size={16} /> Buat Milestone
-            </button>
+            {!readOnly && (
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                style={{ 
+                  padding: "6px 12px", 
+                  fontSize: "11px", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "6px",
+                  background: "var(--gradient-primary)",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "#fff",
+                  fontWeight: "700",
+                  cursor: "pointer"
+                }}
+              >
+                <Plus size={14} /> Buat Milestone
+              </button>
+            )}
           </div>
 
           <div style={{ background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
@@ -304,42 +319,46 @@ export default function MilestoneManager({
                     
                     {/* Aksi: Upload Bukti */}
                     <div>
-                      {milestone.status === "Menunggu DP" ? (
-                         <div style={{ fontSize: "12px", color: "var(--warning)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
-                           <Clock size={14} /> Unggahan terkunci sampai DP dibayar
-                         </div>
-                      ) : milestone.status === "Disetujui" ? (
-                         <div style={{ fontSize: "12px", color: "var(--accent)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
-                           <CheckCircle2 size={14} /> Selesai & Disetujui
-                         </div>
-                      ) : (
-                        <button
-                          onClick={() => setUploadModalState({ isOpen: true, milestoneId: milestone.id, title: milestone.title })}
-                          style={{
-                            background: "rgba(6, 182, 212, 0.1)",
-                            color: "var(--cyan)",
-                            border: "1px solid rgba(6, 182, 212, 0.3)",
-                            padding: "8px 16px",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            transition: "all 0.2s"
-                          }}
-                          onMouseOver={(e) => e.currentTarget.style.background = "rgba(6, 182, 212, 0.2)"}
-                          onMouseOut={(e) => e.currentTarget.style.background = "rgba(6, 182, 212, 0.1)"}
-                        >
-                          <UploadCloud size={14} /> Upload Bukti
-                        </button>
+                      {!readOnly && (
+                        <>
+                          {milestone.status === "Menunggu DP" ? (
+                             <div style={{ fontSize: "12px", color: "var(--warning)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
+                               <Clock size={14} /> Unggahan terkunci sampai DP dibayar
+                             </div>
+                          ) : milestone.status === "Disetujui" ? (
+                             <div style={{ fontSize: "12px", color: "var(--accent)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
+                               <CheckCircle2 size={14} /> Selesai & Disetujui
+                             </div>
+                          ) : (
+                            <button
+                              onClick={() => setUploadModalState({ isOpen: true, milestoneId: milestone.id, title: milestone.title })}
+                              style={{
+                                background: "rgba(6, 182, 212, 0.1)",
+                                color: "var(--cyan)",
+                                border: "1px solid rgba(6, 182, 212, 0.3)",
+                                padding: "8px 16px",
+                                borderRadius: "8px",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                transition: "all 0.2s"
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.background = "rgba(6, 182, 212, 0.2)"}
+                              onMouseOut={(e) => e.currentTarget.style.background = "rgba(6, 182, 212, 0.1)"}
+                            >
+                              <UploadCloud size={14} /> Upload Bukti
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
 
                     {/* Aksi: CRUD (Edit/Hapus) */}
                     <div style={{ display: "flex", gap: "8px" }}>
-                      {!isLocked && (
+                      {!readOnly && !isLocked && (
                         <>
                           <button 
                             onClick={() => { setIsEditingId(milestone.id); setEditForm(milestone); }}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import FreelancerStatsCards from "../../components/dashboard/freelancer/FreelancerStatsCards";
 import MilestoneManager from "../../components/dashboard/freelancer/MilestoneManager";
@@ -13,18 +13,64 @@ import ProjectMarketFeed from "../../components/dashboard/ProjectMarketFeed";
 import { useUser } from "../layout";
 
 import OnboardingWelcomeBanner from "../../components/dashboard/OnboardingWelcomeBanner";
-
+import { supabase } from "@/lib/supabase";
 export default function FreelancerDashboardPage() {
   const { user } = useUser();
   const [isChangeRequestOpen, setIsChangeRequestOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Mock data for progress - in real app would come from API/Context
-  const progressData = {
-    percentage: 65,
-    completedCount: 2,
-    totalCount: 3,
-    nextMilestone: "Backend Integration"
-  };
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const [progressData, setProgressData] = useState({
+    percentage: 0,
+    completedCount: 0,
+    totalCount: 0,
+    nextMilestone: ""
+  });
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchProgress = async () => {
+      // 1. Get the latest active project
+      const { data: project } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("freelancer_id", user.id)
+        .eq("status", "active")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (project) {
+        // 2. Get milestones for this project
+        const { data: milestones } = await supabase
+          .from("milestones")
+          .select("title, status")
+          .eq("project_id", project.id)
+          .order("created_at", { ascending: true });
+
+        if (milestones && milestones.length > 0) {
+          const total = milestones.length;
+          const completed = milestones.filter(m => ["Approved", "Disetujui", "Completed"].includes(m.status)).length;
+          const next = milestones.find(m => !["Approved", "Disetujui", "Completed"].includes(m.status))?.title || "";
+          
+          setProgressData({
+            percentage: Math.round((completed / total) * 100),
+            completedCount: completed,
+            totalCount: total,
+            nextMilestone: next
+          });
+        }
+      }
+    };
+
+    fetchProgress();
+  }, [user?.id]);
+
+  if (!mounted) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
@@ -56,6 +102,23 @@ export default function FreelancerDashboardPage() {
       {/* Statistik Ringkasan */}
       <FreelancerStatsCards />
 
+      {/* Progres & Payment Side-by-Side (50/50) */}
+      <div style={{ 
+        display: "grid", 
+        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
+        gap: "32px",
+        width: "100%"
+      }}>
+        <ProgressTrackerCard 
+          percentage={progressData.percentage}
+          completedCount={progressData.completedCount}
+          totalCount={progressData.totalCount}
+          nextMilestone={progressData.nextMilestone}
+          variant="compact"
+        />
+        <PaymentTracker />
+      </div>
+
       {/* Layout Grid Utama */}
       <div style={{ 
         display: "grid", 
@@ -81,14 +144,6 @@ export default function FreelancerDashboardPage() {
 
         {/* Kolom Kanan */}
         <div style={{ display: "flex", flexDirection: "column", gap: "32px", minWidth: 0 }}>
-          <ProgressTrackerCard 
-            percentage={progressData.percentage}
-            completedCount={progressData.completedCount}
-            totalCount={progressData.totalCount}
-            nextMilestone={progressData.nextMilestone}
-          />
-
-          <PaymentTracker />
           
           {/* Aksi Cepat / Kontrol Scope Card */}
           <motion.div

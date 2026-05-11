@@ -8,13 +8,18 @@ export function useContacts() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [acc, pend] = await Promise.all([
-      window.fetch("/api/contacts?type=accepted").then(r => r.json()),
-      window.fetch("/api/contacts?type=pending").then(r => r.json()),
-    ]);
-    setContacts(acc.data ?? []);
-    setInvitations(pend.data ?? []);
-    setLoading(false);
+    try {
+      const [acc, pend] = await Promise.all([
+        window.fetch("/api/contacts?type=accepted").then(r => r.json()),
+        window.fetch("/api/contacts?type=pending").then(r => r.json()),
+      ]);
+      setContacts(acc.data ?? []);
+      setInvitations(pend.data ?? []);
+    } catch (e) {
+      console.error("Failed to fetch contacts:", e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -43,5 +48,25 @@ export function useContacts() {
     return json.data;
   };
 
-  return { contacts, invitations, loading, refetch: fetchAll, inviteContact, respondInvitation };
+  const ensureContact = async (targetId: string) => {
+    const res = await window.fetch("/api/contacts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target_id: targetId, status: "accepted" }),
+    });
+    const json = await res.json();
+    if (json.error && res.status !== 409) throw new Error(json.error);
+    await fetchAll();
+    return json.data;
+  };
+
+  return { 
+    contacts, 
+    invitations, 
+    loading, 
+    refetch: fetchAll, 
+    inviteContact, 
+    respondInvitation, 
+    ensureContact 
+  };
 }

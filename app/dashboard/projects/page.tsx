@@ -40,10 +40,13 @@ export default function ProjectsPage() {
   const [projectToEdit, setProjectToEdit] = useState<any>(null);
 
   const tabs = role === "freelancer"
-    ? ["all", "draft", "published", "pending_freelancer", "pending_client", "active", "review", "completed"]
+    ? ["all", "draft", "pending_freelancer", "pending_client", "active", "review", "completed"]
     : ["all", "draft", "published", "pending_freelancer", "pending_client", "active", "review", "completed"];
 
   const filtered = projects.filter(p => {
+    // Proyek "published" (Marketplace) hanya muncul di sisi Klien (pembuatnya)
+    if (role === "freelancer" && p.status === "published") return false;
+
     const matchTab = tab === "all" || p.status === tab;
     const partner = role === "client" ? (p.freelancer?.full_name ?? "") : (p.client?.full_name ?? "");
     const matchSearch = (p.title ?? "").toLowerCase().includes(search.toLowerCase()) ||
@@ -51,11 +54,16 @@ export default function ProjectsPage() {
     return matchTab && matchSearch;
   });
 
+  const visibleProjects = projects.filter(p => {
+    if (role === "freelancer" && p.status === "published") return false;
+    return true;
+  });
+
   const stats = [
-    { label: "Total", value: projects.length, icon: Briefcase, color: "#4D63FF" },
-    { label: "Aktif", value: projects.filter(p => p.status === "active").length, icon: Clock, color: "#00E5FF" },
-    { label: "Tinjauan", value: projects.filter(p => p.status === "review").length, icon: SlidersHorizontal, color: "#F59E0B" },
-    { label: "Selesai", value: projects.filter(p => p.status === "completed").length, icon: CheckCircle2, color: "#00FFA3" },
+    { label: "Total", value: visibleProjects.length, icon: Briefcase, color: "#4D63FF" },
+    { label: "Aktif", value: visibleProjects.filter(p => p.status === "active").length, icon: Clock, color: "#00E5FF" },
+    { label: "Tinjauan", value: visibleProjects.filter(p => p.status === "review").length, icon: SlidersHorizontal, color: "#F59E0B" },
+    { label: "Selesai", value: visibleProjects.filter(p => p.status === "completed").length, icon: CheckCircle2, color: "#00FFA3" },
   ];
 
   const toCard = (p: any) => ({
@@ -190,10 +198,10 @@ export default function ProjectsPage() {
               <Briefcase size={28} style={{ color: "rgba(226, 232, 240, 0.1)" }} />
             </div>
             <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", marginBottom: "8px" }}>
-              {projects.length === 0 ? "Belum ada proyek" : "Tidak ada proyek ditemukan"}
+              {visibleProjects.length === 0 ? "Belum ada proyek" : "Tidak ada proyek ditemukan"}
             </h3>
             <p style={{ color: "rgba(226, 232, 240, 0.4)", fontSize: "14px", marginBottom: "20px" }}>
-              {projects.length === 0
+              {visibleProjects.length === 0
                 ? "Mulai dengan menginisiasi proyek baru Anda"
                 : "Coba ubah filter atau kata kunci pencarian"}
             </p>

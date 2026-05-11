@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MoreVertical, Users, Calendar, DollarSign, Pencil, Trash2, Send, CheckCircle2, X, MessageSquare, RefreshCw } from "lucide-react";
 import Swal from "sweetalert2";
 import { useUser } from "../../dashboard/layout";
+import { formatRupiah } from "@/utils/format";
 
 interface ProjectCardProps {
   project: {
@@ -186,7 +187,7 @@ export default function ProjectCard({ project, onEdit, onDelete, onSendToClient 
           <span style={{ fontSize: "10px", color: "rgba(226, 232, 240, 0.3)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Budget</span>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#fff", fontWeight: "700", fontSize: "14px" }}>
             <span style={{ fontSize: "12px", fontWeight: "900", color: "var(--cyan)", opacity: 0.8 }}>Rp</span>
-            {project.budget}
+            {formatRupiah(project.budget).replace("Rp", "").trim()}
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end" }}>

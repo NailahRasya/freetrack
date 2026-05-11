@@ -31,9 +31,9 @@ export default function ProgressTrackerCard({
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        gap: "20px",
+        gap: "16px",
         height: "100%",
-        minHeight: variant === "compact" ? "auto" : "240px",
+        minHeight: variant === "compact" ? "auto" : "180px",
       }}
     >
       {/* Background Glow */}
@@ -87,8 +87,8 @@ export default function ProgressTrackerCard({
 
       <div style={{ zIndex: 1, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "12px" }}>
-          <span style={{ fontSize: "36px", fontWeight: "900", color: "#fff", letterSpacing: "-1px" }}>
-            {percentage}<span style={{ fontSize: "18px", color: "var(--cyan)", fontWeight: "700" }}>%</span>
+          <span style={{ fontSize: "32px", fontWeight: "900", color: "#fff", letterSpacing: "-1px" }}>
+            {percentage}<span style={{ fontSize: "16px", color: "var(--cyan)", fontWeight: "700" }}>%</span>
           </span>
           <div style={{ textAlign: "right" }}>
              <div style={{ fontSize: "11px", fontWeight: "700", color: "rgba(226, 232, 240, 0.3)", textTransform: "uppercase", marginBottom: "2px" }}>Status</div>

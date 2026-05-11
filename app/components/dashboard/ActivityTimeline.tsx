@@ -6,45 +6,59 @@ import { Plus, Check, CreditCard, UserPlus, FileText } from "lucide-react";
 /**
  * Data dummy untuk riwayat aktivitas terbaru dalam platform.
  */
-const activities = [
-  {
-    id: 1,
-    title: "Proyek Dibuat",
-    desc: "Proyek baru 'Smart Contract Audit' telah dipasang.",
-    time: "4 jam yang lalu",
-    icon: Plus,
-    color: "var(--cyan)",
-  },
-  {
-    id: 2,
-    title: "Target Disetujui",
-    desc: "Anda menyetujui 'UI Design Hi-Fi' untuk Aplikasi E-Commerce.",
-    time: "Kemarin",
-    icon: Check,
-    color: "var(--accent)",
-  },
-  {
-    id: 3,
-    title: "Pembayaran Dirilis",
-    desc: "Rp 4.500.000 dirilis ke Sarah Jenkins.",
-    time: "2 hari yang lalu",
-    icon: CreditCard,
-    color: "var(--primary-light)",
-  },
-  {
-    id: 4,
-    title: "Kontrak Ditandatangani",
-    desc: "Aris Munandar menandatangani kontrak untuk Website Redesign.",
-    time: "3 hari yang lalu",
-    icon: FileText,
-    color: "var(--warning)",
-  },
-];
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { useUser } from "../../dashboard/layout";
 
 /**
  * Komponen ActivityTimeline menampilkan log kronologis dari peristiwa penting proyek.
  */
 export default function ActivityTimeline() {
+  const [activities, setActivities] = useState<any[]>([]);
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchActivities = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(4);
+
+        if (error) throw error;
+
+        if (data) {
+          const mapped = data.map(n => {
+            const typeMap: any = {
+              "project_agreed": { icon: Check, color: "var(--accent)" },
+              "milestone_created": { icon: Plus, color: "var(--cyan)" },
+              "payment_released": { icon: CreditCard, color: "var(--primary-light)" },
+              "project_updated": { icon: FileText, color: "var(--warning)" },
+            };
+            const t = typeMap[n.type] || { icon: FileText, color: "var(--warning)" };
+
+            return {
+              id: n.id,
+              title: n.title,
+              desc: n.content,
+              time: new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              icon: t.icon,
+              color: t.color
+            };
+          });
+          setActivities(mapped);
+        }
+      } catch (err) {
+        console.error("Error fetching activities:", err);
+      }
+    };
+
+    fetchActivities();
+  }, [user?.id]);
   return (
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", height: "100%" }}>
       <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", marginBottom: "24px" }}>Lini Masa Aktivitas</h3>
@@ -62,7 +76,9 @@ export default function ActivityTimeline() {
         }} />
 
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          {activities.map((activity, idx) => (
+          {activities.length === 0 ? (
+            <p style={{ textAlign: "center", color: "rgba(226, 232, 240, 0.2)", fontSize: "12px", padding: "20px" }}>Belum ada aktivitas terbaru.</p>
+          ) : activities.map((activity, idx) => (
             <motion.div
               key={activity.id}
               initial={{ opacity: 0, x: 20 }}

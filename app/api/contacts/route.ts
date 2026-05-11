@@ -1,7 +1,7 @@
 /**
  * app/api/contacts/route.ts
  * GET   /api/contacts  — daftar kontak yang sudah accepted (untuk dropdown klien)
- * POST  /api/contacts  — undang client via email
+ * POST  /api/contacts  — undang client via email atau hubungkan via target_id
  * PATCH /api/contacts  — client terima/tolak undangan
  */
 
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ data });
 }
 
-// ── POST — undang client ──────────────────────────────────────────────────────
+// ── POST — undang/hubungkan kontak ──────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   const { user, role, supabase } = await getAuth(request);
@@ -54,21 +54,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { invited_email } = body;
-  if (!invited_email?.trim()) {
-    return NextResponse.json({ error: "Email klien wajib diisi" }, { status: 400 });
+  const { invited_email, target_id, status: bodyStatus } = body;
+  
+  let targetProfile: any = null;
+
+  if (target_id) {
+    const { data: p } = await supabase.from("profiles").select("id, full_name, email, role").eq("id", target_id).single();
+    if (p) targetProfile = p;
+  } else if (invited_email) {
+    const { data: p } = await supabase.from("profiles").select("id, full_name, email, role").eq("email", invited_email.trim().toLowerCase()).single();
+    if (p) targetProfile = p;
   }
 
-  // Cari user dengan email tersebut di profiles
-  const { data: targetProfile, error: findError } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, role")
-    .eq("email", invited_email.trim().toLowerCase())
-    .single();
-
-  if (findError || !targetProfile) {
+  if (!targetProfile) {
     return NextResponse.json(
-      { error: "Pengguna dengan email tersebut tidak ditemukan. Pastikan mereka sudah terdaftar." },
+      { error: "Pengguna tidak ditemukan." },
       { status: 404 }
     );
   }
@@ -76,15 +76,9 @@ export async function POST(request: NextRequest) {
   // Tentukan freelancer_id dan client_id berdasarkan role pemanggil
   let freelancer_id: string, client_id: string;
   if (role === "freelancer") {
-    if (targetProfile.role !== "client") {
-      return NextResponse.json({ error: "Target harus berperan sebagai client" }, { status: 400 });
-    }
     freelancer_id = user.id;
     client_id = targetProfile.id;
   } else {
-    if (targetProfile.role !== "freelancer") {
-      return NextResponse.json({ error: "Target harus berperan sebagai freelancer" }, { status: 400 });
-    }
     freelancer_id = targetProfile.id;
     client_id = user.id;
   }
@@ -95,14 +89,15 @@ export async function POST(request: NextRequest) {
       freelancer_id,
       client_id,
       invited_by: user.id,
-      invited_email: invited_email.trim().toLowerCase(),
-      status: "pending",
+      invited_email: targetProfile.email,
+      status: bodyStatus || "pending",
     })
     .select()
     .single();
 
   if (error) {
     if (error.code === "23505") {
+      // Jika sudah ada, tapi statusnya mungkin berbeda, kita biarkan saja atau update
       return NextResponse.json({ error: "Kontak ini sudah ada atau sudah diundang" }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -131,9 +126,8 @@ export async function PATCH(request: NextRequest) {
     .from("contacts")
     .update({ status })
     .eq("id", id)
-    // hanya penerima undangan yang bisa update
     .or(`freelancer_id.eq.${user.id},client_id.eq.${user.id}`)
-    .neq("invited_by", user.id) // tidak bisa accept undangan sendiri
+    .neq("invited_by", user.id) 
     .select()
     .single();
 
@@ -142,6 +136,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 // ── DELETE — hapus kontak ───────────────────────────────────────────────────
+
 export async function DELETE(request: NextRequest) {
   const { user, supabase } = await getAuth(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -151,6 +146,22 @@ export async function DELETE(request: NextRequest) {
 
   if (!id) return NextResponse.json({ error: "id wajib diisi" }, { status: 400 });
 
+  // 1. Ambil data kontak dulu untuk mendapatkan freelancer_id & client_id
+  const { data: contact } = await supabase
+    .from("contacts")
+    .select("freelancer_id, client_id")
+    .eq("id", id)
+    .single();
+
+  if (contact) {
+    // 2. Hapus semua pesan antara freelancer & client tersebut
+    await supabase
+      .from("messages")
+      .delete()
+      .or(`and(sender_id.eq.${contact.freelancer_id},receiver_id.eq.${contact.client_id}),and(sender_id.eq.${contact.client_id},receiver_id.eq.${contact.freelancer_id})`);
+  }
+
+  // 3. Hapus kontak
   const { error } = await supabase
     .from("contacts")
     .delete()

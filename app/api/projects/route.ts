@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       required_skills: required_skills || [],
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -127,7 +127,7 @@ export async function PATCH(request: NextRequest) {
     .from("projects")
     .select("status, negotiation_count")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   let nextNegoCount = currentProject?.negotiation_count || 0;
   if (payload.status && currentProject && payload.status !== currentProject.status) {
@@ -152,6 +152,8 @@ export async function PATCH(request: NextRequest) {
     if (payload.freelancer_id !== undefined) updateData.freelancer_id = payload.freelancer_id;
     if (payload.category_id !== undefined) updateData.category_id = payload.category_id;
     if (payload.required_skills !== undefined) updateData.required_skills = payload.required_skills;
+    if (payload.planning_context !== undefined) updateData.planning_context = payload.planning_context;
+    if (payload.proposal_reason !== undefined) updateData.proposal_reason = payload.proposal_reason;
 
     const { data, error } = await supabase
       .from("projects")
@@ -159,7 +161,7 @@ export async function PATCH(request: NextRequest) {
       .eq("id", id)
       .eq("client_id", user.id)
       .select()
-      .single();
+      .maybeSingle();
       
     if (error) {
       console.error("Supabase update error:", error);
@@ -197,16 +199,31 @@ export async function PATCH(request: NextRequest) {
   if (payload.budget !== undefined) updateData.budget = payload.budget;
   if (payload.deadline !== undefined) updateData.deadline = payload.deadline;
   if (payload.description !== undefined) updateData.description = payload.description;
+  if (payload.planning_context !== undefined) updateData.planning_context = payload.planning_context;
+  if (payload.proposal_reason !== undefined) updateData.proposal_reason = payload.proposal_reason;
 
-  const { data, error } = await supabase
-    .from("projects")
-    .update(updateData)
-    .eq("id", id)
-    .eq("freelancer_id", user.id)
-    .select()
-    .single();
+  // Ambil data proyek untuk mengecek status saat ini (untuk fitur "Apply")
+  const { data: checkProject } = await supabase.from("projects").select("status, freelancer_id").eq("id", id).maybeSingle();
+  
+  const isApplying = checkProject?.status === "published" && !checkProject.freelancer_id;
+
+  let query = supabase.from("projects").update(isApplying ? { ...updateData, freelancer_id: user.id } : updateData).eq("id", id);
+  
+  if (isApplying) {
+    query = query.eq("status", "published");
+  } else {
+    query = query.eq("freelancer_id", user.id);
+  }
+
+  const { data, error } = await query.select().maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  
+  if (!data) {
+    return NextResponse.json({ 
+      error: `Gagal update. ID=${id}, UserID=${user.id}, Status=${checkProject?.status || "null"}, FreelancerID=${checkProject?.freelancer_id || "null"}, IsApplying=${isApplying}. Pastikan status proyek masih 'published' jika melamar.`
+    }, { status: 404 });
+  }
 
   if (payload.status === "pending_client" && data.client_id) {
     const msgContent = `Halo, Klien. Saya mengajukan revisi/penawaran baru untuk proyek "${data.title}" dengan anggaran ${data.budget || "yang belum ditentukan"}. Bagaimana menurut Anda?`;
@@ -216,6 +233,31 @@ export async function PATCH(request: NextRequest) {
       receiver_id: data.client_id,
       content: msgContent
     });
+  }
+  
+  // --- Notifikasi jika sudah sepakat (agreed) ---
+  if (payload.status === "agreed") {
+    const notifyClient = data.client_id;
+    const notifyFreelancer = data.freelancer_id;
+
+    if (notifyClient && notifyFreelancer) {
+      await supabase.from("notifications").insert([
+        {
+          user_id: notifyClient,
+          title: "Proyek Disepakati! 🎉",
+          content: `Proyek "${data.title}" telah disetujui oleh kedua pihak. Mari mulai pengerjaan!`,
+          type: "project_agreed",
+          link: `/dashboard/projects?id=${data.id}`
+        },
+        {
+          user_id: notifyFreelancer,
+          title: "Proyek Disepakati! 🎉",
+          content: `Selamat! Proyek "${data.title}" telah disetujui. Segera buat rencana milestone pengerjaan.`,
+          type: "project_agreed",
+          link: `/dashboard/projects?id=${data.id}`
+        }
+      ]);
+    }
   }
 
   return NextResponse.json({ data });

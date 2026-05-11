@@ -9,7 +9,8 @@ import MilestoneManager from "../../components/dashboard/freelancer/MilestoneMan
 import { useUser } from "../layout";
 import { useContacts } from "@/lib/hooks/useContacts";
 import { useProjects } from "@/lib/hooks/useProjects";
-import { Flag, ShieldAlert, Loader2, Users, FolderPlus } from "lucide-react";
+import { Flag, ShieldAlert, Loader2, Users, FolderPlus, Clock, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { useAccessDeniedToast } from "@/lib/hooks/useAccessDeniedToast";
 
 // ── Inner component (needs Suspense for useSearchParams) ─────────────────────
@@ -30,12 +31,15 @@ function MilestonesContent() {
   // Filter projects for the selected contact/client (Freelancer)
   const filteredProjects = useMemo(() => {
     if (!selectedContact) return [];
-    return projects.filter(p => p.client_id === (selectedContact.client?.id || selectedContact.client_id));
+    return projects.filter(p => 
+      p.client_id === (selectedContact.client?.id || selectedContact.client_id) &&
+      ["agreed", "active", "ongoing", "completed"].includes(p.status)
+    );
   }, [projects, selectedContact]);
 
   // Projects available for Client view
   const clientProjects = useMemo(() => {
-    return projects; // Assume backend filters for current user
+    return projects.filter(p => ["agreed", "active", "ongoing", "completed"].includes(p.status));
   }, [projects]);
 
   // Auto-select first project for clients if only one exists
@@ -223,41 +227,71 @@ function MilestonesContent() {
            {selectedContact && filteredProjects.length === 0 && (
              <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "10px", background: "rgba(245, 158, 11, 0.05)", border: "1px solid rgba(245, 158, 11, 0.1)" }}>
                <FolderPlus size={16} style={{ color: "var(--warning)" }} />
-               <span style={{ fontSize: "13px", color: "var(--warning)" }}>
-                 Belum ada proyek aktif dengan <strong>{selectedContact.client?.full_name || selectedContact.client?.email}</strong>. 
-                 Silakan buat proyek terlebih dahulu di tab "Proyek Saya".
-               </span>
+                <span style={{ fontSize: "13px", color: "var(--warning)" }}>
+                  Belum ada proyek aktif dengan <strong>{selectedContact.client?.full_name || selectedContact.client?.email}</strong>.{" "}
+                  {role === "client" 
+                    ? 'Silakan buat proyek terlebih dahulu di tab "Proyek Saya".'  
+                    :  'Silakan selesaikan proses negosiasi atau ajukan lamaran di menu "Pesan".'}
+                </span>
              </div>
            )}
         </div>
 
         {selectedProjectId ? (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "32px" }}>
-             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-                <ProgressTrackerCard 
-                  percentage={progressPercentage} 
-                  completedCount={completedCount} 
-                  totalCount={milestones.length}
-                  nextMilestone={milestones.find(m => m.status !== "Completed" && m.status !== "Disetujui" && m.status !== "Approved")?.title}
-                />
-                <div className="glass-card" style={{ padding: "24px", background: "rgba(26, 54, 240, 0.05)", border: "1px solid rgba(26, 54, 240, 0.1)" }}>
-                  <h4 style={{ fontSize: "14px", fontWeight: "800", color: "#fff", marginBottom: "12px" }}>Tips Milestone</h4>
-                  <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.5)", lineHeight: "1.6" }}>
-                    Mengelola proyek <strong>{filteredProjects.find(p => p.id === selectedProjectId)?.title}</strong>. 
-                    Pastikan setiap milestone memiliki deskripsi yang jelas untuk mempermudah persetujuan klien.
-                  </p>
-                </div>
-             </div>
-             
-             <div style={{ minWidth: 0 }}>
-               <MilestoneManager 
-                 clientName={selectedContact?.client?.full_name || selectedContact?.client?.email} 
-                 projectId={selectedProjectId}
-                 initialMilestones={milestones}
-                 onMilestoneCreated={() => setRefreshKey(prev => prev + 1)}
-               />
-             </div>
-          </div>
+          (selectedProject?.status === "agreed" || selectedProject?.status === "active" || selectedProject?.status === "ongoing" || selectedProject?.status === "completed") ? (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "32px" }}>
+               <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                  <ProgressTrackerCard 
+                    percentage={progressPercentage} 
+                    completedCount={completedCount} 
+                    totalCount={milestones.length}
+                    nextMilestone={milestones.find(m => m.status !== "Completed" && m.status !== "Disetujui" && m.status !== "Approved")?.title}
+                  />
+                  <div className="glass-card" style={{ padding: "24px", background: "rgba(26, 54, 240, 0.05)", border: "1px solid rgba(26, 54, 240, 0.1)" }}>
+                    <h4 style={{ fontSize: "14px", fontWeight: "800", color: "#fff", marginBottom: "12px" }}>Tips Milestone</h4>
+                    <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.5)", lineHeight: "1.6" }}>
+                      Mengelola proyek <strong>{selectedProject?.title}</strong>. 
+                      Pastikan setiap milestone memiliki deskripsi yang jelas untuk mempermudah persetujuan klien.
+                    </p>
+                  </div>
+               </div>
+               
+               <div style={{ minWidth: 0 }}>
+                 <MilestoneManager 
+                   clientName={selectedContact?.client?.full_name || selectedContact?.client?.email} 
+                   projectId={selectedProjectId}
+                   initialMilestones={milestones}
+                   onMilestoneCreated={() => setRefreshKey(prev => prev + 1)}
+                 />
+               </div>
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-card"
+              style={{ padding: "80px 40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", background: "rgba(15, 27, 46, 0.6)" }}
+            >
+              <div style={{ width: "80px", height: "80px", borderRadius: "24px", background: "rgba(245, 158, 11, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F59E0B" }}>
+                <Clock size={40} />
+              </div>
+              <div style={{ maxWidth: "500px" }}>
+                <h3 style={{ fontSize: "20px", fontWeight: "900", color: "#fff", marginBottom: "12px" }}>
+                  {selectedProject?.status === "published" ? "Belum Mengajukan Lamaran" : "Dalam Tahap Negosiasi"}
+                </h3>
+                <p style={{ fontSize: "15px", color: "rgba(226, 232, 240, 0.5)", lineHeight: "1.6" }}>
+                  {selectedProject?.status === "published" 
+                    ? "Anda harus mengajukan lamaran terlebih dahulu untuk proyek ini sebelum dapat menyusun milestone."
+                    : "Proyek ini masih dalam tahap negosiasi antara Anda dan Klien. Milestone hanya dapat dikelola setelah kedua belah pihak mencapai kesepakatan."}
+                </p>
+              </div>
+              <Link href={`/dashboard/messages?chat=${selectedProject?.client_id}&project=${selectedProjectId}`}>
+                <button className="btn-primary" style={{ padding: "12px 28px", borderRadius: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
+                  {selectedProject?.status === "published" ? "Ajukan Lamaran di Chat" : "Selesaikan Negosiasi"} <ChevronRight size={18} />
+                </button>
+              </Link>
+            </motion.div>
+          )
         ) : (
           <motion.div 
             initial={{ opacity: 0 }}

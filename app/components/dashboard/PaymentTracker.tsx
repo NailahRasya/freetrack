@@ -7,45 +7,78 @@ import { useUser } from "../../dashboard/layout";
 /**
  * Data dummy untuk riwayat pembayaran.
  */
-const payments = [
-  {
-    id: 1,
-    milestone: "UI/UX High Fidelity Design",
-    project: "E-Commerce Mobile App",
-    amount: "Rp 4.5M",
-    status: "Dirilis",
-    date: "2 jam yang lalu",
-    icon: CheckCircle2,
-    color: "var(--accent)",
-  },
-  {
-    id: 2,
-    milestone: "API Integration",
-    project: "Corporate Website Redesign",
-    amount: "Rp 3.2M",
-    status: "Dalam Escrow",
-    date: "Kemarin",
-    icon: ShieldCheck,
-    color: "var(--cyan)",
-  },
-  {
-    id: 3,
-    milestone: "Landing Page Development",
-    project: "Startup Landing Page",
-    amount: "Rp 2.8M",
-    status: "Menunggu Persetujuan",
-    date: "2 hari yang lalu",
-    icon: Clock,
-    color: "var(--warning)",
-  },
-];
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { formatRupiah } from "@/utils/format";
 
 /**
  * Komponen PaymentTracker memantau status dana dan pembayaran per milestone.
  */
 export default function PaymentTracker() {
-  const { role } = useUser();
+  const { user, role } = useUser();
   const isFreelancer = role === "freelancer";
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchPayments = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("milestones")
+          .select(`
+            id,
+            title,
+            amount,
+            status,
+            created_at,
+            projects!inner (
+              title,
+              client_id,
+              freelancer_id
+            )
+          `)
+          .or(`client_id.eq.${user.id},freelancer_id.eq.${user.id}`, { foreignTable: 'projects' })
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+
+        if (data) {
+          const mapped = data.map(m => {
+            const statusMap: any = {
+              "Approved": { label: "Dirilis", color: "var(--accent)", icon: CheckCircle2 },
+              "Disetujui": { label: "Dirilis", color: "var(--accent)", icon: CheckCircle2 },
+              "Menunggu DP": { label: "Menunggu DP", color: "var(--warning)", icon: Clock },
+              "Waiting for Approval": { label: "Menunggu Persetujuan", color: "var(--warning)", icon: Clock },
+              "Menunggu Persetujuan": { label: "Menunggu Persetujuan", color: "var(--warning)", icon: Clock },
+              "Dalam Pengerjaan": { label: "Dalam Escrow", color: "var(--cyan)", icon: ShieldCheck },
+              "In Progress": { label: "Dalam Escrow", color: "var(--cyan)", icon: ShieldCheck },
+            };
+            const s = statusMap[m.status] || { label: m.status, color: "rgba(226, 232, 240, 0.4)", icon: Clock };
+            
+            return {
+              id: m.id,
+              milestone: m.title,
+              project: (m.projects as any).title,
+              amount: formatRupiah(m.amount || 0),
+              status: s.label,
+              color: s.color,
+              icon: s.icon,
+            };
+          });
+          setPayments(mapped);
+        }
+      } catch (err) {
+        console.error("Error fetching payments:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, [user?.id]);
 
   return (
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", display: "flex", flexDirection: "column" }}>
@@ -55,7 +88,11 @@ export default function PaymentTracker() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        {payments.map((payment, idx) => (
+        {loading ? (
+          <p style={{ textAlign: "center", color: "rgba(226, 232, 240, 0.3)", fontSize: "12px", padding: "20px" }}>Memuat data...</p>
+        ) : payments.length === 0 ? (
+          <p style={{ textAlign: "center", color: "rgba(226, 232, 240, 0.3)", fontSize: "12px", padding: "20px" }}>Belum ada riwayat pembayaran.</p>
+        ) : payments.map((payment, idx) => (
           <motion.div
             key={payment.id}
             initial={{ opacity: 0, y: 10 }}
@@ -128,7 +165,7 @@ export default function PaymentTracker() {
             </div>
 
             {/* Tombol Aksi khusus Freelancer jika status dana ada di Escrow */}
-            {isFreelancer && payment.status === "In Escrow" && (
+            {isFreelancer && payment.status === "Dalam Escrow" && (
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -146,7 +183,7 @@ export default function PaymentTracker() {
                   boxShadow: "0 4px 12px rgba(0, 255, 163, 0.2)"
                 }}
               >
-                Upload Bukti
+                Kirim Bukti
               </motion.button>
             )}
           </motion.div>
