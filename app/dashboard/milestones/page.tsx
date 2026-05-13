@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion } from "framer-motion";
 import ClientProjectHeader from "../../components/dashboard/milestones/ClientProjectHeader";
 import ClientMilestoneCard from "../../components/dashboard/milestones/ClientMilestoneCard";
+import EvidenceReviewModal from "../../components/dashboard/milestones/EvidenceReviewModal";
 import ProgressTrackerCard from "../../components/dashboard/ProgressTrackerCard";
 import MilestoneManager from "../../components/dashboard/freelancer/MilestoneManager";
 import { useUser } from "../layout";
@@ -24,6 +25,15 @@ function MilestonesContent() {
   const [milestones, setMilestones] = useState<any[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isFetchingMilestones, setIsFetchingMilestones] = useState(false);
+  const [reviewModalState, setReviewModalState] = useState<{
+    isOpen: boolean;
+    milestoneId: string | null;
+    milestoneTitle: string;
+  }>({
+    isOpen: false,
+    milestoneId: null,
+    milestoneTitle: "",
+  });
 
   const selectedContact = contacts.find(c => c.id === selectedContactId);
   const selectedProject = projects.find(p => p.id === selectedProjectId);
@@ -109,7 +119,32 @@ function MilestonesContent() {
   };
 
   const handleReview = (id: string) => {
-    console.log("Review deliverables for milestone:", id);
+    const milestone = milestones.find(m => m.id === id);
+    if (milestone) {
+      setReviewModalState({
+        isOpen: true,
+        milestoneId: id,
+        milestoneTitle: milestone.title,
+      });
+    }
+  };
+
+  const handleReviewModalClose = () => {
+    setReviewModalState({
+      isOpen: false,
+      milestoneId: null,
+      milestoneTitle: "",
+    });
+  };
+
+  const handleEvidenceApprove = () => {
+    // Refresh milestones after approval
+    setRefreshKey(prev => prev + 1);
+  };
+
+  const handleEvidenceRevision = () => {
+    // Refresh milestones after requesting revision
+    setRefreshKey(prev => prev + 1);
   };
 
   if (loading) {
@@ -493,6 +528,16 @@ function MilestonesContent() {
             }
           }
         `}</style>
+
+      {/* Evidence Review Modal */}
+      <EvidenceReviewModal
+        isOpen={reviewModalState.isOpen}
+        onClose={handleReviewModalClose}
+        milestoneId={reviewModalState.milestoneId}
+        milestoneTitle={reviewModalState.milestoneTitle}
+        onApprove={handleEvidenceApprove}
+        onRequestRevision={handleEvidenceRevision}
+      />
     </div>
   );
 }

@@ -226,8 +226,15 @@ export async function PUT(request: NextRequest) {
 
   // ── Security Shield: Client payload validation ────────────────────────────
   if (role === "client") {
+    // Fetch current milestone to get current status
+    const { data: currentMilestone } = await supabase
+      .from("milestones")
+      .select("status")
+      .eq("id", id)
+      .single();
+
     // Clients attempting direct PUT that aren't just a status change
-    const validationError = validateClientMilestonePayload(payload);
+    const validationError = validateClientMilestonePayload(payload, currentMilestone?.status);
     if (validationError) {
       return unauthorized(
         `Unauthorized: Clients cannot update milestone data. ${validationError}`,
@@ -235,9 +242,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Extra safety: strip every key except 'status' before hitting the DB
+    // Extra safety: strip every key except 'status' and 'payment_status' before hitting the DB
+    // (payment_status is needed for the client to mark a milestone as Escrowed when paying DP)
     const safePayload: Record<string, unknown> = {};
     if ("status" in payload) safePayload.status = payload.status;
+    if ("payment_status" in payload) safePayload.payment_status = payload.payment_status;
 
     if (Object.keys(safePayload).length === 0) {
       return NextResponse.json(
@@ -267,10 +276,15 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ data });
   }
 
-  // ── Freelancer: full update ───────────────────────────────────────────────
+  // ── Freelancer: full update (except payment_status — only client can pay DP) ─
+  // Strip payment_status from freelancer payload to prevent freelancers from
+  // self-approving their own payments.
+  const freelancerPayload = { ...payload };
+  delete freelancerPayload.payment_status;
+
   const { data, error } = await supabase
     .from("milestones")
-    .update(payload)
+    .update(freelancerPayload)
     .eq("id", id)
     // RLS enforces freelancer_id match at DB level
     .select()

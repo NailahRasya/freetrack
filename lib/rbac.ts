@@ -16,7 +16,7 @@ export type UserRole = "freelancer" | "client";
  * Field Milestone yang diizinkan untuk diubah oleh Client secara eksplisit.
  * Selain ini dianggap tidak dapat diubah (immutable) dari perspektif mereka.
  */
-export const CLIENT_ALLOWED_MILESTONE_FIELDS = ["status"] as const;
+export const CLIENT_ALLOWED_MILESTONE_FIELDS = ["status", "payment_status"] as const;
 export type ClientAllowedMilestoneField =
   (typeof CLIENT_ALLOWED_MILESTONE_FIELDS)[number];
 
@@ -54,9 +54,12 @@ export function isBlockedForClient(pathname: string): boolean {
  * Validasi payload pembaruan milestone dari Client.
  *
  * Mengembalikan pesan kesalahan (string) jika payload tidak valid, atau null jika OK.
+ * 
+ * Special case: Client boleh update "Menunggu DP" → "In Progress" untuk payment flow.
  */
 export function validateClientMilestonePayload(
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
+  currentStatus?: string
 ): string | null {
   // 1. Periksa field yang tidak boleh diubah (immutable)
   const immutableFields = ["title", "description", "deadline"] as const;
@@ -66,9 +69,21 @@ export function validateClientMilestonePayload(
     }
   }
 
+  // payment_status hanya boleh diisi oleh client saat pembayaran DP (Escrowed)
+  if ("payment_status" in body && body.payment_status !== "Escrowed") {
+    return `Unauthorized: Client hanya dapat mengatur payment_status ke 'Escrowed' (saat membayar DP).`;
+  }
+
   // 2. Terapkan whitelist status
   if ("status" in body) {
     const requested = body.status as string;
+    
+    // Special case: Allow "Menunggu DP" → "In Progress" for payment flow
+    if (currentStatus === "Menunggu DP" && requested === "In Progress") {
+      return null; // Allow this transition for DP payment
+    }
+    
+    // Normal validation: Only allow Approved/Rejected
     if (
       !CLIENT_ALLOWED_STATUS_TRANSITIONS.includes(
         requested as ClientAllowedStatus

@@ -309,27 +309,27 @@ export default function ClientMilestoneCard({
             </motion.button>
           </div>
         ) : milestone.status === "Menunggu DP" ? (
-          <Link href="/dashboard/payments" style={{ textDecoration: "none" }}>
+          <Link href={`/dashboard/payments?milestone=${milestone.id}`} style={{ textDecoration: "none" }}>
             <motion.button
               whileHover={{ scale: 1.03, x: 4 }}
               whileTap={{ scale: 0.97 }}
               style={{ 
-                padding: "10px 22px", 
-                fontSize: "13px", 
+                padding: "12px 24px", 
+                fontSize: "14px", 
                 borderRadius: "12px",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                background: "var(--warning)",
+                background: "linear-gradient(135deg, #f59e0b, #d97706)",
                 color: "#fff",
                 border: "none",
                 fontWeight: "700",
-                boxShadow: "0 8px 20px rgba(245, 158, 11, 0.25)",
+                boxShadow: "0 8px 20px rgba(245, 158, 11, 0.3)",
                 cursor: "pointer"
               }}
             >
-              <Wallet size={16} />
-              Bayar DP Sekarang
+              <Wallet size={18} />
+              💳 Bayar DP Sekarang
             </motion.button>
           </Link>
         ) : (
