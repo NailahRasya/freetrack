@@ -7,7 +7,13 @@ import { createBrowserClient } from "@supabase/ssr";
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        // Bypass navigator.locks to prevent "Lock was released because another request stole it" console errors in hot-reloading/development environments
+        lock: async (name, acquireTimeout, fn) => fn(),
+      },
+    }
   );
 }
 

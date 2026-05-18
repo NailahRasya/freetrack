@@ -1,30 +1,175 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, AlertTriangle } from "lucide-react";
+import { X, Send, AlertTriangle, Briefcase, Calendar, DollarSign } from "lucide-react";
+import Swal from "sweetalert2";
+import { supabase } from "@/lib/supabase";
+import { useUser } from "../../../dashboard/layout";
+import { formatRupiah, parseRupiah } from "@/utils/format";
 
 interface ChangeRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
+  projectId?: string;
+  clientId?: string;
+  onSuccess?: () => void;
 }
 
-export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestModalProps) {
+export default function ChangeRequestModal({ 
+  isOpen, 
+  onClose, 
+  projectId: propProjectId, 
+  clientId: propClientId,
+  onSuccess 
+}: ChangeRequestModalProps) {
+  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Form fields state
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [budgetDisplay, setBudgetDisplay] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [reason, setReason] = useState("");
+
+  // Projects list state
+  const [activeProjects, setActiveProjects] = useState<any[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+
+  // Sync propProjectId if provided
+  useEffect(() => {
+    if (propProjectId) {
+      setSelectedProjectId(propProjectId);
+    }
+  }, [propProjectId]);
+
+  // Fetch active projects for this freelancer if isOpen is true
+  useEffect(() => {
+    if (!isOpen || !user?.id) return;
+
+    const fetchProjects = async () => {
+      setIsLoadingProjects(true);
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("id, title, client_id, budget, deadline, client:profiles!projects_client_id_fkey(full_name)")
+          .eq("freelancer_id", user.id)
+          .eq("status", "active");
+
+        if (error) throw error;
+        setActiveProjects(data || []);
+        
+        // Auto-select if there's only 1 project and no prop passed
+        if (data && data.length === 1 && !propProjectId) {
+          setSelectedProjectId(data[0].id);
+        }
+      } catch (err) {
+        console.error("Error fetching active projects:", err);
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    };
+
+    fetchProjects();
+  }, [isOpen, user?.id, propProjectId]);
+
+  // Reset form when modal closes or opens
+  useEffect(() => {
+    if (isOpen) {
+      setBudgetDisplay("");
+      setDeadline("");
+      setReason("");
+      if (propProjectId) {
+        setSelectedProjectId(propProjectId);
+      } else if (activeProjects.length > 0) {
+        setSelectedProjectId(activeProjects[0].id);
+      } else {
+        setSelectedProjectId("");
+      }
+    }
+  }, [isOpen, propProjectId]);
+
+  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = parseRupiah(e.target.value);
+    if (rawValue === 0) {
+      setBudgetDisplay("");
+    } else {
+      setBudgetDisplay(formatRupiah(rawValue));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const finalProjectId = propProjectId || selectedProjectId;
+
+    if (!finalProjectId) {
+      Swal.fire({
+        icon: "warning",
+        title: "Proyek Belum Dipilih",
+        text: "Silakan pilih proyek aktif terlebih dahulu.",
+        background: "rgba(13, 27, 62, 0.95)",
+        color: "#fff",
+        confirmButtonColor: "var(--warning)",
+      });
+      return;
+    }
+
+    if (!reason.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Alasan Diperlukan",
+        text: "Silakan isi alasan permintaan perubahan.",
+        background: "rgba(13, 27, 62, 0.95)",
+        color: "#fff",
+        confirmButtonColor: "var(--warning)",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
-    // Simulasi pemanggilan API
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const budgetAmount = budgetDisplay ? parseRupiah(budgetDisplay).toString() : null;
+
+      const res = await fetch("/api/change-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: finalProjectId,
+          reason: reason.trim(),
+          new_budget: budgetAmount,
+          new_deadline: deadline || null
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal mengajukan permintaan perubahan.");
+      }
+
       setIsSuccess(true);
+      onSuccess?.();
+
       setTimeout(() => {
         setIsSuccess(false);
         onClose();
       }, 2000);
-    }, 1500);
+
+    } catch (err: any) {
+      console.error("Failed to submit change request:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Pengajuan Gagal",
+        text: err.message || "Terjadi kesalahan saat mengirimkan permintaan.",
+        background: "rgba(13, 27, 62, 0.95)",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -131,10 +276,51 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                   <Send size={32} />
                 </div>
                 <h3 style={{ fontSize: "18px", color: "#fff", fontWeight: "700" }}>Permintaan Perubahan Terkirim!</h3>
-                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px" }}>Klien telah diberitahu tentang permintaan Anda.</p>
+                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px", textAlign: "center" }}>Klien telah diberitahu melalui pesan chat mengenai permintaan Anda.</p>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit}>
+                {/* Project Selector (only visible if propProjectId is not provided) */}
+                {!propProjectId && (
+                  <div style={{ marginBottom: "20px" }}>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
+                      Pilih Proyek Aktif <span style={{ color: "var(--danger)" }}>*</span>
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <Briefcase size={16} style={{ position: "absolute", left: "14px", top: "14px", color: "rgba(255,255,255,0.3)" }} />
+                      <select 
+                        required
+                        value={selectedProjectId}
+                        onChange={(e) => setSelectedProjectId(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "12px 16px 12px 40px",
+                          background: "rgba(0,0,0,0.2)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: "10px",
+                          color: "#fff",
+                          outline: "none",
+                          fontSize: "14px",
+                          cursor: "pointer",
+                          appearance: "none"
+                        }}
+                      >
+                        <option value="" style={{ background: "#0F172A" }}>Pilih Proyek...</option>
+                        {activeProjects.map((p) => (
+                          <option key={p.id} value={p.id} style={{ background: "#0F172A" }}>
+                            {p.title} {p.client?.full_name ? `— ${p.client.full_name}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {activeProjects.length === 0 && !isLoadingProjects && (
+                      <p style={{ color: "var(--danger)", fontSize: "12px", marginTop: "4px" }}>
+                        Anda tidak memiliki proyek aktif saat ini.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
@@ -145,6 +331,8 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                       <input 
                         type="text" 
                         placeholder="misal 15.000.000"
+                        value={budgetDisplay}
+                        onChange={handleBudgetChange}
                         style={{
                           width: "100%",
                           padding: "12px 16px 12px 40px",
@@ -166,6 +354,8 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                     </label>
                     <input 
                       type="date" 
+                      value={deadline}
+                      onChange={(e) => setDeadline(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -189,8 +379,10 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                   </label>
                   <textarea 
                     required
-                    placeholder="Jelaskan scope creep atau alasan permintaan perubahan..."
+                    placeholder="Jelaskan scope creep atau alasan permintaan perubahan secara mendetail..."
                     rows={4}
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
                     style={{
                       width: "100%",
                       padding: "12px 16px",
@@ -226,12 +418,12 @@ export default function ChangeRequestModal({ isOpen, onClose }: ChangeRequestMod
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (!propProjectId && !selectedProjectId)}
                     className="btn-primary"
                     style={{
                       padding: "12px 32px",
-                      opacity: isSubmitting ? 0.7 : 1,
-                      cursor: isSubmitting ? "not-allowed" : "pointer"
+                      opacity: (isSubmitting || (!propProjectId && !selectedProjectId)) ? 0.7 : 1,
+                      cursor: (isSubmitting || (!propProjectId && !selectedProjectId)) ? "not-allowed" : "pointer"
                     }}
                   >
                     {isSubmitting ? "Mengirim..." : "Ajukan Permintaan"}

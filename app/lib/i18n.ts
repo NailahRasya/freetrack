@@ -23,6 +23,7 @@ export const translations = {
     milestones: "Target Pencapaian",
     messages: "Pesan",
     my_profile: "Profil Saya",
+    change_requests: "Permintaan Perubahan",
     
     // Settings
     account_settings: "Pengaturan Akun",
@@ -75,6 +76,7 @@ export const translations = {
     milestones: "Milestones",
     messages: "Messages",
     my_profile: "My Profile",
+    change_requests: "Change Requests",
     
     // Settings
     account_settings: "Account Settings",

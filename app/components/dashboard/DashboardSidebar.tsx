@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Users,
   User,
-  Sparkles
+  Sparkles,
+  GitPullRequest
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -35,6 +36,7 @@ export default function DashboardSidebar() {
     { icon: Users, label: t("contacts"), href: "/dashboard/contacts" },
     { icon: Wallet, label: t("payments"), href: "/dashboard/payments" },
     { icon: Flag, label: t("milestones"), href: "/dashboard/milestones" },
+    { icon: GitPullRequest, label: t("change_requests"), href: "/dashboard/change-requests" },
     { icon: MessageSquare, label: t("messages"), href: "/dashboard/messages" },
     { icon: User, label: t("my_profile"), href: "/dashboard/profile" },
     { icon: Settings, label: t("settings"), href: "/dashboard/settings" },
