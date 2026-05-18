@@ -140,20 +140,54 @@ export async function GET(
   }
 
   // Fetch evidence using the helper function
-  const { data: evidence, error } = await supabase.rpc(
-    "get_milestone_evidence",
-    {
-      p_milestone_id: milestoneId,
-    }
-  );
+  const { data: evidenceData, error } = await supabase
+    .from("milestone_evidence")
+    .select(`
+      id,
+      milestone_id,
+      evidence_type,
+      file_url,
+      file_name,
+      file_size,
+      file_type,
+      external_link,
+      link_title,
+      description,
+      uploaded_at,
+      uploaded_by,
+      profiles (
+        full_name,
+        role
+      )
+    `)
+    .eq("milestone_id", milestoneId)
+    .eq("is_active", true)
+    .order("uploaded_at", { ascending: false });
 
   if (error) {
     console.error("Error fetching evidence:", error);
     return NextResponse.json(
-      { error: "Failed to fetch evidence" },
+      { error: `Failed to fetch evidence: ${error.message || "Unknown error"}` },
       { status: 500 }
     );
   }
+
+  const evidence = (evidenceData || []).map((item: any) => ({
+    id: item.id,
+    milestone_id: item.milestone_id,
+    evidence_type: item.evidence_type,
+    file_url: item.file_url,
+    file_name: item.file_name,
+    file_size: item.file_size,
+    file_type: item.file_type,
+    external_link: item.external_link,
+    link_title: item.link_title,
+    description: item.description,
+    uploaded_at: item.uploaded_at,
+    uploader_id: item.uploaded_by,
+    uploader_name: item.profiles?.full_name,
+    uploader_role: item.profiles?.role,
+  }));
 
   // Generate signed URLs for files
   const evidenceWithUrls = await Promise.all(

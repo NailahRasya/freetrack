@@ -69,9 +69,13 @@ export function validateClientMilestonePayload(
     }
   }
 
-  // payment_status hanya boleh diisi oleh client saat pembayaran DP (Escrowed)
+  // payment_status hanya boleh diisi oleh client saat pembayaran DP (Escrowed) atau saat approve (Released)
   if ("payment_status" in body && body.payment_status !== "Escrowed") {
-    return `Unauthorized: Client hanya dapat mengatur payment_status ke 'Escrowed' (saat membayar DP).`;
+    if (body.payment_status === "Released" && body.status === "Approved") {
+      // Diizinkan
+    } else {
+      return `Unauthorized: Client hanya dapat mengatur payment_status ke 'Escrowed' (saat membayar DP) atau 'Released' (saat menyetujui milestone).`;
+    }
   }
 
   // 2. Terapkan whitelist status

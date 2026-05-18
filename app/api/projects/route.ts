@@ -132,6 +132,12 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
+  // "agreed" adalah sinyal kesepakatan — langsung promosikan ke "active"
+  const isAgreement = payload.status === "agreed";
+  if (isAgreement) {
+    payload.status = "active";
+  }
+
   let data: any;
   let error: any;
 
@@ -234,7 +240,7 @@ export async function PATCH(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Gagal memproses permintaan proyek." }, { status: 404 });
   
-  if (payload.status === "agreed") {
+  if (isAgreement) {
     const notifyClient = data.client_id;
     const notifyFreelancer = data.freelancer_id;
 
