@@ -55,7 +55,7 @@ const stepVariants = {
     opacity: 1, 
     x: 0, 
     filter: "blur(0px)",
-    transition: { duration: 0.5, ease: "easeOut" } 
+    transition: { duration: 0.5, ease: "easeOut" as const } 
   }
 };
 

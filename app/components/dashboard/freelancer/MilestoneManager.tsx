@@ -400,7 +400,11 @@ export default function MilestoneManager({
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                         <h4 style={{ fontSize: "16px", fontWeight: "700", color: "#fff" }}>{milestone.title}</h4>
-                        {isLocked && <Lock size={12} style={{ color: "rgba(255,255,255,0.3)" }} title="Terkunci dari penyuntingan" />}
+                        {isLocked && (
+                          <span title="Terkunci dari penyuntingan" style={{ display: "inline-flex" }}>
+                            <Lock size={12} style={{ color: "rgba(255,255,255,0.3)" }} />
+                          </span>
+                        )}
                       </div>
                       <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "rgba(226, 232, 240, 0.5)", fontWeight: "500" }}>
                         <span>{milestone.price}</span>

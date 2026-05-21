@@ -22,6 +22,7 @@ interface ProjectCardProps {
     description?: string;
     rejection_reason?: string;
     negotiation_count?: number;
+    rawStatus?: string;
   };
   onEdit?: (project: any) => void;
   onDelete?: (id: number) => void;

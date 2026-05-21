@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, Check, AlertCircle, FileText, Calendar, DollarSign, 
-  ChevronRight, Lock, Unlock, ShieldCheck, Info
+  ChevronRight, Lock, Unlock, ShieldCheck, Info, Clock
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import Swal from "sweetalert2";

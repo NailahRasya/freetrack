@@ -10,7 +10,7 @@ import {
 
 interface FreelancerStep3Props {
   data: {
-    experienceLevel: "junior" | "mid" | "senior" | "";
+    experienceLevel: "junior" | "mid" | "senior" | "expert" | "";
     yearsOfExperience: number;
     portfolioUrl: string;
   };

@@ -262,7 +262,7 @@ export default function ContractInitiationModal({ isOpen, onClose, project, onSu
                   />
                 </div>
 
-                <label style={labelStyle} sx={{ marginTop: "20px" }}>Rincian Pembayaran</label>
+                <label style={{ ...labelStyle, marginTop: "20px" }}>Rincian Pembayaran</label>
                 <textarea 
                   placeholder="Misal: 30% DP, 40% Tengah Proyek, 30% Final..."
                   style={textareaStyle}

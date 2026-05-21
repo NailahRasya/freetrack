@@ -92,7 +92,7 @@ export default function ChangeRequestModal({
 
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = parseRupiah(e.target.value);
-    if (rawValue === 0) {
+    if (!rawValue || rawValue === "0") {
       setBudgetDisplay("");
     } else {
       setBudgetDisplay(formatRupiah(rawValue));

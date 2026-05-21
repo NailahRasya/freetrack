@@ -96,12 +96,12 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
 
   // Status badge
   const statusText = invoice.status === "paid" ? "LUNAS" : invoice.status === "overdue" ? "JATUH TEMPO" : "MENUNGGU PEMBAYARAN";
-  const statusColor = invoice.status === "paid" ? [16, 185, 129] as const : invoice.status === "overdue" ? [239, 68, 68] as const : [245, 158, 11] as const;
+  const statusColor = invoice.status === "paid" ? [16, 185, 129] : invoice.status === "overdue" ? [239, 68, 68] : [245, 158, 11];
 
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   const statusWidth = doc.getTextWidth(statusText) + 12;
-  doc.setFillColor(...statusColor);
+  doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
   doc.roundedRect(pageWidth - margin - statusWidth, 35, statusWidth, 8, 2, 2, "F");
   doc.setTextColor(...white);
   doc.text(statusText, pageWidth - margin - statusWidth + 6, 40.5);
@@ -130,7 +130,7 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
     doc.text(formatDatePDF(invoice.paid_at), margin + 140, y + 16);
   }
 
-  y += 32;
+  y += 26;
 
   // ── Parties Section ──
   // Client (Bill To)
@@ -169,14 +169,14 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
     doc.text(invoice.freelancer_email, pageWidth / 2 + 10, y + 14);
   }
 
-  y += 28;
+  y += 18;
 
   // ── Separator ──
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
 
-  y += 10;
+  y += 6;
 
   // ── Project & Milestone Details ──
   doc.setFontSize(9);
@@ -184,7 +184,7 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
   doc.setTextColor(...cyan);
   doc.text("DETAIL PROYEK", margin, y);
 
-  y += 8;
+  y += 6;
 
   // Table header
   doc.setFillColor(...navy);
@@ -251,7 +251,7 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
     { align: "right" }
   );
 
-  y += 30;
+  y += 22;
 
   // ── Escrow Info ──
   doc.setFillColor(6, 182, 212, 15);
@@ -263,7 +263,7 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...cyan);
-  doc.text("🔒 ESCROW PROTECTION", margin + 8, y + 6);
+  doc.text("ESCROW PROTECTION", margin + 8, y + 6);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...gray);
   doc.text(
@@ -272,7 +272,7 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
     y + 12
   );
 
-  y += 24;
+  y += 26;
 
   // ── Activity Timeline ──
   if (invoice.activity_log && invoice.activity_log.length > 0) {

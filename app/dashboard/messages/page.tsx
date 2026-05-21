@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ContractInitiationModal from "../../components/dashboard/ContractInitiationModal";
 import ContractReviewModal from "../../components/dashboard/ContractReviewModal";
@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
 import { supabase } from "@/lib/supabase";
 
-export default function Messages() {
+function MessagesContent() {
   const { user, role } = useUser();
   const { contacts, loading: contactsLoading, ensureContact, refetch: refetchContacts } = useContacts();
   const searchParams = useSearchParams();
@@ -366,5 +366,17 @@ export default function Messages() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Messages() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "calc(100vh - 140px)", background: "rgba(15, 27, 46, 0.4)", borderRadius: "24px", color: "rgba(226,232,240,0.4)" }}>
+        <Loader2 className="animate-spin" />
+      </div>
+    }>
+      <MessagesContent />
+    </Suspense>
   );
 }

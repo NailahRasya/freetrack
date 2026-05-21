@@ -7,7 +7,7 @@ import { Lock, Eye, EyeOff, Save, CheckCircle2 } from "lucide-react";
 
 async function swal(opts: object) {
   const Swal = (await import("sweetalert2")).default;
-  return Swal.fire(opts as Parameters<typeof Swal.fire>[0]);
+  return Swal.fire(opts as unknown as Parameters<typeof Swal.fire>[0]);
 }
 
 export default function ResetPasswordPage() {

@@ -88,7 +88,7 @@ const STATUS_CONFIG: Record<
 };
 
 const PAYMENT_CONFIG: Record<
-  Milestone["paymentStatus"],
+  "Escrowed" | "Released",
   { color: string; bg: string; border: string; label: string }
 > = {
   "Released": {

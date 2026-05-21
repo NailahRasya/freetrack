@@ -151,6 +151,17 @@ export default function EvidenceReviewModal({
         throw new Error(data.error || "Failed to approve milestone");
       }
 
+      // Auto-create invoice for this milestone
+      try {
+        await fetch("/api/invoices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ milestone_id: milestoneId }),
+        });
+      } catch (invoiceErr) {
+        console.error("Failed to auto-create invoice:", invoiceErr);
+      }
+
       await Swal.fire({
         icon: "success",
         title: "Milestone Disetujui!",

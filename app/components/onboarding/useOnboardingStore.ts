@@ -125,7 +125,7 @@ export function useOnboardingStore(role: "client" | "freelancer") {
   }, []);
 
   return {
-    data: data as ClientOnboardingData & FreelancerOnboardingData,
+    data: data as any as Omit<ClientOnboardingData, "role"> & Omit<FreelancerOnboardingData, "role"> & { role: "client" | "freelancer" },
     updateData,
     clearData,
     getRawData,

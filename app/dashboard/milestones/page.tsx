@@ -279,9 +279,7 @@ function MilestonesContent() {
                <FolderPlus size={16} style={{ color: "var(--warning)" }} />
                 <span style={{ fontSize: "13px", color: "var(--warning)" }}>
                   Belum ada proyek aktif dengan <strong>{selectedContact.client?.full_name || selectedContact.client?.email}</strong>.{" "}
-                  {role === "client" 
-                    ? 'Silakan buat proyek terlebih dahulu di tab "Proyek Saya".'  
-                    :  'Silakan selesaikan proses negosiasi atau ajukan lamaran di menu "Pesan".'}
+                  Silakan selesaikan proses negosiasi atau ajukan lamaran di menu "Pesan".
                 </span>
              </div>
            )}

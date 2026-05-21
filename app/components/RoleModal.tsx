@@ -194,13 +194,13 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
                   overflow: "hidden",
                 } as React.CSSProperties}
                 onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement;
+                  const el = e.currentTarget as HTMLDivElement;
                   el.style.transform = "translateY(-4px)";
                   el.style.boxShadow = `0 20px 60px ${role.color}22`;
                   el.style.borderColor = role.color;
                 }}
                 onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement;
+                  const el = e.currentTarget as HTMLDivElement;
                   el.style.transform = "translateY(0)";
                   el.style.boxShadow = "none";
                   el.style.borderColor = role.colorBorder;

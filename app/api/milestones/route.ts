@@ -229,7 +229,7 @@ export async function PUT(request: NextRequest) {
     // Fetch current milestone to get current status
     const { data: currentMilestone } = await supabase
       .from("milestones")
-      .select("status")
+      .select("status, project_id")
       .eq("id", id)
       .single();
 

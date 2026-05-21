@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CreditCard, Wallet, CheckCircle, AlertCircle, ArrowLeft, Clock, Shield, ShieldCheck, Lock } from "lucide-react";
+import { CreditCard, Wallet, CheckCircle, AlertCircle, ArrowLeft, Clock, Shield, ShieldCheck, Lock, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useUser } from "../layout";
 import { formatRupiah } from "@/utils/format";
 
-export default function Payments() {
+function PaymentsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { role } = useUser();
@@ -543,5 +543,17 @@ export default function Payments() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function Payments() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "calc(100vh - 140px)", background: "rgba(15, 27, 46, 0.4)", borderRadius: "24px", color: "rgba(226,232,240,0.4)", padding: "40px" }}>
+        <Loader2 style={{ animation: "spin 1s linear infinite" }} />
+      </div>
+    }>
+      <PaymentsContent />
+    </Suspense>
   );
 }

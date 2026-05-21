@@ -21,7 +21,7 @@ import PolicyModal from "../components/PolicyModal";
 // Fungsi pembantu untuk memuat SweetAlert2 secara dinamis
 async function swal(opts: object) {
   const Swal = (await import("sweetalert2")).default;
-  return Swal.fire(opts as Parameters<typeof Swal.fire>[0]);
+  return Swal.fire(opts as unknown as Parameters<typeof Swal.fire>[0]);
 }
 
 // Fungsi untuk menghitung kekuatan password berdasarkan panjang dan variasi karakter
