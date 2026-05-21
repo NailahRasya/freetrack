@@ -14,7 +14,7 @@ import {
   CLIENT_FALLBACK_PATH,
 } from "@/lib/rbac";
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   // ── 1. Segarkan cookie sesi Supabase & ambil user ─────────────────────────
   // updateSession kini menangani sinkronisasi cookie secara aman.
   const { supabaseResponse, user } = await updateSession(request);

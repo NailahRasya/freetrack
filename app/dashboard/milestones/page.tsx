@@ -29,10 +29,12 @@ function MilestonesContent() {
     isOpen: boolean;
     milestoneId: string | null;
     milestoneTitle: string;
+    milestone: any | null;
   }>({
     isOpen: false,
     milestoneId: null,
     milestoneTitle: "",
+    milestone: null,
   });
 
   const selectedContact = contacts.find(c => c.id === selectedContactId);
@@ -108,6 +110,17 @@ function MilestonesContent() {
         return;
       }
 
+      // Auto-create invoice for this milestone
+      try {
+        await fetch("/api/invoices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ milestone_id: id }),
+        });
+      } catch (invoiceErr) {
+        console.error("Failed to auto-create invoice:", invoiceErr);
+      }
+
       setMilestones((prev) =>
         prev.map((m) =>
           m.id === id ? { ...m, status: "Approved" } : m
@@ -125,6 +138,7 @@ function MilestonesContent() {
         isOpen: true,
         milestoneId: id,
         milestoneTitle: milestone.title,
+        milestone: milestone,
       });
     }
   };
@@ -134,6 +148,7 @@ function MilestonesContent() {
       isOpen: false,
       milestoneId: null,
       milestoneTitle: "",
+      milestone: null,
     });
   };
 
@@ -535,6 +550,10 @@ function MilestonesContent() {
         onClose={handleReviewModalClose}
         milestoneId={reviewModalState.milestoneId}
         milestoneTitle={reviewModalState.milestoneTitle}
+        milestone={reviewModalState.milestone}
+        projectName={selectedProject?.title || ""}
+        freelancerName={selectedProject?.freelancer?.full_name || selectedProject?.freelancer?.email || "Freelancer"}
+        userRole={role}
         onApprove={handleEvidenceApprove}
         onRequestRevision={handleEvidenceRevision}
       />

@@ -27,6 +27,7 @@ export type ClientAllowedMilestoneField =
 export const CLIENT_ALLOWED_STATUS_TRANSITIONS = [
   "Approved",
   "Rejected",
+  "In Progress",
 ] as const;
 export type ClientAllowedStatus =
   (typeof CLIENT_ALLOWED_STATUS_TRANSITIONS)[number];

@@ -25,6 +25,10 @@ interface EvidenceReviewModalProps {
   onClose: () => void;
   milestoneId: string | null;
   milestoneTitle: string;
+  milestone?: any;
+  projectName?: string;
+  freelancerName?: string;
+  userRole?: string;
   onApprove?: () => void;
   onRequestRevision?: () => void;
 }
@@ -34,6 +38,10 @@ export default function EvidenceReviewModal({
   onClose,
   milestoneId,
   milestoneTitle,
+  milestone,
+  projectName,
+  freelancerName,
+  userRole,
   onApprove,
   onRequestRevision,
 }: EvidenceReviewModalProps) {
@@ -41,10 +49,24 @@ export default function EvidenceReviewModal({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [checklist, setChecklist] = useState({
+    uploaded: false,
+    deliverable: false,
+    quality: false,
+    completeFiles: false,
+    validProgress: false,
+  });
 
   useEffect(() => {
     if (isOpen && milestoneId) {
       fetchEvidence();
+      setChecklist({
+        uploaded: false,
+        deliverable: false,
+        quality: false,
+        completeFiles: false,
+        validProgress: false,
+      });
     }
   }, [isOpen, milestoneId]);
 
@@ -216,6 +238,85 @@ export default function EvidenceReviewModal({
     }
   };
 
+  const handleReject = async () => {
+    const result = await Swal.fire({
+      title: "Tolak Submission?",
+      text: "Milestone akan ditandai sebagai 'Rejected'.",
+      input: "textarea",
+      inputLabel: "Alasan Penolakan (Opsional)",
+      inputPlaceholder: "Jelaskan mengapa ditolak...",
+      icon: "error",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Tolak",
+      cancelButtonText: "Batal",
+      background: "rgba(13, 27, 62, 0.95)",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+    });
+
+    if (!result.isConfirmed) return;
+
+    setIsProcessing(true);
+    try {
+      const res = await fetch("/api/milestones", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: milestoneId,
+          status: "Rejected",
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to reject milestone");
+      }
+
+      await Swal.fire({
+        icon: "success",
+        title: "Submission Ditolak",
+        text: "Status milestone telah diubah",
+        background: "rgba(13, 27, 62, 0.95)",
+        color: "#fff",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      onRequestRevision?.();
+      onClose();
+    } catch (err: any) {
+      console.error("Error rejecting milestone:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menolak",
+        text: err.message || "Terjadi kesalahan",
+        background: "rgba(13, 27, 62, 0.95)",
+        color: "#fff",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (userRole && userRole !== "client") {
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(6, 13, 32, 0.8)", backdropFilter: "blur(8px)" }} />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="glass-card" style={{ position: "relative", width: "100%", maxWidth: "400px", background: "rgba(13, 27, 62, 0.95)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "24px", padding: "32px", textAlign: "center", zIndex: 1 }}>
+               <AlertCircle size={48} style={{ color: "#ef4444", margin: "0 auto 16px" }} />
+               <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#fff", marginBottom: "8px" }}>Akses Tidak Diizinkan</h2>
+               <p style={{ color: "rgba(226, 232, 240, 0.6)", fontSize: "14px", marginBottom: "24px" }}>Hanya Client yang dapat membuka fitur Review Submission.</p>
+               <button onClick={onClose} className="btn-primary" style={{ padding: "10px 24px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", cursor: "pointer" }}>Tutup</button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -295,24 +396,42 @@ export default function EvidenceReviewModal({
             </button>
 
             <div style={{ marginBottom: "24px" }}>
-              <h2
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "800",
-                  color: "#fff",
-                  marginBottom: "8px",
-                }}
-              >
+              <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#fff", marginBottom: "8px" }}>
                 Review Bukti Kerja
               </h2>
-              <p
-                style={{
-                  color: "rgba(226, 232, 240, 0.6)",
-                  fontSize: "14px",
-                }}
-              >
+              <p style={{ color: "rgba(226, 232, 240, 0.6)", fontSize: "14px" }}>
                 Milestone: <strong style={{ color: "#fff" }}>{milestoneTitle}</strong>
               </p>
+            </div>
+
+            {/* Metadata Section */}
+            <div style={{ marginBottom: "24px", padding: "16px", background: "rgba(255,255,255,0.02)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Nama Project</p>
+                  <p style={{ fontSize: "14px", fontWeight: "600", color: "#fff" }}>{projectName || "-"}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Nama Freelancer</p>
+                  <p style={{ fontSize: "14px", fontWeight: "600", color: "#fff" }}>{freelancerName || "-"}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Tanggal Submission</p>
+                  <p style={{ fontSize: "14px", fontWeight: "600", color: "#fff" }}>
+                    {evidence.length > 0 ? formatDate(evidence[0].uploaded_at) : "-"}
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Status Submission</p>
+                  <div style={{ display: "inline-flex", padding: "4px 8px", background: "rgba(6, 182, 212, 0.1)", color: "var(--cyan)", borderRadius: "6px", fontSize: "12px", fontWeight: "600" }}>
+                    {milestone?.status || "Menunggu Persetujuan"}
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Deskripsi Pekerjaan</p>
+                  <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{milestone?.description || "-"}</p>
+              </div>
             </div>
 
             {isLoading ? (
@@ -560,71 +679,100 @@ export default function EvidenceReviewModal({
                   </div>
                 </div>
 
+                {/* Checklist Section */}
+                <div style={{ marginBottom: "24px" }}>
+                   <h3 style={{ fontSize: "14px", fontWeight: "700", color: "rgba(255,255,255,0.8)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                     Validation & Quality Review
+                   </h3>
+                   <div style={{ display: "flex", flexDirection: "column", gap: "10px", background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                     {[
+                       { id: 'uploaded', label: 'Bukti berhasil diupload' },
+                       { id: 'deliverable', label: 'Deliverable sesuai milestone' },
+                       { id: 'quality', label: 'Kualitas pekerjaan sesuai' },
+                       { id: 'completeFiles', label: 'Tidak ada file yang kurang' },
+                       { id: 'validProgress', label: 'Progress valid' },
+                     ].map(item => (
+                       <label key={item.id} style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>
+                         <input 
+                           type="checkbox" 
+                           checked={checklist[item.id as keyof typeof checklist]}
+                           onChange={(e) => setChecklist(prev => ({ ...prev, [item.id]: e.target.checked }))}
+                           style={{ width: "16px", height: "16px", accentColor: "var(--cyan)", cursor: "pointer" }}
+                         />
+                         <span style={{ fontSize: "14px", color: checklist[item.id as keyof typeof checklist] ? "#fff" : "rgba(255,255,255,0.6)", transition: "color 0.2s" }}>
+                           {item.label}
+                         </span>
+                       </label>
+                     ))}
+                   </div>
+                </div>
+
                 {/* Action Buttons */}
-                <div style={{ display: "flex", gap: "12px" }}>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                  <button
+                    onClick={handleReject}
+                    disabled={isProcessing}
+                    style={{
+                      flex: 1, minWidth: "140px", padding: "14px",
+                      background: "rgba(239, 68, 68, 0.1)",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      borderRadius: "10px", color: "#ef4444",
+                      fontSize: "13px", fontWeight: "700",
+                      cursor: isProcessing ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                      transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1,
+                    }}
+                    onMouseOver={(e) => !isProcessing && (e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)")}
+                    onMouseOut={(e) => (e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)")}
+                  >
+                    <XCircle size={16} /> Reject Submission
+                  </button>
+
                   <button
                     onClick={handleRequestRevision}
                     disabled={isProcessing}
                     style={{
-                      flex: 1,
-                      padding: "14px",
+                      flex: 1, minWidth: "140px", padding: "14px",
                       background: "rgba(245, 158, 11, 0.1)",
                       border: "1px solid rgba(245, 158, 11, 0.3)",
-                      borderRadius: "10px",
-                      color: "#f59e0b",
-                      fontSize: "14px",
-                      fontWeight: "600",
+                      borderRadius: "10px", color: "#f59e0b",
+                      fontSize: "13px", fontWeight: "700",
                       cursor: isProcessing ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      transition: "all 0.2s",
-                      opacity: isProcessing ? 0.5 : 1,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                      transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1,
                     }}
-                    onMouseOver={(e) => {
-                      if (!isProcessing) {
-                        e.currentTarget.style.background = "rgba(245, 158, 11, 0.2)";
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = "rgba(245, 158, 11, 0.1)";
-                    }}
+                    onMouseOver={(e) => !isProcessing && (e.currentTarget.style.background = "rgba(245, 158, 11, 0.2)")}
+                    onMouseOut={(e) => (e.currentTarget.style.background = "rgba(245, 158, 11, 0.1)")}
                   >
-                    <XCircle size={18} /> Minta Revisi
+                    <AlertCircle size={16} /> Request Revision
                   </button>
+                  
                   <button
                     onClick={handleApprove}
                     disabled={isProcessing}
                     style={{
-                      flex: 1,
-                      padding: "14px",
-                      background: "linear-gradient(135deg, #10b981, #059669)",
+                      flex: 1, minWidth: "140px", padding: "14px",
+                      background: "linear-gradient(135deg, var(--cyan), var(--blue))",
                       border: "none",
-                      borderRadius: "10px",
-                      color: "#fff",
-                      fontSize: "14px",
-                      fontWeight: "600",
+                      borderRadius: "10px", color: "#fff",
+                      fontSize: "13px", fontWeight: "700",
                       cursor: isProcessing ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      transition: "all 0.2s",
-                      opacity: isProcessing ? 0.5 : 1,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                      transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1,
+                      boxShadow: "0 4px 15px rgba(6, 182, 212, 0.3)",
                     }}
                     onMouseOver={(e) => {
                       if (!isProcessing) {
                         e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.boxShadow = "0 8px 20px rgba(16, 185, 129, 0.3)";
+                        e.currentTarget.style.boxShadow = "0 8px 20px rgba(6, 182, 212, 0.5)";
                       }
                     }}
                     onMouseOut={(e) => {
                       e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
+                      e.currentTarget.style.boxShadow = "0 4px 15px rgba(6, 182, 212, 0.3)";
                     }}
                   >
-                    <CheckCircle size={18} /> Setujui Milestone
+                    <CheckCircle size={16} /> Approve Submission
                   </button>
                 </div>
               </>

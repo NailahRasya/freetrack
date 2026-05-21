@@ -13,7 +13,8 @@ import {
   Users,
   User,
   Sparkles,
-  GitPullRequest
+  GitPullRequest,
+  FileText
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -35,6 +36,7 @@ export default function DashboardSidebar() {
     { icon: Briefcase, label: t("my_projects"), href: "/dashboard/projects" },
     { icon: Users, label: t("contacts"), href: "/dashboard/contacts" },
     { icon: Wallet, label: t("payments"), href: "/dashboard/payments" },
+    { icon: FileText, label: t("invoices"), href: "/dashboard/invoices" },
     { icon: Flag, label: t("milestones"), href: "/dashboard/milestones" },
     { icon: GitPullRequest, label: t("change_requests"), href: "/dashboard/change-requests" },
     { icon: MessageSquare, label: t("messages"), href: "/dashboard/messages" },
@@ -142,7 +144,7 @@ export default function DashboardSidebar() {
             : pathname.startsWith(item.href);
           return (
             <Link 
-              key={item.label} 
+              key={item.href} 
               href={item.href}
               style={{ textDecoration: "none" }}
             >
@@ -177,7 +179,7 @@ export default function DashboardSidebar() {
                   />
                 )}
                 <item.icon size={20} style={{ flexShrink: 0 }} />
-                {mounted && item.label === "Proyek Saya" && hasActionableProjects && (
+                {mounted && item.href === "/dashboard/projects" && hasActionableProjects && (
                   <span style={{
                     position: "absolute",
                     top: collapsed ? "8px" : "12px",
@@ -190,7 +192,7 @@ export default function DashboardSidebar() {
                     zIndex: 10
                   }} />
                 )}
-                {mounted && item.label === "Pesan" && unreadCount > 0 && (
+                {mounted && item.href === "/dashboard/messages" && unreadCount > 0 && (
                   <span style={{
                     position: "absolute",
                     top: collapsed ? "8px" : "12px",
