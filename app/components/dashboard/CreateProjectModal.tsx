@@ -160,7 +160,7 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
 
   const [form, setForm] = useState({
     name: initialData?.title || "",
-    clientId: initialData?.client_id || initialData?.freelancer_id || "",
+    clientId: (role === "client" ? initialData?.freelancer_id : initialData?.client_id) || "",
     clientName: (role === "client" ? initialData?.freelancer?.full_name : initialData?.client?.full_name) || "",
     budget: initialData?.budget ? formatRupiah(initialData.budget) : "",
     description: initialData?.description || "",

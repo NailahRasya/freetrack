@@ -226,10 +226,10 @@ export async function PUT(request: NextRequest) {
 
   // ── Security Shield: Client payload validation ────────────────────────────
   if (role === "client") {
-    // Fetch current milestone to get current status
+    // Fetch current milestone to get current status and context
     const { data: currentMilestone } = await supabase
       .from("milestones")
-      .select("status, project_id")
+      .select("status, project_id, title, freelancer_id, description, amount")
       .eq("id", id)
       .single();
 
@@ -242,11 +242,33 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Extra safety: strip every key except 'status' and 'payment_status' before hitting the DB
+    const reviewNotes = payload.review_notes as string | undefined;
+    const reviewChecklist = payload.checklist as any;
+
+    // Extra safety: strip every key except 'status', 'payment_status', and 'description' before hitting the DB
     // (payment_status is needed for the client to mark a milestone as Escrowed when paying DP)
     const safePayload: Record<string, unknown> = {};
     if ("status" in payload) safePayload.status = payload.status;
     if ("payment_status" in payload) safePayload.payment_status = payload.payment_status;
+
+    // Store review feedback in description field if milestone is rejected or revision requested
+    if (currentMilestone) {
+      const currentDesc = currentMilestone.description || "";
+      const cleanDesc = currentDesc.split("--- REVIEW FEEDBACK ---")[0].trim();
+
+      if (payload.status === "In Progress" || payload.status === "Rejected") {
+        if (reviewNotes || reviewChecklist) {
+          const delimiter = "\n\n--- REVIEW FEEDBACK ---";
+          const notesPart = reviewNotes && reviewNotes.trim() ? `\nNotes: ${reviewNotes.trim()}` : "";
+          const checklistPart = reviewChecklist ? `\nChecklist: ${JSON.stringify(reviewChecklist)}` : "";
+          
+          safePayload.description = `${cleanDesc}${delimiter}${notesPart}${checklistPart}`;
+        }
+      } else if (payload.status === "Approved") {
+        // Clear previous review feedback on approval
+        safePayload.description = cleanDesc || null;
+      }
+    }
 
     if (Object.keys(safePayload).length === 0) {
       return NextResponse.json(
@@ -266,6 +288,140 @@ export async function PUT(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Auto-create chat message and in-app notification when client requests revision or rejects
+    if (currentMilestone && (payload.status === "In Progress" || payload.status === "Rejected")) {
+      const isRevision = payload.status === "In Progress";
+      const statusTitle = isRevision ? "REVISION REQUESTED" : "SUBMISSION REJECTED";
+      const statusEmoji = isRevision ? "⚠️" : "❌";
+      
+      let checklistSummary = "";
+      if (reviewChecklist) {
+        checklistSummary = "\n\n📋 **Validation & Quality Review:**\n" +
+          `${reviewChecklist.uploaded ? "✅" : "❌"} Bukti berhasil diupload\n` +
+          `${reviewChecklist.deliverable ? "✅" : "❌"} Deliverable sesuai milestone\n` +
+          `${reviewChecklist.quality ? "✅" : "❌"} Kualitas pekerjaan sesuai\n` +
+          `${reviewChecklist.completeFiles ? "✅" : "❌"} Tidak ada file yang kurang\n` +
+          `${reviewChecklist.validProgress ? "✅" : "❌"} Progress valid`;
+      }
+
+      const notesSummary = reviewNotes && reviewNotes.trim() 
+        ? `\n\n💬 **Catatan dari Klien:**\n"${reviewNotes.trim()}"`
+        : "";
+
+      const messageContent = `${statusEmoji} **${statusTitle}**\n` +
+        `Milestone: *${currentMilestone.title}*\n` +
+        `Status: ${isRevision ? "Kembali ke 'Dalam Pengerjaan'" : "Ditolak"}` +
+        checklistSummary +
+        notesSummary;
+
+      // Send to freelancer
+      if (currentMilestone.freelancer_id) {
+        // Ensure contact exists between client and freelancer
+        try {
+          const { data: existingContact } = await supabase
+            .from("contacts")
+            .select("id")
+            .eq("freelancer_id", currentMilestone.freelancer_id)
+            .eq("client_id", user.id)
+            .maybeSingle();
+
+          if (!existingContact) {
+            const { data: freelancerProfile } = await supabase
+              .from("profiles")
+              .select("email")
+              .eq("id", currentMilestone.freelancer_id)
+              .single();
+              
+            await supabase.from("contacts").insert({
+              freelancer_id: currentMilestone.freelancer_id,
+              client_id: user.id,
+              status: "accepted",
+              invited_by: user.id,
+              invited_email: freelancerProfile?.email || ""
+            });
+          }
+        } catch (contactErr) {
+          console.error("Auto contact check failed in milestones PUT:", contactErr);
+        }
+
+        // Insert chat message
+        await supabase.from("messages").insert({
+          sender_id: user.id,
+          receiver_id: currentMilestone.freelancer_id,
+          content: messageContent,
+          is_read: false
+        });
+
+        // Insert notification
+        await supabase.from("notifications").insert({
+          user_id: currentMilestone.freelancer_id,
+          title: isRevision ? `Revisi Diminta: ${currentMilestone.title}` : `Submission Ditolak: ${currentMilestone.title}`,
+          content: reviewNotes && reviewNotes.trim() 
+            ? `Catatan: ${reviewNotes.trim()}`
+            : `Klien meminta penyesuaian pada milestone ${currentMilestone.title}. Silakan periksa chat detail.`,
+          type: isRevision ? "warning" : "error",
+          link: `/dashboard/milestones?project_id=${currentMilestone.project_id}`
+        });
+      }
+    } else if (currentMilestone && payload.status === "Approved") {
+      const amountStr = currentMilestone.amount 
+        ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(currentMilestone.amount)
+        : "sesuai kesepakatan";
+
+      const messageContent = `🎉 **MILESTONE DISETUJUI & DANA ESCROW CAIR**\n\n` +
+        `Milestone: *${currentMilestone.title}*\n` +
+        `Klien telah menyetujui hasil pekerjaan Anda. Dana sebesar **${amountStr}** yang ditahan di escrow telah otomatis dicairkan ke saldo FreeTrack Anda!\n\n` +
+        `Terima kasih atas kerja keras Anda! 🚀`;
+
+      // Send to freelancer
+      if (currentMilestone.freelancer_id) {
+        // Ensure contact exists between client and freelancer
+        try {
+          const { data: existingContact } = await supabase
+            .from("contacts")
+            .select("id")
+            .eq("freelancer_id", currentMilestone.freelancer_id)
+            .eq("client_id", user.id)
+            .maybeSingle();
+
+          if (!existingContact) {
+            const { data: freelancerProfile } = await supabase
+              .from("profiles")
+              .select("email")
+              .eq("id", currentMilestone.freelancer_id)
+              .single();
+              
+            await supabase.from("contacts").insert({
+              freelancer_id: currentMilestone.freelancer_id,
+              client_id: user.id,
+              status: "accepted",
+              invited_by: user.id,
+              invited_email: freelancerProfile?.email || ""
+            });
+          }
+        } catch (contactErr) {
+          console.error("Auto contact check failed in milestones PUT (approval):", contactErr);
+        }
+
+        // Insert chat message
+        await supabase.from("messages").insert({
+          sender_id: user.id,
+          receiver_id: currentMilestone.freelancer_id,
+          content: messageContent,
+          is_read: false
+        });
+
+        // Insert notification
+        await supabase.from("notifications").insert({
+          user_id: currentMilestone.freelancer_id,
+          title: "🎉 Dana Escrow Cair!",
+          content: `Milestone "${currentMilestone.title}" disetujui. Dana sebesar ${amountStr} otomatis ditambahkan ke saldo Anda.`,
+          type: "success",
+          link: `/dashboard/payments?approved_notification=true&amount=${currentMilestone.amount || 0}&title=${encodeURIComponent(currentMilestone.title || "")}`
+        });
+      }
     }
 
     // Update project progress

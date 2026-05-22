@@ -172,7 +172,7 @@ export default function DashboardNavbar() {
           Dashboard {role === "freelancer" ? "Freelancer" : "Klien"}
         </h2>
         <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.4)", margin: "2px 0 0 0" }}>
-          {currentDate}
+          {mounted ? currentDate : ""}
         </p>
       </div>
 
@@ -185,6 +185,9 @@ export default function DashboardNavbar() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => searchQuery.trim() && setShowResults(true)}
+            autoComplete="off"
+            name="search-query"
+            id="search-query"
             style={{ width: "100%", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "10px", padding: "10px 12px 10px 42px", color: "#fff", fontSize: "13px", outline: "none", transition: "all 0.3s ease" }}
           />
           <AnimatePresence>

@@ -260,12 +260,31 @@ export default function RoleModal({ isOpen, onClose }: RoleModalProps) {
           {/* Bagian Bawah Modal (Link Login jika sudah punya akun) */}
           <p style={{
             textAlign: "center",
-            fontSize: "12px",
-            color: "rgba(226,232,240,0.3)",
-            marginTop: "24px",
+            fontSize: "14px",
+            color: "rgba(226, 232, 240, 0.7)",
+            marginTop: "28px",
           }}>
             Sudah punya akun?{" "}
-            <Link href="/login" style={{ color: "#4D63FF", textDecoration: "none", fontWeight: "600" }}>
+            <Link 
+              href="/login" 
+              style={{ 
+                color: "#38BDF8", 
+                textDecoration: "none", 
+                fontWeight: "700",
+                marginLeft: "4px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color = "#00E5FF";
+                (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline";
+                (e.currentTarget as HTMLAnchorElement).style.textShadow = "0 0 10px rgba(0,229,255,0.4)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color = "#38BDF8";
+                (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none";
+                (e.currentTarget as HTMLAnchorElement).style.textShadow = "none";
+              }}
+            >
               Masuk di sini
             </Link>
           </p>

@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, SlidersHorizontal, Briefcase, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import ProjectCard from "../../components/dashboard/ProjectCard";
 import CreateProjectModal from "../../components/dashboard/CreateProjectModal";
+import RatingReviewModal from "../../components/dashboard/RatingReviewModal";
 import Swal from "sweetalert2";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useContacts } from "@/lib/hooks/useContacts";
@@ -18,6 +19,7 @@ const STATUS_COLOR: Record<string, string> = {
   completed: "#00FFA3", 
   rejected: "#FF4D6A",
   published: "#4D63FF",
+  archived: "#64748B",
 };
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draf", 
@@ -28,6 +30,7 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "Selesai", 
   rejected: "Ditolak / Revisi",
   published: "Dipublikasikan",
+  archived: "Diarsipkan",
 };
 
 export default function ProjectsPage() {
@@ -38,16 +41,60 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<any>(null);
+  const [reviewTarget, setReviewTarget] = useState<{
+    projectId: string;
+    freelancerId: string;
+    projectTitle: string;
+    freelancerName: string;
+  } | null>(null);
+  const [reviewedProjectIds, setReviewedProjectIds] = useState<Set<string>>(new Set());
+
+  // Load existing reviews for all completed projects (to show hasReview badge)
+  useEffect(() => {
+    if (role !== "client" || projects.length === 0) return;
+    const completedIds = projects
+      .filter((p) => p.status === "completed")
+      .map((p) => p.id);
+    if (completedIds.length === 0) return;
+
+    const checkReviews = async () => {
+      try {
+        // Check reviews for each completed project
+        const results = await Promise.all(
+          completedIds.map(async (id) => {
+            const res = await fetch(`/api/reviews?projectId=${id}`);
+            const json = await res.json();
+            return { id, hasReview: json.data && json.data.length > 0 };
+          })
+        );
+        const reviewed = new Set<string>(
+          results.filter((r) => r.hasReview).map((r) => String(r.id))
+        );
+        setReviewedProjectIds(reviewed);
+      } catch (err) {
+        console.error("Failed to check reviews:", err);
+      }
+    };
+    checkReviews();
+  }, [role, projects]);
 
   const tabs = role === "freelancer"
-    ? ["all", "draft", "pending_freelancer", "pending_client", "active", "review", "completed"]
-    : ["all", "draft", "published", "pending_freelancer", "pending_client", "active", "review", "completed"];
+    ? ["all", "draft", "pending_freelancer", "pending_client", "active", "review", "completed", "archived"]
+    : ["all", "draft", "published", "pending_freelancer", "pending_client", "active", "review", "completed", "archived"];
 
   const filtered = projects.filter(p => {
     // Proyek "published" (Marketplace) hanya muncul di sisi Klien (pembuatnya)
     if (role === "freelancer" && p.status === "published") return false;
 
-    const matchTab = tab === "all" || p.status === tab;
+    // Filter based on archived state
+    const isArchived = role === "client" ? p.client_archived === true : p.freelancer_archived === true;
+    if (tab === "archived") {
+      if (!isArchived) return false;
+    } else {
+      if (isArchived) return false;
+    }
+
+    const matchTab = tab === "all" || tab === "archived" || p.status === tab;
     const partner = role === "client" ? (p.freelancer?.full_name ?? "") : (p.client?.full_name ?? "");
     const matchSearch = (p.title ?? "").toLowerCase().includes(search.toLowerCase()) ||
                         partner.toLowerCase().includes(search.toLowerCase());
@@ -56,7 +103,8 @@ export default function ProjectsPage() {
 
   const visibleProjects = projects.filter(p => {
     if (role === "freelancer" && p.status === "published") return false;
-    return true;
+    const isArchived = role === "client" ? p.client_archived === true : p.freelancer_archived === true;
+    return !isArchived;
   });
 
   const stats = [
@@ -66,22 +114,27 @@ export default function ProjectsPage() {
     { label: "Selesai", value: visibleProjects.filter(p => p.status === "completed").length, icon: CheckCircle2, color: "#00FFA3" },
   ];
 
-  const toCard = (p: any) => ({
-    id: p.id,
-    projectId: p.project_code,
-    name: p.title,
-    client: p.client?.full_name ?? "-",
-    freelancer: p.freelancer?.full_name ?? "-",
-    progress: p.progress ?? 0,
-    budget: p.budget ?? "-",
-    deadline: p.deadline ?? "-",
-    status: STATUS_LABEL[p.status] ?? p.status,
-    statusColor: STATUS_COLOR[p.status] ?? "#666",
-    rawStatus: p.status,
-    description: p.description,
-    rejection_reason: p.rejection_reason,
-    negotiation_count: p.negotiation_count || 0
-  });
+  const toCard = (p: any) => {
+    const isArchived = role === "client" ? p.client_archived === true : p.freelancer_archived === true;
+    return {
+      id: p.id,
+      projectId: p.project_code,
+      name: p.title,
+      client: p.client?.full_name ?? "-",
+      freelancer: p.freelancer?.full_name ?? "-",
+      freelancerId: p.freelancer_id ?? "",
+      progress: p.progress ?? 0,
+      budget: p.budget ?? "-",
+      deadline: p.deadline ?? "-",
+      status: isArchived ? "Diarsipkan" : (STATUS_LABEL[p.status] ?? p.status),
+      statusColor: isArchived ? STATUS_COLOR.archived : (STATUS_COLOR[p.status] ?? "#666"),
+      rawStatus: p.status,
+      description: p.description,
+      rejection_reason: p.rejection_reason,
+      negotiation_count: p.negotiation_count || 0,
+      hasReview: reviewedProjectIds.has(String(p.id)),
+    };
+  };
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "400px", gap: "12px", color: "rgba(226,232,240,0.4)" }}>
@@ -154,6 +207,7 @@ export default function ProjectsPage() {
           <motion.div layout style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" }}>
             {filtered.map(p => (
               <ProjectCard key={p.id} project={toCard(p)}
+                isArchivedView={tab === "archived"}
                 onEdit={() => setProjectToEdit(p)}
                 onDelete={async id => { 
                   const result = await Swal.fire({
@@ -187,6 +241,59 @@ export default function ProjectsPage() {
                   } catch(e:any) { 
                     Swal.fire({ title: "Error", text: e.message, icon: "error", background: "#0F1B2E", color: "#fff" });
                   } 
+                }}
+                onReview={(projectId, freelancerId, projectTitle, freelancerName) => {
+                  setReviewTarget({ projectId, freelancerId, projectTitle, freelancerName });
+                }}
+                onArchive={async id => {
+                  try {
+                    const payload = role === "client" 
+                      ? { client_archived: true } 
+                      : { freelancer_archived: true };
+                    await updateProject(String(id), payload);
+                    Swal.fire({
+                      title: "Berhasil!",
+                      text: "Proyek berhasil diarsipkan.",
+                      icon: "success",
+                      background: "#0F1B2E",
+                      color: "#fff",
+                      timer: 1500,
+                      showConfirmButton: false
+                    });
+                  } catch (e: any) {
+                    Swal.fire({
+                      title: "Error",
+                      text: e.message,
+                      icon: "error",
+                      background: "#0F1B2E",
+                      color: "#fff"
+                    });
+                  }
+                }}
+                onRestore={async id => {
+                  try {
+                    const payload = role === "client" 
+                      ? { client_archived: false } 
+                      : { freelancer_archived: false };
+                    await updateProject(String(id), payload);
+                    Swal.fire({
+                      title: "Berhasil!",
+                      text: "Proyek berhasil dipulihkan.",
+                      icon: "success",
+                      background: "#0F1B2E",
+                      color: "#fff",
+                      timer: 1500,
+                      showConfirmButton: false
+                    });
+                  } catch (e: any) {
+                    Swal.fire({
+                      title: "Error",
+                      text: e.message,
+                      icon: "error",
+                      background: "#0F1B2E",
+                      color: "#fff"
+                    });
+                  }
                 }}
               />
             ))}
@@ -245,6 +352,23 @@ export default function ProjectsPage() {
                 Swal.fire({ title: "Gagal!", text: e.message, icon: "error", background: "#0F1B2E", color: "#fff" });
                 throw e;
               }
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Modal Rating & Review */}
+      <AnimatePresence>
+        {reviewTarget && (
+          <RatingReviewModal
+            projectId={reviewTarget.projectId}
+            projectTitle={reviewTarget.projectTitle}
+            freelancerName={reviewTarget.freelancerName}
+            onClose={() => setReviewTarget(null)}
+            onSuccess={() => {
+              // Mark as reviewed locally for instant UI update
+              setReviewedProjectIds((prev) => new Set([...prev, reviewTarget.projectId]));
+              setReviewTarget(null);
             }}
           />
         )}

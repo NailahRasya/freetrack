@@ -90,7 +90,6 @@ export default function ContractReviewModal({ isOpen, onClose, project, onSucces
 
         // 4. Send notification message
         await supabase.from("messages").insert({
-          project_id: project.id,
           sender_id: user.id,
           receiver_id: project.freelancer_id,
           content: `Kontrak digital untuk proyek "${project.title}" telah disetujui! Proyek kini berstatus Aktif. Mari kita mulai pengerjaannya.`
@@ -126,7 +125,6 @@ export default function ContractReviewModal({ isOpen, onClose, project, onSucces
           .eq("status", "Contract Pending");
 
         await supabase.from("messages").insert({
-          project_id: project.id,
           sender_id: user.id,
           receiver_id: project.freelancer_id,
           content: `Saya telah meninjau proposal kontrak untuk "${project.title}" namun ada beberapa hal yang perlu disesuaikan kembali. Mari diskusikan.`

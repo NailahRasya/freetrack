@@ -108,7 +108,7 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
 
   y = 70;
 
-  // ── Date Information ──
+  // ── Date & Payment Information ──
   doc.setFillColor(...lightBg);
   doc.roundedRect(margin, y, contentWidth, 22, 3, 3, "F");
 
@@ -116,18 +116,29 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...gray);
   doc.text("Tanggal Terbit", margin + 8, y + 8);
-  doc.text("Jatuh Tempo", margin + 70, y + 8);
+  doc.text("Jatuh Tempo", margin + 50, y + 8);
   if (invoice.paid_at) {
-    doc.text("Tanggal Bayar", margin + 140, y + 8);
+    doc.text("Tanggal Bayar", margin + 92, y + 8);
+    doc.text("Metode Bayar", margin + 134, y + 8);
   }
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...darkText);
   doc.text(formatDatePDF(invoice.issued_at), margin + 8, y + 16);
-  doc.text(formatDatePDF(invoice.due_date), margin + 70, y + 16);
+  doc.text(formatDatePDF(invoice.due_date), margin + 50, y + 16);
   if (invoice.paid_at) {
-    doc.text(formatDatePDF(invoice.paid_at), margin + 140, y + 16);
+    doc.text(formatDatePDF(invoice.paid_at), margin + 92, y + 16);
+    
+    // Extract payment method from activity log
+    let paymentMethod = "Bank Transfer";
+    if (invoice.activity_log && Array.isArray(invoice.activity_log)) {
+      const paymentEntry = invoice.activity_log.find((entry: any) => entry.action === "payment_completed");
+      if (paymentEntry && (paymentEntry as any).payment_method) {
+        paymentMethod = (paymentEntry as any).payment_method;
+      }
+    }
+    doc.text(paymentMethod, margin + 134, y + 16);
   }
 
   y += 26;

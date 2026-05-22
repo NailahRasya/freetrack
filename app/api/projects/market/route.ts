@@ -14,12 +14,10 @@ export async function GET(request: NextRequest) {
     .from("profiles")
     .select("skills, role")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (!profile || profile.role !== "freelancer") {
-    // Jika bukan freelancer, mungkin hanya bisa melihat postingan sendiri?
-    // Tapi untuk marketplace, biasanya freelancer yang melihat.
-    // Jika klien yang akses, mungkin kembalikan error atau list terbatas.
+  if (!profile) {
+    // Fallback or log if no profile found
   }
 
   // Fetch projects with status 'published'

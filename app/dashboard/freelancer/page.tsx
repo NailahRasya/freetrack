@@ -14,10 +14,37 @@ import { useUser } from "../layout";
 
 import OnboardingWelcomeBanner from "../../components/dashboard/OnboardingWelcomeBanner";
 import { supabase } from "@/lib/supabase";
+import FreelancerReviewsCard from "../../components/dashboard/freelancer/FreelancerReviewsCard";
+import { Star } from "lucide-react";
+
 export default function FreelancerDashboardPage() {
   const { user } = useUser();
   const [isChangeRequestOpen, setIsChangeRequestOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [ratingData, setRatingData] = useState({
+    averageRating: 0,
+    totalReviews: 0
+  });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchRating = async () => {
+      try {
+        const res = await fetch(`/api/reviews?freelancerId=${user.id}`);
+        const json = await res.json();
+        if (json.data && json.data.length > 0) {
+          const sum = json.data.reduce((acc: number, r: any) => acc + r.rating, 0);
+          setRatingData({
+            averageRating: Math.round((sum / json.data.length) * 10) / 10,
+            totalReviews: json.data.length
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch rating data in dashboard:", err);
+      }
+    };
+    fetchRating();
+  }, [user?.id]);
 
   useEffect(() => {
     setMounted(true);
@@ -84,15 +111,38 @@ export default function FreelancerDashboardPage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 style={{ 
-            fontSize: "28px", 
-            fontWeight: "900", 
-            color: "#fff", 
-            letterSpacing: "-0.5px",
-            marginBottom: "8px"
-          }}>
-            Selamat datang kembali, <span className="gradient-text-emerald">{user?.profile?.full_name || "Freelancer"}</span>
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", marginBottom: "8px" }}>
+            <h1 style={{ 
+              fontSize: "28px", 
+              fontWeight: "900", 
+              color: "#fff", 
+              letterSpacing: "-0.5px",
+              margin: 0
+            }}>
+              Selamat datang kembali, <span className="gradient-text-emerald">{user?.profile?.full_name || "Freelancer"}</span>
+            </h1>
+            {ratingData.totalReviews > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "rgba(255, 215, 0, 0.08)",
+                  border: "1px solid rgba(255, 215, 0, 0.2)",
+                  borderRadius: "12px",
+                  padding: "5px 12px",
+                  fontSize: "13px",
+                  fontWeight: "800",
+                  color: "#FFD700"
+                }}
+              >
+                <Star size={13} fill="#FFD700" color="#FFD700" />
+                {ratingData.averageRating.toFixed(1)} ({ratingData.totalReviews} Ulasan)
+              </motion.div>
+            )}
+          </div>
           <p style={{ color: "rgba(226, 232, 240, 0.4)", fontSize: "15px" }}>
             Berikut adalah apa yang terjadi di ruang kerja pribadi Anda hari ini.
           </p>
@@ -200,6 +250,9 @@ export default function FreelancerDashboardPage() {
               </button>
             </div>
           </motion.div>
+
+          {/* Widget Reputasi & Ulasan Klien */}
+          {user?.id && <FreelancerReviewsCard freelancerId={user.id} />}
         </div>
       </div>
 

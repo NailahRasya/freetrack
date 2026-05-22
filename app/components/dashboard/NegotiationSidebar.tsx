@@ -208,10 +208,6 @@ export default function NegotiationSidebar({ project, role, userId, onUpdate }: 
               <DollarSign size={14} style={{ color: "#00FFA3" }} />
               <div style={{ fontSize: "14px", color: "#fff", fontWeight: "700" }}>{formatRupiah(String(project.budget || ""))}</div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <Calendar size={14} style={{ color: "var(--cyan)" }} />
-              <div style={{ fontSize: "14px", color: "rgba(226, 232, 240, 0.7)" }}>Deadline: {project.deadline}</div>
-            </div>
           </div>
         </div>
 
@@ -232,16 +228,11 @@ export default function NegotiationSidebar({ project, role, userId, onUpdate }: 
                         placeholder="Contoh: Rp 5.000.000" 
                       />
                     </div>
-                    <div>
-                      <label style={labelStyle}>Deadline</label>
-                      <input type="date" value={negoDeadline} onChange={e => setNegoDeadline(e.target.value)} style={inputStyle} />
-                    </div>
                     <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
                       <button onClick={() => setIsNegotiating(false)} style={btnSecondary}>Batal</button>
                       <button 
                         onClick={() => handleStatusUpdate(isClient ? "pending_freelancer" : "pending_client", { 
                           budget: negoBudget.replace(/[^0-9]/g, ""), 
-                          deadline: negoDeadline,
                           negotiation_count: (project.negotiation_count || 0) + 1
                         })} 
                         disabled={loading}
@@ -279,6 +270,49 @@ export default function NegotiationSidebar({ project, role, userId, onUpdate }: 
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {/* Milestone Planning Card for active project (Freelancer) */}
+        {!isClient && isActive && (
+          <div className="glass-card" style={{ 
+            padding: "20px", 
+            background: "rgba(6, 182, 212, 0.04)", 
+            border: "1px solid rgba(6, 182, 212, 0.15)", 
+            borderRadius: "16px",
+            marginTop: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "14px"
+          }}>
+            <h5 style={{ fontSize: "14px", fontWeight: "800", color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+              <Flag size={16} style={{ color: "var(--cyan)" }} /> Rencana Kerja & Milestone
+            </h5>
+            <p style={{ fontSize: "12px", color: "rgba(226, 232, 240, 0.5)", lineHeight: "1.6" }}>
+              Proyek telah disetujui! Hubungkan rencana kerja Anda dengan membuat milestone pengerjaan sekarang untuk memantau progress pengerjaan.
+            </p>
+            <button 
+              onClick={() => router.push(`/dashboard/milestones?project_id=${project.id}`)}
+              style={{
+                width: "100%",
+                padding: "12px",
+                background: "linear-gradient(135deg, #06B6D4, #4D63FF)",
+                border: "none",
+                borderRadius: "10px",
+                color: "#fff",
+                fontSize: "13px",
+                fontWeight: "800",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "all 0.2s"
+              }}
+              className="cta-button"
+            >
+              Buat Milestone Planning
+            </button>
+          </div>
+        )}
 
         {/* Planning Section (After Agreed) */}
         {isAgreed && (

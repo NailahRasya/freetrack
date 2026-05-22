@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
+import OnboardingTour from "../components/dashboard/OnboardingTour";
 import { Language, translations, TranslationKey } from "@/app/lib/i18n";
 
 const UserContext = createContext<{
@@ -97,11 +98,11 @@ export default function DashboardLayout({
           
           if (profile) {
             if (profile.role === "freelancer") {
-              const { data: obData } = await supabase
+              const { data: obDataList } = await supabase
                 .from("onboarding_freelancer")
                 .select("skill_categories, tools")
-                .eq("user_id", user.id)
-                .maybeSingle();
+                .eq("user_id", user.id);
+              const obData = obDataList && obDataList.length > 0 ? obDataList[0] : null;
               
               userSkills = [
                 ...(profile.skills || []), 
@@ -109,11 +110,11 @@ export default function DashboardLayout({
                 ...(obData?.tools || [])
               ];
             } else {
-              const { data: obData } = await supabase
+              const { data: obDataList } = await supabase
                 .from("onboarding_client")
                 .select("project_categories, required_skills")
-                .eq("user_id", user.id)
-                .maybeSingle();
+                .eq("user_id", user.id);
+              const obData = obDataList && obDataList.length > 0 ? obDataList[0] : null;
 
               userSkills = [
                 ...(obData?.project_categories || []),
@@ -163,6 +164,7 @@ export default function DashboardLayout({
           position: "relative",
           zIndex: 1
         }}>
+          <OnboardingTour />
           <DashboardSidebar />
 
           <main style={{ 

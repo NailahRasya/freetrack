@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 
 async function getAuth(request: NextRequest) {
   const supabase = await createClient();
@@ -93,40 +93,18 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Simpan pesan
-  const messageData: any = {
-    sender_id: user.id,
-    receiver_id,
-    content: content.trim()
-  };
-  
-  // Hanya tambahkan project_id jika benar-benar dikirim dari client
-  if (project_id) {
-    messageData.project_id = project_id;
-  }
-
   const { data, error } = await supabase
     .from("messages")
-    .insert(messageData)
+    .insert({
+      sender_id: user.id,
+      receiver_id,
+      content: content.trim()
+    })
     .select()
     .single();
 
   if (error) {
     console.error("Insert message error:", error);
-    // Jika error karena project_id tidak ada, coba lagi tanpa project_id
-    if (error.message.includes("project_id") || error.code === "42703") {
-      const { data: retryData, error: retryError } = await supabase
-        .from("messages")
-        .insert({
-          sender_id: user.id,
-          receiver_id,
-          content: content.trim()
-        })
-        .select()
-        .single();
-        
-      if (retryError) return NextResponse.json({ error: retryError.message }, { status: 500 });
-      return NextResponse.json({ data: retryData }, { status: 201 });
-    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -155,7 +133,7 @@ export async function DELETE(request: NextRequest) {
 }
 // ── PATCH — tandai pesan sebagai dibaca ──────────────────────────────────────
 export async function PATCH(request: NextRequest) {
-  const { user, supabase } = await getAuth(request);
+  const { user } = await getAuth(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: any;
@@ -166,8 +144,10 @@ export async function PATCH(request: NextRequest) {
   const { sender_id } = body;
   if (!sender_id) return NextResponse.json({ error: "sender_id is required" }, { status: 400 });
 
+  const adminSupabase = await createAdminClient();
+
   // Update semua pesan dari sender_id ke user.id menjadi is_read = true
-  const { error } = await supabase
+  const { error } = await adminSupabase
     .from("messages")
     .update({ is_read: true })
     .eq("sender_id", sender_id)

@@ -25,6 +25,7 @@ export const translations = {
     messages: "Pesan",
     my_profile: "Profil Saya",
     change_requests: "Permintaan Perubahan",
+    freetrack_guide: "Panduan FreeTrack",
     
     // Settings
     account_settings: "Pengaturan Akun",
@@ -79,6 +80,7 @@ export const translations = {
     messages: "Messages",
     my_profile: "My Profile",
     change_requests: "Change Requests",
+    freetrack_guide: "FreeTrack Guide",
     
     // Settings
     account_settings: "Account Settings",

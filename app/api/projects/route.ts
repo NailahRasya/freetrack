@@ -19,17 +19,29 @@ async function getAuth(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const { user, supabase } = await getAuth(request);
+  const { user, role, supabase } = await getAuth(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabase
+  const { searchParams } = new URL(request.url);
+  const includeArchived = searchParams.get("includeArchived") === "true";
+
+  let query = supabase
     .from("projects")
     .select(`
       *,
       freelancer:profiles!projects_freelancer_id_fkey(id, full_name, email, avatar_url),
       client:profiles!projects_client_id_fkey(id, full_name, email, avatar_url)
-    `)
-    .order("created_at", { ascending: false });
+    `);
+
+  if (!includeArchived) {
+    if (role === "client") {
+      query = query.neq("client_archived", true);
+    } else if (role === "freelancer") {
+      query = query.neq("freelancer_archived", true);
+    }
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });
@@ -155,6 +167,7 @@ export async function PATCH(request: NextRequest) {
     if (payload.required_skills !== undefined) updateData.required_skills = payload.required_skills;
     if (payload.planning_context !== undefined) updateData.planning_context = payload.planning_context;
     if (payload.proposal_reason !== undefined) updateData.proposal_reason = payload.proposal_reason;
+    if (payload.client_archived !== undefined) updateData.client_archived = payload.client_archived;
 
     const { data: updateRes, error: updateErr } = await supabase
       .from("projects")
@@ -174,7 +187,6 @@ export async function PATCH(request: NextRequest) {
         : `Halo! Saya telah memperbarui detail/penawaran untuk proyek "${data.title}". Silakan tinjau kembali.`;
         
       await supabase.from("messages").insert({
-        project_id: data.id,
         sender_id: user.id,
         receiver_id: data.freelancer_id,
         content: msgContent
@@ -191,6 +203,7 @@ export async function PATCH(request: NextRequest) {
     if (payload.description !== undefined) updateData.description = payload.description;
     if (payload.planning_context !== undefined) updateData.planning_context = payload.planning_context;
     if (payload.proposal_reason !== undefined) updateData.proposal_reason = payload.proposal_reason;
+    if (payload.freelancer_archived !== undefined) updateData.freelancer_archived = payload.freelancer_archived;
 
     const { data: checkProject } = await supabase.from("projects").select("*").eq("id", id).maybeSingle();
     const isApplying = checkProject?.status === "published" && !checkProject.freelancer_id;
@@ -229,7 +242,6 @@ export async function PATCH(request: NextRequest) {
     if (!error && data && payload.status === "pending_client" && data.client_id) {
       const msgContent = `Halo, Klien. Saya mengajukan revisi/penawaran baru untuk proyek "${data.title}" dengan anggaran ${data.budget || "yang belum ditentukan"}. Bagaimana menurut Anda?`;
       await supabase.from("messages").insert({
-        project_id: data.id,
         sender_id: user.id,
         receiver_id: data.client_id,
         content: msgContent

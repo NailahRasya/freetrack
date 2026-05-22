@@ -36,6 +36,44 @@ export default function Settings() {
   const [newPassword, setNewPassword] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
+  const handleLogout = async () => {
+    try {
+      const result = await Swal.fire({
+        title: t("confirm_logout"),
+        text: t("confirm_logout_text"),
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: t("logout"),
+        cancelButtonText: t("cancel"),
+        background: "#0F1B2E",
+        color: "#fff",
+        confirmButtonColor: "#EF4444",
+        cancelButtonColor: "rgba(255,255,255,0.1)",
+        customClass: { popup: "rounded-2xl shadow-2xl border border-white/10" }
+      });
+
+      if (!result.isConfirmed) return;
+
+      Swal.fire({
+        title: t("logging_out"),
+        text: t("logging_out"),
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => { Swal.showLoading(); },
+        background: "#0F1B2E",
+        color: "#fff",
+        customClass: { popup: "rounded-2xl border border-white/10" }
+      });
+
+      await supabase.auth.signOut();
+      localStorage.clear();
+      window.location.href = "/";
+      Swal.close();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   useEffect(() => {
     setTempLanguage(language);
   }, [language]);
@@ -295,7 +333,7 @@ export default function Settings() {
           <div style={{ margin: "20px 0", height: "1px", background: "var(--glass-border)" }} />
           
           <button
-            onClick={() => window.location.href = "/auth/logout"}
+            onClick={handleLogout}
             style={{
               display: "flex",
               alignItems: "center",
@@ -573,6 +611,7 @@ export default function Settings() {
                           placeholder="Kata sandi lama" 
                           value={oldPassword}
                           onChange={(e) => setOldPassword(e.target.value)}
+                          autoComplete="new-password"
                           style={{ width: "100%", background: "rgba(128, 128, 128, 0.05)", border: "1px solid var(--glass-border)", borderRadius: "10px", padding: "10px 16px", color: "var(--foreground)", fontSize: "14px", outline: "none" }} 
                         />
                         <input 
@@ -580,6 +619,7 @@ export default function Settings() {
                           placeholder="Kata sandi baru" 
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
+                          autoComplete="new-password"
                           style={{ width: "100%", background: "rgba(128, 128, 128, 0.05)", border: "1px solid var(--glass-border)", borderRadius: "10px", padding: "10px 16px", color: "var(--foreground)", fontSize: "14px", outline: "none" }} 
                         />
                         <button 

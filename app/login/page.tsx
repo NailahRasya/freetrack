@@ -190,9 +190,32 @@ function LoginContent() {
           <h1 style={{ fontSize: "26px", fontWeight: "800", color: "#E2E8F0", marginBottom: "6px", letterSpacing: "-0.6px" }}>
             Selamat Datang Kembali
           </h1>
-          <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.45)", marginBottom: "32px" }}>
+          <p style={{ 
+            fontSize: "14px", 
+            color: "rgba(226, 232, 240, 0.7)", 
+            marginBottom: "32px" 
+          }}>
             Belum punya akun?{" "}
-            <Link href="/onboarding" style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>
+            <Link 
+              href={`/onboarding?role=${role}`} 
+              style={{ 
+                color: "#38BDF8", 
+                fontWeight: "700", 
+                textDecoration: "none",
+                marginLeft: "4px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color = "#00E5FF";
+                (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline";
+                (e.currentTarget as HTMLAnchorElement).style.textShadow = "0 0 10px rgba(0,229,255,0.4)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color = "#38BDF8";
+                (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none";
+                (e.currentTarget as HTMLAnchorElement).style.textShadow = "none";
+              }}
+            >
               Daftar sekarang
             </Link>
           </p>
@@ -278,13 +301,6 @@ function LoginContent() {
 
           {/* Tautan untuk kembali mendaftar atau berganti role login */}
           <div style={{ marginTop: "24px", textAlign: "center", display: "flex", flexDirection: "column", gap: "10px" }}>
-             <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.45)", margin: 0 }}>
-              Butuh akun baru? {" "}
-              <Link href="/onboarding" style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>
-                Daftar di sini
-              </Link>
-            </p>
-            <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", width: "60px", margin: "8px auto" }} />
             <p style={{ fontSize: "12px", color: "rgba(226,232,240,0.25)", margin: 0 }}>
               Bukan {roleConfig.label}? {" "}
               <Link 

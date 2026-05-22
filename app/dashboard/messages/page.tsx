@@ -34,6 +34,7 @@ function MessagesContent() {
   const [showContractModal, setShowContractModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     setIsMounted(true);
@@ -45,14 +46,75 @@ function MessagesContent() {
     }
   }, [initialUserId]);
 
+  // 1. Mark messages as read and clear unread counts immediately when selectedUserId changes
+  useEffect(() => {
+    if (selectedUserId) {
+      setUnreadCounts(prev => ({ ...prev, [selectedUserId]: 0 }));
+      markAsRead();
+    }
+  }, [selectedUserId, markAsRead]);
+
+  // 2. Mark messages as read and clear unread counts whenever new unread messages load or arrive
   useEffect(() => {
     if (selectedUserId && messages.length > 0) {
-      const hasUnread = messages.some((m: any) => m.receiver_id === user?.id && !m.is_read);
+      const hasUnread = messages.some((m: any) => m.sender_id === selectedUserId && m.receiver_id === user?.id && !m.is_read);
       if (hasUnread) {
         markAsRead();
+        setUnreadCounts(prev => ({ ...prev, [selectedUserId]: 0 }));
       }
     }
   }, [selectedUserId, messages, user?.id, markAsRead]);
+
+  // 3. Listen to the custom messages-read event to update unread counts instantly in local state
+  useEffect(() => {
+    const handleMessagesRead = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const senderId = customEvent.detail?.senderId;
+      if (senderId) {
+        setUnreadCounts(prev => ({ ...prev, [senderId]: 0 }));
+      }
+    };
+    window.addEventListener("messages-read", handleMessagesRead);
+    return () => {
+      window.removeEventListener("messages-read", handleMessagesRead);
+    };
+  }, []);
+
+  // Periodic polling for unread message counts with selectedUserId exclusion
+  useEffect(() => {
+    if (!user?.id) return;
+
+    async function fetchUnreadCounts() {
+      try {
+        const { data: unreadMsgs } = await supabase
+          .from("messages")
+          .select("sender_id")
+          .eq("receiver_id", user.id)
+          .eq("is_read", false);
+
+        if (unreadMsgs) {
+          const counts: Record<string, number> = {};
+          unreadMsgs.forEach((msg: any) => {
+            const sender = msg.sender_id;
+            if (sender !== selectedUserId) {
+              counts[sender] = (counts[sender] || 0) + 1;
+            }
+          });
+          // Explicitly ensure currently selected contact has 0 unread
+          if (selectedUserId) {
+            counts[selectedUserId] = 0;
+          }
+          setUnreadCounts(counts);
+        }
+      } catch (err) {
+        console.error("Failed to fetch unread message counts:", err);
+      }
+    }
+
+    fetchUnreadCounts();
+    const interval = setInterval(fetchUnreadCounts, 3000);
+    return () => clearInterval(interval);
+  }, [user?.id, selectedUserId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,6 +155,22 @@ function MessagesContent() {
       if (projectId) {
         setLoadingProject(true);
         try {
+          // If the user is a freelancer, check if they already applied to this project
+          if (role === "freelancer" && user?.id) {
+            const { data: appliedProj } = await supabase
+              .from("projects")
+              .select("*, client:client_id(full_name, avatar_url)")
+              .eq("freelancer_id", user.id)
+              .like("description", `%[source_id:${projectId}]%`)
+              .maybeSingle();
+
+            if (appliedProj) {
+              setProjectContext(appliedProj);
+              setLoadingProject(false);
+              return;
+            }
+          }
+
           const { data: proj } = await supabase
             .from("projects")
             .select("*, client:client_id(full_name, avatar_url)")
@@ -133,12 +211,26 @@ function MessagesContent() {
       }
     }
     fetchProject();
-  }, [projectId, selectedUserId, user?.id]);
+  }, [projectId, selectedUserId, user?.id, role]);
 
   const refetchProject = async () => {
-    const idToFetch = projectId || projectContext?.id;
+    const idToFetch = projectContext?.id || projectId;
     if (!idToFetch) return;
     try {
+      if (role === "freelancer" && user?.id && idToFetch === projectId) {
+        const { data: appliedProj } = await supabase
+          .from("projects")
+          .select("*, client:client_id(full_name, avatar_url)")
+          .eq("freelancer_id", user.id)
+          .like("description", `%[source_id:${projectId}]%`)
+          .maybeSingle();
+
+        if (appliedProj) {
+          setProjectContext(appliedProj);
+          return;
+        }
+      }
+
       const { data: proj } = await supabase
         .from("projects")
         .select("*, client:client_id(full_name, avatar_url)")
@@ -267,12 +359,43 @@ function MessagesContent() {
               {filteredContacts.map((c: any) => {
                 const target = c.freelancer_id === user?.id ? c.client : c.freelancer;
                 const isSelected = selectedUserId === target?.id;
+                const count = unreadCounts[target?.id] || 0;
                 return (
-                  <motion.button key={c.id} whileHover={{ background: "rgba(255,255,255,0.05)" }} onClick={() => setSelectedUserId(target?.id)} style={{ width: "100%", padding: "12px", borderRadius: "16px", background: isSelected ? "rgba(255,255,255,0.08)" : "transparent", border: "none", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", transition: "all 0.2s" }}>
+                  <motion.button 
+                    key={c.id} 
+                    whileHover={{ background: "rgba(255,255,255,0.05)" }} 
+                    onClick={() => {
+                      setSelectedUserId(target?.id);
+                      if (target?.id) {
+                        setUnreadCounts(prev => ({ ...prev, [target.id]: 0 }));
+                      }
+                    }} 
+                    style={{ width: "100%", padding: "12px", borderRadius: "16px", background: isSelected ? "rgba(255,255,255,0.08)" : "transparent", border: "none", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", transition: "all 0.2s" }}
+                  >
                     <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: isSelected ? "linear-gradient(135deg, #4D63FF, #06B6D4)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800", fontSize: "16px" }}>{target?.full_name?.charAt(0) ?? "?"}</div>
                     <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <span style={{ color: "#fff", fontWeight: "700", fontSize: "14px" }}>{target?.full_name || target?.email?.split('@')[0]}</span>
+                        {count > 0 && (
+                          <span style={{
+                            background: "linear-gradient(135deg, #FF4D6A, #FF003C)",
+                            color: "#fff",
+                            fontSize: "10px",
+                            fontWeight: "900",
+                            minWidth: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "0 5px",
+                            boxShadow: "0 0 10px rgba(255, 77, 106, 0.4)",
+                            border: "1px solid rgba(255, 255, 255, 0.2)",
+                            marginLeft: "8px"
+                          }}>
+                            {count}
+                          </span>
+                        )}
                       </div>
                       <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{target?.email}</div>
                     </div>

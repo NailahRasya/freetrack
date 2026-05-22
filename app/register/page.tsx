@@ -182,9 +182,32 @@ function RegisterContent() {
           <h1 style={{ fontSize: "26px", fontWeight: "800", color: "#E2E8F0", marginBottom: "6px", letterSpacing: "-0.6px" }}>
             Buat Akun Baru
           </h1>
-          <p style={{ fontSize: "14px", color: "rgba(226,232,240,0.45)", marginBottom: "32px" }}>
+          <p style={{ 
+            fontSize: "14px", 
+            color: "rgba(226, 232, 240, 0.7)", 
+            marginBottom: "32px" 
+          }}>
             Sudah punya akun?{" "}
-            <Link href={`/login?role=${role}`} style={{ color: roleConfig.color, fontWeight: "600", textDecoration: "none" }}>
+            <Link 
+              href={`/login?role=${role}`} 
+              style={{ 
+                color: "#38BDF8", 
+                fontWeight: "700", 
+                textDecoration: "none",
+                marginLeft: "4px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color = "#00E5FF";
+                (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline";
+                (e.currentTarget as HTMLAnchorElement).style.textShadow = "0 0 10px rgba(0,229,255,0.4)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color = "#38BDF8";
+                (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none";
+                (e.currentTarget as HTMLAnchorElement).style.textShadow = "none";
+              }}
+            >
               Masuk di sini
             </Link>
           </p>

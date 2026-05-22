@@ -53,18 +53,37 @@ export function useMessages(userId?: string) {
     }
   };
 
-  const markAsRead = async () => {
+  const markAsRead = useCallback(async () => {
     if (!userId) return;
     try {
-      await window.fetch("/api/messages", {
+      // Optimistically update local state immediately so we don't trigger multiple rapid markAsRead calls
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.sender_id === userId ? { ...m, is_read: true } : m
+        )
+      );
+
+      const res = await window.fetch("/api/messages", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sender_id: userId }),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Failed to mark messages as read on server:", errorData.error || res.statusText);
+      } else {
+        // Dispatch custom event to instantly sync other components (DashboardSidebar, etc.)
+        window.dispatchEvent(
+          new CustomEvent("messages-read", {
+            detail: { senderId: userId },
+          })
+        );
+      }
     } catch (e) {
       console.error("Failed to mark messages as read:", e);
     }
-  };
+  }, [userId]);
 
   return { messages, loading, sendMessage, markAsRead, refetch: fetchMessages };
 }

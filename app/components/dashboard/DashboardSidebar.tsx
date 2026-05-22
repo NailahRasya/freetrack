@@ -1,5 +1,4 @@
-"use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -14,7 +13,8 @@ import {
   User,
   Sparkles,
   GitPullRequest,
-  FileText
+  FileText,
+  HelpCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -41,24 +41,108 @@ export default function DashboardSidebar() {
     { icon: GitPullRequest, label: t("change_requests"), href: "/dashboard/change-requests" },
     { icon: MessageSquare, label: t("messages"), href: "/dashboard/messages" },
     { icon: User, label: t("my_profile"), href: "/dashboard/profile" },
+    { icon: HelpCircle, label: t("freetrack_guide"), href: "/dashboard/guide" },
     { icon: Settings, label: t("settings"), href: "/dashboard/settings" },
   ];
   const { projects } = useProjects();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasChangeRequestAction, setHasChangeRequestAction] = useState(false);
+  const [hasInvoiceAction, setHasInvoiceAction] = useState(false);
+  const [hasMilestoneAction, setHasMilestoneAction] = useState(false);
+  const [hasPaymentAction, setHasPaymentAction] = useState(false);
 
-  useEffect(() => {
+  const fetchUnread = useCallback(async () => {
     if (!user?.id) return;
-
-    // Hitung awal
-    const fetchUnread = async () => {
+    try {
       const { count } = await supabase
         .from("messages")
         .select("*", { count: "exact", head: true })
         .eq("receiver_id", user.id)
         .eq("is_read", false);
       setUnreadCount(count || 0);
+    } catch (err) {
+      console.error("Failed to fetch unread messages:", err);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !role) return;
+
+    const fetchActionStates = async () => {
+      try {
+        if (role === "client") {
+          // 1. Change Requests (pending)
+          const { count: crCount } = await supabase
+            .from("change_requests")
+            .select("*", { count: "exact", head: true })
+            .eq("client_id", user.id)
+            .eq("status", "pending");
+          setHasChangeRequestAction((crCount || 0) > 0);
+
+          // 2. Invoices (pending)
+          const { count: invCount } = await supabase
+            .from("invoices")
+            .select("*", { count: "exact", head: true })
+            .eq("client_id", user.id)
+            .eq("status", "pending");
+          setHasInvoiceAction((invCount || 0) > 0);
+
+          // 3. Milestones (Waiting for Approval)
+          const { count: msCount } = await supabase
+            .from("milestones")
+            .select("*", { count: "exact", head: true })
+            .eq("client_id", user.id)
+            .in("status", ["Waiting for Approval", "Menunggu Persetujuan"]);
+          setHasMilestoneAction((msCount || 0) > 0);
+
+          // 4. Payments (Menunggu DP)
+          const { count: payCount } = await supabase
+            .from("milestones")
+            .select("*", { count: "exact", head: true })
+            .eq("client_id", user.id)
+            .eq("status", "Menunggu DP");
+          setHasPaymentAction((payCount || 0) > 0);
+        } else if (role === "freelancer") {
+          // Freelancer view
+          setHasChangeRequestAction(false);
+          setHasInvoiceAction(false);
+
+          // Milestones (Revision Requested)
+          const { count: msCount } = await supabase
+            .from("milestones")
+            .select("*", { count: "exact", head: true })
+            .eq("freelancer_id", user.id)
+            .in("status", ["Revision Requested", "Requested Revision"]);
+          setHasMilestoneAction((msCount || 0) > 0);
+
+          setHasPaymentAction(false);
+        }
+
+        // Also check unread count periodically
+        fetchUnread();
+      } catch (err) {
+        console.error("Failed to fetch sidebar action states:", err);
+      }
     };
+
+    fetchActionStates();
+
+    // Check states periodically every 5 seconds to keep sidebar red dots in sync
+    const interval = setInterval(fetchActionStates, 5000);
+    return () => clearInterval(interval);
+  }, [user?.id, role, fetchUnread]);
+
+  // Fetch unread count immediately on page navigation
+  useEffect(() => {
+    if (user?.id) {
+      fetchUnread();
+    }
+  }, [pathname, user?.id, fetchUnread]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
     fetchUnread();
 
     // Subscribe ke pesan baru
@@ -75,7 +159,18 @@ export default function DashboardSidebar() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user?.id]);
+  }, [user?.id, fetchUnread]);
+
+  // Listen to custom messages-read event to clear the red unread dot on the 'Pesan' tab instantly
+  useEffect(() => {
+    const handleMessagesRead = () => {
+      fetchUnread();
+    };
+    window.addEventListener("messages-read", handleMessagesRead);
+    return () => {
+      window.removeEventListener("messages-read", handleMessagesRead);
+    };
+  }, [fetchUnread]);
 
   const hasActionableProjects = projects.some(p => 
     (role === "client" && p.status === "pending_client") ||
@@ -179,20 +274,14 @@ export default function DashboardSidebar() {
                   />
                 )}
                 <item.icon size={20} style={{ flexShrink: 0 }} />
-                {mounted && item.href === "/dashboard/projects" && hasActionableProjects && (
-                  <span style={{
-                    position: "absolute",
-                    top: collapsed ? "8px" : "12px",
-                    left: collapsed ? "45px" : "28px",
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    background: "#FF4D6A",
-                    boxShadow: "0 0 10px #FF4D6A",
-                    zIndex: 10
-                  }} />
-                )}
-                {mounted && item.href === "/dashboard/messages" && unreadCount > 0 && (
+                {mounted && !isActive && (
+                  (item.href === "/dashboard/projects" && hasActionableProjects) ||
+                  (item.href === "/dashboard/messages" && unreadCount > 0) ||
+                  (item.href === "/dashboard/change-requests" && hasChangeRequestAction) ||
+                  (item.href === "/dashboard/invoices" && hasInvoiceAction) ||
+                  (item.href === "/dashboard/milestones" && hasMilestoneAction) ||
+                  (item.href === "/dashboard/payments" && hasPaymentAction)
+                ) && (
                   <span style={{
                     position: "absolute",
                     top: collapsed ? "8px" : "12px",

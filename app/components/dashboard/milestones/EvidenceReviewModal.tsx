@@ -33,6 +33,32 @@ interface EvidenceReviewModalProps {
   onRequestRevision?: () => void;
 }
 
+function parseMilestoneDescription(description: string | null) {
+  if (!description) return { cleanDesc: "", notes: "", checklist: null };
+  const parts = description.split("--- REVIEW FEEDBACK ---");
+  const cleanDesc = parts[0].trim();
+  let notes = "";
+  let checklist: any = null;
+
+  if (parts.length > 1) {
+    const feedbackPart = parts[1];
+    const notesMatch = feedbackPart.match(/Notes:\s*([\s\S]*?)(?=\nChecklist:|$)/);
+    if (notesMatch) {
+      notes = notesMatch[1].trim();
+    }
+    const checklistMatch = feedbackPart.match(/Checklist:\s*({.*})/);
+    if (checklistMatch) {
+      try {
+        checklist = JSON.parse(checklistMatch[1]);
+      } catch (e) {
+        console.error("Failed to parse checklist JSON:", e);
+      }
+    }
+  }
+
+  return { cleanDesc, notes, checklist };
+}
+
 export default function EvidenceReviewModal({
   isOpen,
   onClose,
@@ -60,6 +86,22 @@ export default function EvidenceReviewModal({
   useEffect(() => {
     if (isOpen && milestoneId) {
       fetchEvidence();
+      
+      // Parse previous checklist if available in milestone description
+      if (milestone?.description) {
+        const parsed = parseMilestoneDescription(milestone.description);
+        if (parsed.checklist) {
+          setChecklist({
+            uploaded: !!parsed.checklist.uploaded,
+            deliverable: !!parsed.checklist.deliverable,
+            quality: !!parsed.checklist.quality,
+            completeFiles: !!parsed.checklist.completeFiles,
+            validProgress: !!parsed.checklist.validProgress,
+          });
+          return;
+        }
+      }
+
       setChecklist({
         uploaded: false,
         deliverable: false,
@@ -68,7 +110,7 @@ export default function EvidenceReviewModal({
         validProgress: false,
       });
     }
-  }, [isOpen, milestoneId]);
+  }, [isOpen, milestoneId, milestone]);
 
   const fetchEvidence = async () => {
     if (!milestoneId) return;
@@ -193,8 +235,8 @@ export default function EvidenceReviewModal({
       title: "Minta Revisi?",
       text: "Milestone akan dikembalikan ke status 'In Progress' dan freelancer akan diminta untuk melakukan perbaikan.",
       input: "textarea",
-      inputLabel: "Catatan Revisi (Opsional)",
-      inputPlaceholder: "Jelaskan apa yang perlu diperbaiki...",
+      inputLabel: "Catatan Revisi untuk Freelancer",
+      inputPlaceholder: "Jelaskan secara detail apa yang perlu diperbaiki...",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Ya, Minta Revisi",
@@ -203,6 +245,11 @@ export default function EvidenceReviewModal({
       color: "#fff",
       confirmButtonColor: "#f59e0b",
       cancelButtonColor: "#6b7280",
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return "Silakan masukkan catatan revisi untuk freelancer!";
+        }
+      }
     });
 
     if (!result.isConfirmed) return;
@@ -215,6 +262,8 @@ export default function EvidenceReviewModal({
         body: JSON.stringify({
           id: milestoneId,
           status: "In Progress",
+          review_notes: result.value,
+          checklist: checklist,
         }),
       });
 
@@ -254,8 +303,8 @@ export default function EvidenceReviewModal({
       title: "Tolak Submission?",
       text: "Milestone akan ditandai sebagai 'Rejected'.",
       input: "textarea",
-      inputLabel: "Alasan Penolakan (Opsional)",
-      inputPlaceholder: "Jelaskan mengapa ditolak...",
+      inputLabel: "Alasan Penolakan untuk Freelancer",
+      inputPlaceholder: "Jelaskan secara detail mengapa ditolak...",
       icon: "error",
       showCancelButton: true,
       confirmButtonText: "Ya, Tolak",
@@ -264,6 +313,11 @@ export default function EvidenceReviewModal({
       color: "#fff",
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#6b7280",
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return "Silakan masukkan alasan penolakan untuk freelancer!";
+        }
+      }
     });
 
     if (!result.isConfirmed) return;
@@ -276,6 +330,8 @@ export default function EvidenceReviewModal({
         body: JSON.stringify({
           id: milestoneId,
           status: "Rejected",
+          review_notes: result.value,
+          checklist: checklist,
         }),
       });
 
@@ -441,7 +497,9 @@ export default function EvidenceReviewModal({
               </div>
               <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                   <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Deskripsi Pekerjaan</p>
-                  <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{milestone?.description || "-"}</p>
+                  <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+                    {milestone?.description ? parseMilestoneDescription(milestone.description).cleanDesc : "-"}
+                  </p>
               </div>
             </div>
 
@@ -720,25 +778,6 @@ export default function EvidenceReviewModal({
 
                 {/* Action Buttons */}
                 <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                  <button
-                    onClick={handleReject}
-                    disabled={isProcessing}
-                    style={{
-                      flex: 1, minWidth: "140px", padding: "14px",
-                      background: "rgba(239, 68, 68, 0.1)",
-                      border: "1px solid rgba(239, 68, 68, 0.3)",
-                      borderRadius: "10px", color: "#ef4444",
-                      fontSize: "13px", fontWeight: "700",
-                      cursor: isProcessing ? "not-allowed" : "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-                      transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1,
-                    }}
-                    onMouseOver={(e) => !isProcessing && (e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)")}
-                    onMouseOut={(e) => (e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)")}
-                  >
-                    <XCircle size={16} /> Reject Submission
-                  </button>
-
                   <button
                     onClick={handleRequestRevision}
                     disabled={isProcessing}

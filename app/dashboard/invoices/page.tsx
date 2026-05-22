@@ -21,6 +21,8 @@ import {
   Activity,
   ShieldCheck,
   ChevronRight,
+  CreditCard,
+  Wallet,
 } from "lucide-react";
 import { useUser } from "../layout";
 import { useInvoices, Invoice } from "@/lib/hooks/useInvoices";
@@ -91,6 +93,16 @@ function InvoiceDetailModal({
 }) {
   const config = statusConfig[invoice.status];
   const StatusIcon = config.icon;
+
+  const paymentMethod = useMemo(() => {
+    if (invoice.activity_log && Array.isArray(invoice.activity_log)) {
+      const paymentEntry = invoice.activity_log.find((entry: any) => entry.action === "payment_completed");
+      if (paymentEntry && (paymentEntry as any).payment_method) {
+        return (paymentEntry as any).payment_method;
+      }
+    }
+    return invoice.status === "paid" ? "Bank Transfer" : null;
+  }, [invoice]);
 
   return (
     <motion.div
@@ -332,6 +344,21 @@ function InvoiceDetailModal({
               value={formatDate(invoice.due_date)}
               highlight={invoice.status === "overdue"}
             />
+
+            {invoice.paid_at && (
+              <InfoBlock
+                icon={Calendar}
+                label="Tanggal Bayar"
+                value={formatDate(invoice.paid_at)}
+              />
+            )}
+            {paymentMethod && (
+              <InfoBlock
+                icon={paymentMethod.includes("QRIS") || paymentMethod.includes("Wallet") ? Wallet : CreditCard}
+                label="Metode Pembayaran"
+                value={paymentMethod}
+              />
+            )}
 
             {/* Parties */}
             <InfoBlock
@@ -1160,7 +1187,6 @@ function InvoicesContent() {
       >
         {[
           { key: "all", label: "Semua", count: stats.total },
-          { key: "pending", label: "Pending", count: stats.pending },
           { key: "paid", label: "Lunas", count: stats.paid },
           { key: "overdue", label: "Jatuh Tempo", count: stats.overdue },
         ].map((tab) => (

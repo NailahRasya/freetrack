@@ -9,7 +9,7 @@ export function useProjects() {
 
   const fetch = useCallback(async () => {
     setLoading(true);
-    const res = await window.fetch("/api/projects");
+    const res = await window.fetch("/api/projects?includeArchived=true");
     const json = await res.json();
     if (json.error) setError(json.error);
     else setProjects(json.data ?? []);

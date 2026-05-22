@@ -256,9 +256,9 @@ export async function POST(
   }
 
   // Check milestone status
-  if (milestone.status !== "In Progress") {
+  if (milestone.status !== "In Progress" && milestone.status !== "Rejected") {
     return unauthorized(
-      `Cannot upload evidence. Milestone status is "${milestone.status}". Evidence can only be uploaded when status is "In Progress".`,
+      `Cannot upload evidence. Milestone status is "${milestone.status}". Evidence can only be uploaded when status is "In Progress" or "Rejected".`,
       403
     );
   }

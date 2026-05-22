@@ -13,16 +13,22 @@ import { useProjects } from "@/lib/hooks/useProjects";
 import { Flag, ShieldAlert, Loader2, Users, FolderPlus, Clock, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useAccessDeniedToast } from "@/lib/hooks/useAccessDeniedToast";
+import ProjectCompletionBanner from "../../components/dashboard/milestones/ProjectCompletionBanner";
+import { useSearchParams } from "next/navigation";
 
 // ── Inner component (needs Suspense for useSearchParams) ─────────────────────
 function MilestonesContent() {
   const { role, loading: userLoading } = useUser();
   const { contacts, loading: contactsLoading } = useContacts();
-  const { projects, loading: projectsLoading } = useProjects();
+  const { projects, loading: projectsLoading, refetch: refetchProjects } = useProjects();
+  const searchParams = useSearchParams();
+  const urlProjectId = searchParams.get("project_id") || searchParams.get("projectId");
   
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [milestones, setMilestones] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [isFetchingInvoices, setIsFetchingInvoices] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isFetchingMilestones, setIsFetchingMilestones] = useState(false);
   const [reviewModalState, setReviewModalState] = useState<{
@@ -54,35 +60,64 @@ function MilestonesContent() {
     return projects.filter(p => ["agreed", "active", "ongoing", "completed"].includes(p.status));
   }, [projects]);
 
-  // Auto-select first project for clients if only one exists
+  // Auto-select project and client/contact if project_id is provided in URL
   useEffect(() => {
-    if (role === "client" && !selectedProjectId && clientProjects.length > 0) {
+    if (urlProjectId && projects.length > 0) {
+      const targetProject = projects.find(p => p.id === urlProjectId);
+      if (targetProject) {
+        if (role === "freelancer" && contacts.length > 0) {
+          const targetContact = contacts.find(c => 
+            (c.client?.id || c.client_id) === targetProject.client_id
+          );
+          if (targetContact) {
+            setSelectedContactId(targetContact.id);
+            setSelectedProjectId(urlProjectId);
+          }
+        } else if (role === "client") {
+          setSelectedProjectId(urlProjectId);
+        }
+      }
+    }
+  }, [urlProjectId, projects, contacts, role]);
+
+  // Auto-select first project for clients if only one exists and no specific project is requested in URL
+  useEffect(() => {
+    if (role === "client" && !urlProjectId && !selectedProjectId && clientProjects.length > 0) {
       setSelectedProjectId(clientProjects[0].id);
     }
-  }, [role, selectedProjectId, clientProjects]);
+  }, [role, urlProjectId, selectedProjectId, clientProjects]);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Fetch milestones when project changes or refreshKey changes
+  // Fetch milestones & invoices when project changes or refreshKey changes
   useEffect(() => {
-    const fetchMilestones = async () => {
+    const fetchData = async () => {
       if (!selectedProjectId) {
         setMilestones([]);
+        setInvoices([]);
         return;
       }
       setIsFetchingMilestones(true);
+      setIsFetchingInvoices(true);
       try {
-        const res = await fetch(`/api/milestones${selectedProjectId ? `?project_id=${selectedProjectId}` : ""}`);
-        const json = await res.json();
-        const filtered = json.data ?? [];
-        setMilestones(filtered);
+        const [milestonesRes, invoicesRes] = await Promise.all([
+          fetch(`/api/milestones?project_id=${selectedProjectId}`),
+          fetch(`/api/invoices?project_id=${selectedProjectId}`)
+        ]);
+
+        const milestonesJson = await milestonesRes.json();
+        const invoicesJson = await invoicesRes.json();
+
+        setMilestones(milestonesJson.data ?? []);
+        setInvoices(invoicesJson.data ?? []);
       } catch (err) {
-        console.error("Failed to fetch milestones:", err);
+        console.error("Failed to fetch project details:", err);
       } finally {
         setIsFetchingMilestones(false);
+        setIsFetchingInvoices(false);
       }
     };
-    fetchMilestones();
+    fetchData();
   }, [selectedProjectId, refreshKey]);
 
   // Reads ?error= from middleware RBAC redirect → shows toast
@@ -92,6 +127,24 @@ function MilestonesContent() {
     ["Completed", "Disetujui", "Approved", "Waiting for Approval", "Menunggu Persetujuan"].includes(m.status)
   ).length;
   const progressPercentage = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
+
+  const allMilestonesApproved = useMemo(() => {
+    return milestones.length > 0 && milestones.every(m => 
+      ["Approved", "Disetujui", "Completed"].includes(m.status)
+    );
+  }, [milestones]);
+
+  const allInvoicesPaid = useMemo(() => {
+    return milestones.length > 0 && milestones.every(m => {
+      const inv = invoices.find(i => i.milestone_id === m.id);
+      return inv && inv.status === "paid";
+    });
+  }, [milestones, invoices]);
+
+  const handleProjectCompleted = () => {
+    refetchProjects();
+    setRefreshKey(prev => prev + 1);
+  };
 
   const loading = userLoading || contactsLoading || projectsLoading;
 
@@ -200,6 +253,16 @@ function MilestonesContent() {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
         <PageHeader />
+        
+        {selectedProject && (
+          <ProjectCompletionBanner
+            project={selectedProject}
+            role={role}
+            allMilestonesApproved={allMilestonesApproved}
+            allInvoicesPaid={allInvoicesPaid}
+            onProjectCompleted={handleProjectCompleted}
+          />
+        )}
         
         {/* Client & Project Selection */}
         <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -408,6 +471,16 @@ function MilestonesContent() {
       )}
 
       <PageHeader />
+
+      {selectedProject && (
+        <ProjectCompletionBanner
+          project={selectedProject}
+          role={role}
+          allMilestonesApproved={allMilestonesApproved}
+          allInvoicesPaid={allInvoicesPaid}
+          onProjectCompleted={handleProjectCompleted}
+        />
+      )}
 
       {/* Project Selector for Client */}
       <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", marginBottom: "32px" }}>

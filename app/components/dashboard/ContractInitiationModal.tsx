@@ -109,7 +109,6 @@ export default function ContractInitiationModal({ isOpen, onClose, project, onSu
 
       // 4. Send chat message
       await supabase.from("messages").insert({
-        project_id: project.id,
         sender_id: user.id,
         receiver_id: project.client_id,
         content: `Saya telah mengirimkan proposal kontrak untuk proyek "${project.title}". Silakan tinjau milestone dan detail pembayarannya.`

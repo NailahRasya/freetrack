@@ -22,6 +22,32 @@ interface Milestone {
   description?: string;
 }
 
+function parseMilestoneDescription(description: string | null | undefined) {
+  if (!description) return { cleanDesc: "", notes: "", checklist: null };
+  const parts = description.split("--- REVIEW FEEDBACK ---");
+  const cleanDesc = parts[0].trim();
+  let notes = "";
+  let checklist: any = null;
+
+  if (parts.length > 1) {
+    const feedbackPart = parts[1];
+    const notesMatch = feedbackPart.match(/Notes:\s*([\s\S]*?)(?=\nChecklist:|$)/);
+    if (notesMatch) {
+      notes = notesMatch[1].trim();
+    }
+    const checklistMatch = feedbackPart.match(/Checklist:\s*({.*})/);
+    if (checklistMatch) {
+      try {
+        checklist = JSON.parse(checklistMatch[1]);
+      } catch (e) {
+        console.error("Failed to parse checklist JSON:", e);
+      }
+    }
+  }
+
+  return { cleanDesc, notes, checklist };
+}
+
 export default function MilestoneManager({ 
   clientName, 
   projectId, 
@@ -51,6 +77,14 @@ export default function MilestoneManager({
   useEffect(() => {
     if (projectId) setLocalProjectId(projectId);
   }, [projectId]);
+
+  const currentProject = useMemo(() => {
+    const pid = projectId || localProjectId;
+    if (!pid) return null;
+    return projects.find(p => p.id === pid);
+  }, [projectId, localProjectId, projects]);
+
+  const isProjectCompleted = currentProject?.status === "completed";
 
   // Fetch milestones if using local selection
   useEffect(() => {
@@ -214,8 +248,11 @@ export default function MilestoneManager({
       case "Dalam Pengerjaan": 
       case "In Progress": return "var(--cyan)";
       case "Menunggu Persetujuan": 
+      case "Waiting for Approval":
       case "Review": return "var(--primary-light)";
       case "Menunggu DP": return "var(--warning)"; 
+      case "Rejected":
+      case "Ditolak": return "var(--danger)";
       default: return "#E2E8F0";
     }
   };
@@ -229,11 +266,11 @@ export default function MilestoneManager({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", gap: "16px" }}>
             <div style={{ flex: 1 }}>
               <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                Target Pencapaian {clientName || (localProjectId && activeProjects.find(p => p.id === localProjectId)?.client?.full_name) ? `— ${clientName || activeProjects.find(p => p.id === localProjectId)?.client?.full_name}` : ""}
+                Target Pencapaian {clientName || currentProject?.client?.full_name ? `— ${clientName || currentProject?.client?.full_name}` : ""}
               </h3>
               <p style={{ color: "rgba(226, 232, 240, 0.5)", fontSize: "13px" }}>Kelola tahapan dan unggah bukti proyek.</p>
             </div>
-            {!readOnly && (
+            {!readOnly && !isProjectCompleted && (
               <button 
                 onClick={() => setIsModalOpen(true)}
                 style={{ 
@@ -353,7 +390,7 @@ export default function MilestoneManager({
                 ) : localProjectId || projectId ? "Belum ada milestone untuk proyek ini." : "Silakan pilih proyek untuk mengelola milestone."}
               </motion.div>
             ) : milestones.map((milestone) => {
-              const isLocked = milestone.status === "Disetujui" || milestone.status === "Menunggu Persetujuan";
+              const isLocked = ["Disetujui", "Approved", "Menunggu Persetujuan", "Waiting for Approval"].includes(milestone.status);
               const isEditing = isEditingId === milestone.id;
 
               if (isEditing) {
@@ -376,6 +413,8 @@ export default function MilestoneManager({
                   </motion.form>
                 );
               }
+
+              const { cleanDesc, notes, checklist } = parseMilestoneDescription(milestone.description);
 
               return (
                 <motion.div
@@ -411,6 +450,11 @@ export default function MilestoneManager({
                         <span>•</span>
                         <span>Jatuh tempo {milestone.deadline}</span>
                       </div>
+                      {cleanDesc && (
+                        <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.6)", marginTop: "8px", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                          {cleanDesc}
+                        </p>
+                      )}
                     </div>
                     
                     <div style={{ 
@@ -432,6 +476,68 @@ export default function MilestoneManager({
                     </div>
                   </div>
 
+                  {/* Review Feedback Alert Box */}
+                  {(notes || checklist) && (milestone.status === "In Progress" || milestone.status === "Rejected") && (
+                    <div style={{
+                      padding: "16px",
+                      background: milestone.status === "Rejected" ? "rgba(239, 68, 68, 0.08)" : "rgba(245, 158, 11, 0.08)",
+                      border: `1px solid ${milestone.status === "Rejected" ? "rgba(239, 68, 68, 0.2)" : "rgba(245, 158, 11, 0.2)"}`,
+                      borderRadius: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "16px" }}>{milestone.status === "Rejected" ? "❌" : "⚠️"}</span>
+                        <span style={{ fontSize: "13px", fontWeight: "700", color: milestone.status === "Rejected" ? "#ef4444" : "#f59e0b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          {milestone.status === "Rejected" ? "Submission Ditolak Klien" : "Revisi Diminta Klien"}
+                        </span>
+                      </div>
+
+                      {notes && (
+                        <div style={{
+                          padding: "12px",
+                          background: "rgba(0, 0, 0, 0.2)",
+                          borderRadius: "8px",
+                          borderLeft: `3px solid ${milestone.status === "Rejected" ? "#ef4444" : "#f59e0b"}`,
+                          fontSize: "13px",
+                          color: "rgba(255, 255, 255, 0.8)",
+                          fontStyle: "italic",
+                          lineHeight: "1.6"
+                        }}>
+                          "{notes}"
+                        </div>
+                      )}
+
+                      {checklist && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "800", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                            Validation & Quality Review:
+                          </span>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "8px" }}>
+                            {[
+                              { key: "uploaded", label: "Bukti diupload" },
+                              { key: "deliverable", label: "Deliverable sesuai" },
+                              { key: "quality", label: "Kualitas sesuai" },
+                              { key: "completeFiles", label: "File lengkap" },
+                              { key: "validProgress", label: "Progress valid" }
+                            ].map(item => {
+                              const passed = !!checklist[item.key];
+                              return (
+                                <div key={item.key} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
+                                  <span>{passed ? "✅" : "❌"}</span>
+                                  <span style={{ color: passed ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.4)" }}>
+                                    {item.label}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                     
                     {/* Aksi: Upload Bukti */}
@@ -442,9 +548,13 @@ export default function MilestoneManager({
                              <div style={{ fontSize: "12px", color: "var(--warning)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
                                <Clock size={14} /> Unggahan terkunci sampai DP dibayar
                              </div>
-                          ) : milestone.status === "Disetujui" ? (
+                          ) : ["Disetujui", "Approved"].includes(milestone.status) ? (
                              <div style={{ fontSize: "12px", color: "var(--accent)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
                                <CheckCircle2 size={14} /> Selesai & Disetujui
+                             </div>
+                          ) : ["Waiting for Approval", "Menunggu Persetujuan"].includes(milestone.status) ? (
+                             <div style={{ fontSize: "12px", color: "var(--warning)", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
+                               <Clock size={14} /> Menunggu Persetujuan Klien
                              </div>
                           ) : (
                             <button
@@ -475,7 +585,7 @@ export default function MilestoneManager({
 
                     {/* Aksi: CRUD (Edit/Hapus) */}
                     <div style={{ display: "flex", gap: "8px" }}>
-                      {!readOnly && !isLocked && (
+                      {!readOnly && !isLocked && !isProjectCompleted && (
                         <>
                           <button 
                             onClick={() => { setIsEditingId(milestone.id); setEditForm(milestone); }}

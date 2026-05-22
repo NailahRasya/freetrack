@@ -109,7 +109,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { milestone_id } = body as { milestone_id: string };
+  const { milestone_id, payment_method } = body as {
+    milestone_id: string;
+    payment_method?: string;
+  };
 
   if (!milestone_id) {
     return NextResponse.json(
@@ -195,6 +198,13 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       actor: user.user_metadata?.full_name || user.email || "System",
     },
+    {
+      action: "payment_completed",
+      label: `Pembayaran selesai via ${payment_method || "Bank Transfer"}`,
+      timestamp: new Date().toISOString(),
+      actor: "System",
+      payment_method: payment_method || "Bank Transfer",
+    },
   ];
 
   // Insert invoice using admin client (bypasses RLS for insert)
@@ -214,7 +224,8 @@ export async function POST(request: NextRequest) {
       client_email: clientProfile?.email || null,
       freelancer_email: freelancerProfile?.email || null,
       amount: milestone.amount || 0,
-      status: "pending",
+      status: "paid",
+      paid_at: new Date().toISOString(),
       due_date: dueDateStr,
       activity_log: activityLog,
     })

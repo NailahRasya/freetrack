@@ -20,11 +20,12 @@ export default function RecommendedFreelancers() {
 
     async function fetchRecommendations() {
       try {
-        const { data: clientPref } = await supabase
+        const { data: clientPrefList } = await supabase
           .from("onboarding_client")
           .select("*")
-          .eq("user_id", user.id)
-          .maybeSingle();
+          .eq("user_id", user.id);
+        
+        const clientPref = clientPrefList && clientPrefList.length > 0 ? clientPrefList[0] : null;
 
         if (!clientPref) {
           setLoading(false);
@@ -44,6 +45,24 @@ export default function RecommendedFreelancers() {
 
         if (onboardingError) throw onboardingError;
 
+        const { data: allReviews, error: reviewsError } = await supabase
+          .from("reviews")
+          .select("freelancer_id, rating");
+
+        if (reviewsError) throw reviewsError;
+
+        const ratingMap: Record<string, { totalRating: number, count: number }> = {};
+        if (allReviews) {
+          allReviews.forEach((r: any) => {
+            if (!r.freelancer_id) return;
+            if (!ratingMap[r.freelancer_id]) {
+              ratingMap[r.freelancer_id] = { totalRating: 0, count: 0 };
+            }
+            ratingMap[r.freelancer_id].totalRating += r.rating;
+            ratingMap[r.freelancer_id].count += 1;
+          });
+        }
+
         const matched = freelancers.map((f: any) => {
           let score = 10;
           const ob = allOnboarding?.find(o => o.user_id === f.id) || {};
@@ -59,12 +78,17 @@ export default function RecommendedFreelancers() {
           const skillOverlap = clientSkills.filter((s: string) => freelancerTools.includes(s) || freelancerSkills.includes(s)).length;
           score += (skillOverlap * 15);
 
+          const ratingInfo = ratingMap[f.id] || { totalRating: 0, count: 0 };
+          const averageRating = ratingInfo.count > 0 ? ratingInfo.totalRating / ratingInfo.count : 0;
+
           return { 
             ...f, 
             score, 
             ob,
             displayExp: (ob.experience_level || "Junior").toUpperCase(),
-            yearsExp: ob.years_of_experience || 1
+            yearsExp: ob.years_of_experience || 1,
+            average_rating: averageRating,
+            total_reviews: ratingInfo.count
           };
         })
         .sort((a: any, b: any) => b.score - a.score)
@@ -139,6 +163,18 @@ export default function RecommendedFreelancers() {
                 <p style={{ fontSize: "11px", color: "#10B981", fontWeight: "800", textTransform: "uppercase", marginTop: "4px" }}>
                   {freelancer.displayExp} • {freelancer.yearsExp} Thn Exp
                 </p>
+                {freelancer.average_rating && freelancer.average_rating > 0 ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+                    <Star size={12} fill="#FFD700" color="#FFD700" />
+                    <span style={{ fontSize: "12px", fontWeight: "800", color: "#FFD700" }}>{freelancer.average_rating.toFixed(1)}</span>
+                    <span style={{ fontSize: "11px", color: "rgba(226, 232, 240, 0.4)" }}>({freelancer.total_reviews} ulasan)</span>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+                    <Star size={12} color="rgba(255,255,255,0.15)" />
+                    <span style={{ fontSize: "11px", color: "rgba(226, 232, 240, 0.3)", fontWeight: "600" }}>Baru / Belum ada ulasan</span>
+                  </div>
+                )}
               </div>
             </div>
 
