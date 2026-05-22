@@ -50,47 +50,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "receiver_id and content are required" }, { status: 400 });
   }
 
-  // 1. Pastikan ada koneksi kontak agar muncul di sidebar
-  try {
-    // Ambil data profil pengirim dan penerima untuk menentukan role
-    const [{ data: sender }, { data: receiver }] = await Promise.all([
-      supabase.from("profiles").select("id, role, email").eq("id", user.id).single(),
-      supabase.from("profiles").select("id, role, email").eq("id", receiver_id).single()
-    ]);
-
-    if (sender && receiver) {
-      let freelancer_id, client_id;
-      if (sender.role === "freelancer") {
-        freelancer_id = sender.id;
-        client_id = receiver.id;
-      } else {
-        freelancer_id = receiver.id;
-        client_id = sender.id;
-      }
-
-      // Cek apakah sudah ada kontak
-      const { data: existingContact } = await supabase
-        .from("contacts")
-        .select("id")
-        .eq("freelancer_id", freelancer_id)
-        .eq("client_id", client_id)
-        .maybeSingle();
-
-      if (!existingContact) {
-        // Buat kontak otomatis dengan status accepted
-        await supabase.from("contacts").insert({
-          freelancer_id,
-          client_id,
-          status: "accepted",
-          invited_by: user.id,
-          invited_email: receiver.email
-        });
-      }
-    }
-  } catch (err) {
-    console.error("Failed to auto-create contact:", err);
-    // Kita lanjutkan saja kirim pesan meskipun gagal buat kontak
-  }
+  // Disabled auto-contact creation to support project-contextual chat without forcing a permanent contact relation.
 
   // 2. Simpan pesan
   const { data, error } = await supabase

@@ -263,10 +263,7 @@ function MessagesContent() {
     const text = inputText;
     setInputText("");
     try {
-      // Auto ensure contact on first message
-      if (!selectedContact && selectedUserId) {
-        await ensureContact(selectedUserId);
-      }
+      // Disabled auto ensure contact on first message to allow messaging without auto-contact relationship
       await sendMessage(text);
     } catch (e) {
       setInputText(text);

@@ -252,49 +252,6 @@ export default function ProjectCard({ project, onEdit, onDelete, onSendToClient,
             >
               <RefreshCw size={15} /> Pulihkan Proyek
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                Swal.fire({
-                  title: "Hapus Permanen?",
-                  text: "Proyek ini akan dihapus selamanya dari sistem. Tindakan ini tidak dapat dibatalkan.",
-                  icon: "warning",
-                  showCancelButton: true,
-                  confirmButtonColor: "#FF4D6A",
-                  cancelButtonColor: "rgba(255,255,255,0.1)",
-                  confirmButtonText: "Ya, Hapus Permanen!",
-                  cancelButtonText: "Batal",
-                  background: "#0F1B2E",
-                  color: "#fff",
-                  customClass: {
-                    popup: "glass-card",
-                  }
-                }).then((result) => {
-                  if (result.isConfirmed) {
-                    onDelete?.(project.id);
-                  }
-                });
-              }}
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                background: "rgba(255, 77, 106, 0.1)",
-                border: "1px solid rgba(255, 77, 106, 0.2)",
-                color: "#FF4D6A",
-                padding: "10px 14px",
-                borderRadius: "10px",
-                fontSize: "13px",
-                fontWeight: "700",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              <Trash2 size={15} /> Hapus Permanen
-            </motion.button>
           </div>
         ) : (
           <>

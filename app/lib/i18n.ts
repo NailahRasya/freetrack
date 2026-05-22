@@ -22,10 +22,17 @@ export const translations = {
     payments: "Pembayaran",
     invoices: "Invoice",
     milestones: "Target Pencapaian",
+    change_requests: "Permintaan Perubahan",
     messages: "Pesan",
     my_profile: "Profil Saya",
-    change_requests: "Permintaan Perubahan",
     freetrack_guide: "Panduan FreeTrack",
+    
+    // Sidebar Groups
+    projects_group: "Proyek",
+    communication_group: "Komunikasi",
+    finance_group: "Keuangan",
+    account_group: "Akun",
+    help_group: "Bantuan",
     
     // Settings
     account_settings: "Pengaturan Akun",
@@ -77,10 +84,17 @@ export const translations = {
     payments: "Payments",
     invoices: "Invoices",
     milestones: "Milestones",
+    change_requests: "Change Requests",
     messages: "Messages",
     my_profile: "My Profile",
-    change_requests: "Change Requests",
     freetrack_guide: "FreeTrack Guide",
+    
+    // Sidebar Groups
+    projects_group: "Projects",
+    communication_group: "Communication",
+    finance_group: "Finance",
+    account_group: "Account",
+    help_group: "Help",
     
     // Settings
     account_settings: "Account Settings",

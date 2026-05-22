@@ -4,26 +4,22 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Briefcase, 
-  Clock, 
-  MessageSquare, 
-  Sparkles,
   Loader2,
   Filter,
-  DollarSign,
-  Building2,
-  User,
-  Zap,
-  Target,
-  Send,
-  Star,
   Edit3,
-  Trash2
+  Trash2,
+  Bookmark,
+  Calendar,
+  Clock,
+  ChevronRight
 } from "lucide-react";
 import { useUser } from "../../dashboard/layout";
-import { ONBOARDING_CATEGORIES, getLabelById, getCategoryIdBySkillId } from "@/app/constants/onboarding-categories";
+import { ONBOARDING_CATEGORIES, getLabelById } from "@/app/constants/onboarding-categories";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useContacts } from "@/lib/hooks/useContacts";
+import { parseProjectDescription } from "@/app/lib/project-helper";
+import Swal from "sweetalert2";
 
 function findSkillAndCategory(searchStr: string) {
   try {
@@ -59,16 +55,54 @@ function findSkillAndCategory(searchStr: string) {
 export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: any) => void, onDelete?: (id: string) => void }) {
   const { user, role } = useUser();
   const router = useRouter();
-  const { ensureContact } = useContacts();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterActive, setFilterActive] = useState(role === "freelancer");
+  const [filterTab, setFilterTab] = useState<"all" | "skills" | "saved">("all");
+  const [savedIds, setSavedIds] = useState<string[]>([]);
 
   const isClient = role === "client";
 
   useEffect(() => {
-    setFilterActive(role === "freelancer");
+    setFilterTab(role === "freelancer" ? "skills" : "all");
   }, [role]);
+
+  // Load saved projects from LocalStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("freetrack_saved_projects");
+    if (saved) {
+      try { setSavedIds(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+  const toggleSave = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    let nextSaved = [...savedIds];
+    if (savedIds.includes(id)) {
+      nextSaved = nextSaved.filter(item => item !== id);
+      Swal.fire({ 
+        title: "Dihapus!", 
+        text: "Proyek dihapus dari daftar simpanan.", 
+        icon: "info", 
+        timer: 1200, 
+        showConfirmButton: false, 
+        background: "#0F1B2E", 
+        color: "#fff" 
+      });
+    } else {
+      nextSaved.push(id);
+      Swal.fire({ 
+        title: "Disimpan!", 
+        text: "Proyek berhasil disimpan ke bookmark Anda.", 
+        icon: "success", 
+        timer: 1200, 
+        showConfirmButton: false, 
+        background: "#0F1B2E", 
+        color: "#fff" 
+      });
+    }
+    setSavedIds(nextSaved);
+    localStorage.setItem("freetrack_saved_projects", JSON.stringify(nextSaved));
+  };
 
   useEffect(() => {
     async function fetchMarket() {
@@ -88,7 +122,6 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
               .select("*")
               .eq("user_id", user.id);
             freelancerPref = prefs && prefs.length > 0 ? prefs[0] : null;
-            console.log("🔍 [Marketplace] freelancerPref:", JSON.stringify(freelancerPref));
 
             const { data: appliedProjs } = await supabase
               .from("projects")
@@ -122,7 +155,6 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
                 ? freelancerPref.skill_categories.filter(Boolean).map((s: string) => String(s).toLowerCase())
                 : [];
 
-              // Resolve each freelancer skill ID to its parent category ID
               const freelancerCategoryIds: string[] = Array.from(new Set(
                 freelancerSkillIds.map(sid => {
                   const match = findSkillAndCategory(sid);
@@ -130,40 +162,27 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
                 }).filter(Boolean) as string[]
               ));
 
-              console.log(`🔍 [Marketplace] Project "${p.title}" | category_id: "${p.category_id}" | required_skills:`, cleanSkills);
-              console.log(`🔍 [Marketplace] Freelancer skill IDs: [${freelancerSkillIds.join(", ")}] → categories: [${freelancerCategoryIds.join(", ")}]`);
-
-              // ✅ Match 1: Project category matches any freelancer's resolved category
               const categoryMatch = freelancerCategoryIds.includes(String(p.category_id || "").toLowerCase());
               if (categoryMatch) {
                 matchScore += 50;
-                console.log(`  ✅ Category match! +50`);
               }
 
-              // ✅ Match 2: Any required skill of the project matches freelancer's skills
               for (const skillLabel of cleanSkills) {
                 const resolved = findSkillAndCategory(String(skillLabel));
                 const skillMatchesFreelancer =
-                  // skill ID matches a freelancer skill ID directly
                   (resolved.skillId && freelancerSkillIds.includes(resolved.skillId.toLowerCase())) ||
-                  // skill's parent category matches a freelancer category
                   (resolved.categoryId && freelancerCategoryIds.includes(resolved.categoryId.toLowerCase())) ||
-                  // raw label matches a freelancer skill ID or category ID
                   freelancerSkillIds.includes(String(skillLabel).toLowerCase()) ||
                   freelancerCategoryIds.includes(String(skillLabel).toLowerCase());
 
                 if (skillMatchesFreelancer) {
                   matchScore += 15;
-                  console.log(`  ✅ Skill match: "${skillLabel}" → +15`);
                 }
               }
 
-              // ✅ Match 3: Work type / scale / exp level bonus points
               if (Array.isArray(freelancerPref.preferred_client_scales) && freelancerPref.preferred_client_scales.includes(clientOb.business_scale)) matchScore += 20;
               if (Array.isArray(freelancerPref.work_type_preference) && freelancerPref.work_type_preference.includes(effectiveWork)) matchScore += 20;
               if (freelancerPref.experience_level === effectiveExp) matchScore += 30;
-
-              console.log(`  📊 Final matchScore for "${p.title}": ${matchScore}`);
             }
 
             return { 
@@ -191,7 +210,7 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
             setProjects(processed);
             const hasMatch = processed.some((p: any) => p.matchScore >= 50);
             if (!hasMatch) {
-              setFilterActive(false);
+              setFilterTab("all");
             }
           }
         }
@@ -204,9 +223,13 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
     fetchMarket();
   }, [isClient, user?.id]);
 
-  const filteredProjects = !isClient && filterActive 
-    ? projects.filter(p => p.matchScore >= 50)
-    : projects;
+  const filteredProjects = isClient
+    ? projects
+    : filterTab === "skills"
+      ? projects.filter(p => p.matchScore >= 50)
+      : filterTab === "saved"
+        ? projects.filter(p => savedIds.includes(p.id))
+        : projects;
 
   if (loading) {
     return (
@@ -229,12 +252,12 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
             border: "1px solid rgba(255, 255, 255, 0.08)"
           }}>
             <button 
-              onClick={() => setFilterActive(false)}
+              onClick={() => setFilterTab("all")}
               style={{
                 display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "10px",
-                background: !filterActive ? "rgba(16, 185, 129, 0.1)" : "transparent",
+                background: filterTab === "all" ? "rgba(16, 185, 129, 0.1)" : "transparent",
                 border: "none",
-                color: !filterActive ? "#10B981" : "rgba(226, 232, 240, 0.6)",
+                color: filterTab === "all" ? "#10B981" : "rgba(226, 232, 240, 0.6)",
                 fontSize: "13px", fontWeight: "700", cursor: "pointer",
                 transition: "all 0.2s"
               }}
@@ -242,18 +265,32 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
               Semua Proyek
             </button>
             <button 
-              onClick={() => setFilterActive(true)}
+              onClick={() => setFilterTab("skills")}
               style={{
                 display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "10px",
-                background: filterActive ? "rgba(16, 185, 129, 0.1)" : "transparent",
+                background: filterTab === "skills" ? "rgba(16, 185, 129, 0.1)" : "transparent",
                 border: "none",
-                color: filterActive ? "#10B981" : "rgba(226, 232, 240, 0.6)",
+                color: filterTab === "skills" ? "#10B981" : "rgba(226, 232, 240, 0.6)",
                 fontSize: "13px", fontWeight: "700", cursor: "pointer",
                 transition: "all 0.2s"
               }}
             >
               <Filter size={14} />
               Sesuai Keahlian
+            </button>
+            <button 
+              onClick={() => setFilterTab("saved")}
+              style={{
+                display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "10px",
+                background: filterTab === "saved" ? "rgba(255, 191, 0, 0.1)" : "transparent",
+                border: "none",
+                color: filterTab === "saved" ? "#FFBF00" : "rgba(226, 232, 240, 0.6)",
+                fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              <Bookmark size={14} fill={filterTab === "saved" ? "#FFBF00" : "none"} />
+              Tersimpan ({savedIds.length})
             </button>
           </div>
         )}
@@ -266,130 +303,182 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
       }}>
         <AnimatePresence mode="popLayout">
           {filteredProjects.length > 0 ? (
-            filteredProjects.map((project, idx) => (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: idx * 0.05 }}
-                className="futuristic-card"
-                style={{
-                  padding: "28px", background: "rgba(13, 25, 48, 0.4)", backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "24px",
-                  display: "flex", flexDirection: "column", gap: "20px", position: "relative",
-                  cursor: "pointer"
-                }}
-              >
-                 {/* Bagian Atas: Kategori & Aksi (Client) atau Budget */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ padding: "6px 12px", background: "rgba(77, 99, 255, 0.08)", borderRadius: "8px", color: "#4D63FF", fontSize: "10px", fontWeight: "900", textTransform: "uppercase" }}>
-                      {getLabelById(project.category_id) || "Design"}
+            filteredProjects.map((project, idx) => {
+              const parsed = parseProjectDescription(project.description);
+              const isSaved = savedIds.includes(project.id);
+              const formattedDate = new Date(project.created_at).toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+              });
+
+              return (
+                <motion.div
+                  key={project.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: idx * 0.05 }}
+                  className="futuristic-card"
+                  onClick={() => router.push(`/dashboard/marketplace/${project.id}`)}
+                  style={{
+                    padding: "28px", background: "rgba(13, 25, 48, 0.4)", backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "24px",
+                    display: "flex", flexDirection: "column", gap: "20px", position: "relative",
+                    cursor: "pointer"
+                  }}
+                >
+                  {/* Bagian Atas: Kategori & Aksi (Client) atau Budget */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div style={{ padding: "6px 12px", background: "rgba(77, 99, 255, 0.08)", borderRadius: "8px", color: "#4D63FF", fontSize: "10px", fontWeight: "900", textTransform: "uppercase" }}>
+                        {getLabelById(project.category_id) || "Design"}
+                      </div>
+                      
+                      {isClient && (
+                        <div style={{ 
+                          display: "flex", 
+                          gap: "4px", 
+                          background: "rgba(255, 255, 255, 0.03)", 
+                          padding: "4px", 
+                          borderRadius: "10px", 
+                          border: "1px solid rgba(255, 255, 255, 0.05)"
+                        }}>
+                          <motion.button 
+                            whileHover={{ scale: 1.1, background: "rgba(255,255,255,0.05)" }} 
+                            onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(project); }} 
+                            style={{ width: "24px", height: "24px", borderRadius: "6px", background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                          >
+                            <Edit3 size={12} />
+                          </motion.button>
+                          <motion.button 
+                            whileHover={{ scale: 1.1, background: "rgba(239,68,68,0.1)" }} 
+                            onClick={(e) => { e.stopPropagation(); if (onDelete) onDelete(project.id); }} 
+                            style={{ width: "24px", height: "24px", borderRadius: "6px", background: "transparent", border: "none", color: "rgba(239, 68, 68, 0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                          >
+                            <Trash2 size={12} />
+                          </motion.button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: "18px", fontWeight: "900", color: "#00FFA3" }}>{project.budget}</div>
+                      <div style={{ fontSize: "10px", color: "rgba(226, 232, 240, 0.3)" }}>
+                        {parsed.budget_type === "hourly" ? "Hourly Rate" : "Est. Budget"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body: Title, Client Name, Summary */}
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ fontSize: "20px", fontWeight: "800", color: "#fff", marginBottom: "4px" }}>{project.title}</h4>
+                    <div style={{ fontSize: "12px", color: "rgba(226, 232, 240, 0.35)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+                      <span>oleh {project.client?.full_name || "Klien FreeTrack"}</span>
+                      <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "rgba(255,255,255,0.2)" }} />
+                      <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <Calendar size={11} /> {formattedDate}
+                      </span>
                     </div>
                     
-                    {isClient && (
-                      <div style={{ 
-                        display: "flex", 
-                        gap: "4px", 
-                        background: "rgba(255, 255, 255, 0.03)", 
-                        padding: "4px", 
-                        borderRadius: "10px", 
-                        border: "1px solid rgba(255, 255, 255, 0.05)"
-                      }}>
-                        <motion.button 
-                          whileHover={{ scale: 1.1, background: "rgba(255,255,255,0.05)" }} 
-                          onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(project); }} 
-                          style={{ width: "24px", height: "24px", borderRadius: "6px", background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    <p style={{ fontSize: "14px", color: "rgba(226, 232, 240, 0.45)", lineHeight: "1.6", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>
+                      {parsed.summary || parsed.description || "Tidak ada deskripsi singkat."}
+                    </p>
+                  </div>
+
+                  {/* Meta Details: Duration / Deadline */}
+                  {(parsed.duration || parsed.deadline || project.deadline) && (
+                    <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "rgba(226, 232, 240, 0.4)" }}>
+                      {parsed.duration && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <Clock size={13} style={{ color: "#06B6D4" }} />
+                          <span>{parsed.duration}</span>
+                        </div>
+                      )}
+                      {(parsed.deadline || project.deadline) && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <Calendar size={13} style={{ color: "#E11D48" }} />
+                          <span>Sampai: {parsed.deadline || project.deadline}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Footer: Skills & CTAs */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxWidth: "55%" }}>
+                      {project.cleanSkills?.slice(0, 2).map((skill: string) => (
+                        <span key={skill} style={{ 
+                          fontSize: "10px", 
+                          fontWeight: "700", 
+                          color: "#10B981", 
+                          background: "rgba(16, 185, 129, 0.05)", 
+                          padding: "5px 10px", 
+                          borderRadius: "8px",
+                          whiteSpace: "nowrap",
+                          border: "1px solid rgba(16, 185, 129, 0.1)"
+                        }}>
+                          #{skill}
+                        </span>
+                      ))}
+                    </div>
+
+                    {!isClient && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        {/* Bookmark Icon Button */}
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => toggleSave(e, project.id)}
+                          style={{
+                            width: "36px", height: "36px", borderRadius: "10px",
+                            background: isSaved ? "rgba(255, 191, 0, 0.1)" : "rgba(255, 255, 255, 0.03)",
+                            border: `1px solid ${isSaved ? "rgba(255, 191, 0, 0.25)" : "rgba(255, 255, 255, 0.08)"}`,
+                            color: isSaved ? "#FFBF00" : "rgba(226, 232, 240, 0.6)",
+                            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                            transition: "all 0.2s"
+                          }}
                         >
-                          <Edit3 size={12} />
+                          <Bookmark size={15} fill={isSaved ? "#FFBF00" : "none"} />
                         </motion.button>
-                        <motion.button 
-                          whileHover={{ scale: 1.1, background: "rgba(239,68,68,0.1)" }} 
-                          onClick={(e) => { e.stopPropagation(); if (onDelete) onDelete(project.id); }} 
-                          style={{ width: "24px", height: "24px", borderRadius: "6px", background: "transparent", border: "none", color: "rgba(239, 68, 68, 0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                        >
-                          <Trash2 size={12} />
-                        </motion.button>
+
+                        {project.hasApplied ? (
+                          <button 
+                            disabled
+                            style={{
+                              padding: "10px 18px", 
+                              background: "rgba(16, 185, 129, 0.06)", 
+                              color: "rgba(16, 185, 129, 0.7)",
+                              border: "1px solid rgba(16, 185, 129, 0.18)", 
+                              borderRadius: "12px", 
+                              fontSize: "12px", 
+                              fontWeight: "800", 
+                              cursor: "not-allowed",
+                              display: "flex", 
+                              alignItems: "center", 
+                              gap: "6px"
+                            }}
+                          >
+                            Sudah Dilamar
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => router.push(`/dashboard/marketplace/${project.id}`)}
+                            className="cta-button"
+                            style={{
+                              padding: "10px 18px", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", color: "#fff",
+                              border: "none", borderRadius: "12px", fontSize: "12px", fontWeight: "800", cursor: "pointer",
+                              display: "flex", alignItems: "center", gap: "6px"
+                            }}
+                          >
+                            Lihat Proyek <ChevronRight size={13} />
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
-
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "18px", fontWeight: "900", color: "#00FFA3" }}>{project.budget}</div>
-                    <div style={{ fontSize: "10px", color: "rgba(226, 232, 240, 0.3)" }}>Est. Budget</div>
-                  </div>
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: "20px", fontWeight: "800", color: "#fff", marginBottom: "12px" }}>{project.title}</h4>
-                  <p style={{ fontSize: "14px", color: "rgba(226, 232, 240, 0.45)", lineHeight: "1.7", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>
-                    {project.description}
-                  </p>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxWidth: "60%" }}>
-                    {project.cleanSkills?.slice(0, 3).map((skill: string) => (
-                      <span key={skill} style={{ 
-                        fontSize: "10px", 
-                        fontWeight: "700", 
-                        color: "#10B981", 
-                        background: "rgba(16, 185, 129, 0.05)", 
-                        padding: "5px 10px", 
-                        borderRadius: "8px",
-                        whiteSpace: "nowrap",
-                        border: "1px solid rgba(16, 185, 129, 0.1)"
-                      }}>
-                        #{skill}
-                      </span>
-                    ))}
-                  </div>
-
-                  {!isClient && (
-                    project.hasApplied ? (
-                      <button 
-                        disabled
-                        style={{
-                          padding: "10px 20px", 
-                          background: "rgba(16, 185, 129, 0.06)", 
-                          color: "rgba(16, 185, 129, 0.7)",
-                          border: "1px solid rgba(16, 185, 129, 0.18)", 
-                          borderRadius: "12px", 
-                          fontSize: "12px", 
-                          fontWeight: "800", 
-                          cursor: "not-allowed",
-                          display: "flex", 
-                          alignItems: "center", 
-                          gap: "8px"
-                        }}
-                      >
-                        Sudah Dilamar
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await ensureContact(project.client_id);
-                            router.push(`/dashboard/messages?chat=${project.client_id}&project=${project.id}`);
-                          } catch (err) {
-                            router.push(`/dashboard/messages?chat=${project.client_id}&project=${project.id}`);
-                          }
-                        }}
-                        className="cta-button"
-                        style={{
-                          padding: "10px 20px", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", color: "#fff",
-                          border: "none", borderRadius: "12px", fontSize: "12px", fontWeight: "800", cursor: "pointer",
-                          display: "flex", alignItems: "center", gap: "8px"
-                        }}
-                      >
-                        <MessageSquare size={14} /> Hubungi
-                      </button>
-                    )
-                  )}
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              );
+            })
           ) : (
             <div style={{ gridColumn: "1 / -1", padding: "100px 40px", textAlign: "center", color: "rgba(226,232,240,0.2)" }}>
               <Briefcase size={48} style={{ margin: "0 auto 20px", opacity: 0.3 }} />
@@ -402,7 +491,7 @@ export default function ProjectMarketFeed({ onEdit, onDelete }: { onEdit?: (p: a
       <style>{`
         @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
         .futuristic-card:hover { transform: translateY(-5px); background: rgba(18, 32, 60, 0.6) !important; border-color: rgba(77, 99, 255, 0.3) !important; }
-        .cta-button:hover { transform: scale(1.05); }
+        .cta-button:hover { transform: scale(1.03); }
       `}</style>
     </div>
   );

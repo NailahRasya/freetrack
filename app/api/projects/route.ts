@@ -222,6 +222,7 @@ export async function PATCH(request: NextRequest) {
           client_id: checkProject.client_id,
           category_id: checkProject.category_id,
           required_skills: checkProject.required_skills,
+          proposal_reason: payload.proposal_reason || null,
         })
         .select()
         .maybeSingle();

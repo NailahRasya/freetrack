@@ -43,20 +43,21 @@ export default function GuidePage() {
       color: "var(--cyan)",
       desc: "Langkah awal untuk menemukan talenta terbaik adalah dengan mempublikasikan proyek Anda ke Marketplace.",
       details: [
-        "Akses menu <strong>Marketplace</strong> atau klik <strong>Buat Proyek Baru</strong> pada halaman utama dasbor Anda.",
-        "Tulis deskripsi proyek secara mendetail, tentukan kategori keahlian yang dibutuhkan, dan tetapkan budget awal yang sesuai.",
-        "Anda juga dapat melihat <strong>Rekomendasi Freelancer</strong> di halaman dasbor dan mengirim undangan proyek langsung kepada mereka."
+        "Akses menu <strong>Marketplace</strong> atau klik <strong>Buat Proyek Baru</strong> pada dasbor Anda.",
+        "Tulis meta-data proyek secara mendalam: Ringkasan singkat, tujuan proyek (goals), hasil akhir (deliverables), serta pertanyaan penyaringan (screening questions).",
+        "Pilih cara penyimpanan secara fleksibel: simpan aman sebagai <strong>Draf</strong> atau langsung tekan <strong>Publikasikan Proyek</strong> agar live seketika."
       ]
     },
     {
-      title: "2. Menyepakati Kontrak & Milestone",
+      title: "2. Menjangkau & Evaluasi Freelancer",
       icon: Layers,
       color: "#4D63FF",
-      desc: "Setelah menemukan freelancer yang cocok, buat target pencapaian (milestone) kerja terstruktur.",
+      desc: "Tinjau lamaran pelamar atau jangkau langsung talenta terbaik secara efisien.",
       details: [
-        "Negosiasikan detail tugas, tenggat waktu, dan pembagian budget dengan freelancer melalui fitur <strong>Pesan</strong>.",
-        "Buat daftar <strong>Milestones</strong> yang jelas. Pembayaran proyek di FreeTrack dibagi per milestone untuk menjamin keamanan finansial.",
-        "Freelancer akan meninjau dan menyetujui detail milestone sebelum proyek resmi dimulai."
+        "Proposal pelamar akan terduplikasi secara profesional lengkap dengan isi surat lamaran dan jawaban atas screening questions Anda.",
+        "Anda juga dapat menjangkau langsung talenta pilihan melalui panel <strong>Rekomendasi Freelancer</strong> di dasbor utama dengan mengklik <strong>Mulai Diskusi</strong>.",
+        "Diskusikan parameter proyek secara kontekstual berbasis proyek dengan freelancer tanpa otomatis dipaksa menjadi kontak tetap agar daftar chat rapi.",
+        "Jika ingin terhubung secara formal dan menyimpannya di daftar kontak, gunakan fitur interaktif <strong>Tambahkan ke Kontak</strong>."
       ]
     },
     {
@@ -65,9 +66,9 @@ export default function GuidePage() {
       color: "#10B981",
       desc: "FreeTrack menggunakan sistem rekening bersama (Escrow) untuk melindungi dana klien dan freelancer.",
       details: [
-        "Bayar milestone pertama atau <strong>Uang Muka (DP)</strong> ke dalam sistem Escrow FreeTrack.",
-        "Dana ini akan ditahan secara aman oleh FreeTrack. Freelancer hanya akan mulai bekerja setelah status Milestone berubah menjadi <strong>Terbayar ke Escrow</strong>.",
-        "Ini memberikan kepastian bagi freelancer bahwa Anda berkomitmen dan memiliki dana siap bayar."
+        "Bayar milestone pertama atau <strong>Uang Muka (DP)</strong> menggunakan pilihan metode pembayaran yang fleksibel: <strong>Bank Transfer</strong>, <strong>E-Wallet (QRIS)</strong>, atau <strong>Kartu Kredit</strong>.",
+        "Dana ini akan didepositkan secara aman di sistem Escrow FreeTrack. Freelancer akan segera menerima notifikasi untuk mulai bekerja setelah status berubah menjadi <strong>Terbayar ke Escrow</strong>.",
+        "Metode pembayaran pilihan Anda akan terekam secara otomatis dan tercantum secara resmi pada berkas PDF Invoice Anda."
       ]
     },
     {
@@ -88,8 +89,8 @@ export default function GuidePage() {
       desc: "Sistem auto-invoicing FreeTrack bekerja secara instan tanpa perlu konfirmasi manual yang ribet.",
       details: [
         "Begitu Anda menekan tombol Setuju pada Proof of Work, <strong>dana Escrow secara otomatis cair</strong> ke saldo freelancer.",
-        "Di saat yang bersamaan, sistem FreeTrack langsung menerbitkan invoice resmi berstatus <strong>Lunas (Paid)</strong>.",
-        "Anda dapat melihat, melacak, dan mengunduh invoice dalam format <strong>PDF</strong> kapan saja di tab menu <strong>Invoice</strong>."
+        "Di saat yang bersamaan, sistem FreeTrack langsung menerbitkan invoice resmi berstatus <strong>Lunas (Paid)</strong> dengan rincian metode pembayaran yang telah Anda gunakan.",
+        "Anda dapat melihat, melacak, dan mengunduh invoice berformat <strong>PDF resmi</strong> secara instan kapan saja di tab menu <strong>Invoice</strong>."
       ]
     },
     {
@@ -100,7 +101,7 @@ export default function GuidePage() {
       details: [
         "Setelah seluruh kontrak milestone selesai dan proyek tuntas, Anda dapat menekan tombol <strong>Arsipkan Proyek</strong> di card proyek.",
         "Card proyek tersebut akan dipindahkan ke tab <strong>Diarsipkan</strong> agar dasbor bersih.",
-        "Anda dapat memulihkan (restore) proyek tersebut kembali kapan saja, atau menghapusnya secara permanen."
+        "Anda dapat memulihkan (restore) proyek tersebut kembali ke dasbor utama kapan saja."
       ]
     }
   ];
@@ -112,20 +113,20 @@ export default function GuidePage() {
       color: "var(--cyan)",
       desc: "Cari peluang kerja terbaik yang sesuai dengan keahlian khusus Anda di platform FreeTrack.",
       details: [
-        "Jelajahi proyek-proyek aktif di tab menu <strong>Marketplace</strong>.",
-        "Kirim lamaran (proposal) dengan mengajukan estimasi harga, durasi pengerjaan, dan portfolio terbaik Anda.",
-        "Lengkapi profil Anda agar masuk dalam algoritma <strong>Rekomendasi Freelancer</strong> di dasbor klien."
+        "Jelajahi proyek-proyek aktif di tab menu <strong>Marketplace</strong>. Anda dapat menggunakan fitur <strong>Bookmark</strong> (Simpan Proyek) dan memantaunya secara khusus di tab filter <strong>Tersimpan</strong>.",
+        "Tekan tombol <strong>Lihat Proyek</strong> untuk masuk ke Halaman Detail Proyek murni. Anda wajib memahami deskripsi lengkap, tujuan (goals), serta hasil akhir (deliverables) proyek sebelum melamar.",
+        "Kirim lamaran terstruktur dengan menekan **Ajukan Lamaran**, lalu tulis surat lamaran (cover letter) serta jawab seluruh **Pertanyaan Screening** yang diajukan klien."
       ]
     },
     {
-      title: "2. Sepakati Target Kerja & Milestone",
+      title: "2. Diskusi Kontekstual & Hubungan Kontak",
       icon: Layers,
       color: "#4D63FF",
-      desc: "Buat pembagian target kerja yang transparan bersama klien untuk mencegah kesalahpahaman.",
+      desc: "Lakukan diskusi lingkup kerja secara terstruktur tanpa membebani daftar kontak Anda.",
       details: [
-        "Diskusikan lingkup pekerjaan secara detail dengan klien melalui fitur chat chat-room.",
-        "Tinjau detail <strong>Milestones</strong> yang diusulkan oleh klien. Pastikan deskripsi tugas dan harga per milestone sudah sesuai.",
-        "Pembayaran terbagi per target memberi Anda kepastian pembayaran berkala seiring progress kerja."
+        "Tekan tombol <strong>Tanya Client</strong> di halaman detail proyek untuk melakukan chat kontekstual langsung terkait proyek spesifik tersebut.",
+        "Anda juga dapat menerima pesan obrolan langsung dari klien yang menjangkau Anda melalui rekomendasi profil (reachout). Chat obrolan ini berjalan mandiri tanpa memaksa Anda menjadi kontak mereka secara otomatis agar daftar hubungan kontak tetap rapi.",
+        "Jika ingin terhubung secara resmi dan menyimpan klien ke dalam daftar kontak tetap Anda, gunakan tombol <strong>Tambahkan ke Kontak</strong> di halaman proyek atau obrolan chat."
       ]
     },
     {
@@ -156,9 +157,9 @@ export default function GuidePage() {
       color: "#EC4899",
       desc: "Tidak ada proses penagihan manual. Dana cair instan begitu pekerjaan disetujui.",
       details: [
-        "Ketika klien menyetujui Proof of Work Anda, <strong>dana milestone langsung ditambahkan ke Saldo Dompet</strong> Anda.",
-        "Sistem FreeTrack secara otomatis membuat invoice resmi berstatus <strong>Lunas (Paid)</strong> yang bisa diunduh oleh Anda dan klien.",
-        "Anda dapat melakukan penarikan dana ke rekening bank Anda melalui menu <strong>Pembayaran</strong> kapan saja."
+        "Ketika klien menyetujui Proof of Work Anda, <strong>dana escrow otomatis cair</strong> ke Saldo Aktif Anda disertai notifikasi selebrasi instan.",
+        "Lakukan penarikan dana aman melalui menu <strong>Pembayaran</strong>. Input nominal penarikan kini dilengkapi fitur <strong>Format Rupiah Otomatis</strong> (dengan pemisah titik, misal `1.500.000`) agar terhindar dari salah input.",
+        "Untuk keamanan terbaik, penarikan dana didukung <strong>3-Step Fintech Security</strong>: pilih rekening bank/e-wallet, tinjau ringkasan gratis transfer, dan masukkan 6 digit PIN Keamanan (PIN default: <code>123456</code>)."
       ]
     },
     {
@@ -180,20 +181,40 @@ export default function GuidePage() {
       a: "Escrow adalah sistem rekening bersama di mana klien menyetorkan dana pembayaran proyek ke FreeTrack terlebih dahulu. Dana tersebut ditahan secara aman oleh FreeTrack selama freelancer bekerja, dan baru akan dilepaskan ke saldo freelancer setelah klien menyetujui bukti pekerjaan (Proof of Work) yang diserahkan."
     },
     {
+      q: "Metode pembayaran apa saja yang didukung oleh FreeTrack untuk pengisian Escrow?",
+      a: "FreeTrack mendukung berbagai opsi pembayaran yang fleksibel seperti Transfer Bank virtual account, pembayaran instan E-Wallet (QRIS), serta Kartu Kredit terverifikasi. Rincian metode pembayaran yang dipilih akan langsung dicantumkan pada file PDF Invoice resmi."
+    },
+    {
       q: "Bagaimana cara kerja Auto-Invoicing?",
-      a: "Setiap kali ada transaksi pembayaran uang muka (DP) atau pelepasan milestone yang telah disetujui, FreeTrack akan secara otomatis membuatkan dokumen invoice berstatus **Lunas** (Paid). Klien tidak perlu mengubah status secara manual, dan file invoice berformat PDF dapat diunduh langsung dari menu Invoice."
+      a: "Setiap kali ada transaksi pembayaran uang muka (DP) atau pelepasan milestone yang telah disetujui, FreeTrack akan secara otomatis membuatkan dokumen invoice berstatus Lunas (Paid). Klien tidak perlu mengubah status secara manual, dan file invoice berformat PDF dapat diunduh langsung dari menu Invoice."
+    },
+    {
+      q: "Mengapa freelancer harus melihat detail proyek sebelum melamar?",
+      a: "Untuk mewujudkan ekosistem marketplace yang profesional, freelancer wajib mempelajari deskripsi proyek secara komprehensif (ringkasan, goals, deliverables) sebelum mengajukan lamaran. Tombol 'Hubungi' langsung di halaman depan kini telah diganti menjadi 'Lihat Proyek' yang mengarahkan Anda ke Halaman Detail Proyek kaya data."
+    },
+    {
+      q: "Bagaimana cara melihat proyek yang saya simpan (bookmark)?",
+      a: "Freelancer dapat menyimpan proyek menarik menggunakan tombol Simpan (Bookmark) di kartu feed proyek atau halaman detail. Untuk melihat seluruh proyek tersimpan, silakan pilih tab filter 'Tersimpan' di bagian pojok kanan atas halaman feed Marketplace."
+    },
+    {
+      q: "Mengapa bertanya kepada klien tidak langsung menjadikan mereka teman/kontak?",
+      a: "FreeTrack menerapkan pemisahan hubungan kerja yang bersih. Chat kontekstual melalui 'Tanya Client' digunakan khusus untuk mendiskusikan detail proyek yang diminati. Jika Anda ingin menyimpannya ke daftar kontak permanen, Anda dapat mengajukan permintaan koneksi formal melalui tombol 'Tambahkan ke Kontak' di widget Tentang Klien."
+    },
+    {
+      q: "Bagaimana cara Klien menjangkau (reachout) freelancer secara langsung?",
+      a: "Klien dapat melihat daftar 'Rekomendasi Freelancer' yang dipersonalisasi di dasbor utama berdasarkan kriteria proyek. Klien dapat langsung menekan tombol 'Mulai Diskusi' untuk membuka obrolan tanpa membebani daftar kontak. Hubungan kontak baru akan terjalin secara formal apabila klien menekan tombol 'Tambah ke Kontak' di dalam chat room."
     },
     {
       q: "Mengapa freelancer harus menunggu dana Escrow masuk sebelum bekerja?",
       a: "Ini adalah praktik terbaik (best practice) keamanan kerja lepas di FreeTrack. Dengan memastikan status milestone telah 'Terbayar ke Escrow', freelancer mendapatkan jaminan 100% bahwa klien memiliki dana yang sah dan siap dicairkan begitu pekerjaan diselesaikan sesuai target."
     },
     {
-      q: "Bagaimana jika terjadi perbedaan pendapat antara klien & freelancer?",
-      a: "Jika klien meminta revisi berulang-ulang tanpa alasan jelas, atau freelancer mengirim bukti kerja kosong, kedua belah pihak dapat menggunakan fitur chat FreeTrack untuk berdiskusi, atau menghubungi tim support bantuan FreeTrack untuk memediasi penyelesaian kontrak secara adil."
+      q: "Bagaimana cara kerja penarikan saldo (withdrawal) untuk Freelancer?",
+      a: "Buka menu Pembayaran, tekan tombol Tarik Dana, tentukan rekening bank/e-wallet Anda (BCA, Mandiri, GoPay, OVO), dan isi nominal jumlah penarikan (yang otomatis diformat menjadi Rupiah). Tinjau detail transaksi, lalu otorisasi menggunakan 6 digit PIN keamanan (PIN default Anda adalah 123456)."
     },
     {
       q: "Apakah proyek yang telah diarsipkan bisa dipulihkan kembali?",
-      a: "Bisa! Proyek yang selesai atau diarsipkan dipindahkan ke tab khusus 'Diarsipkan'. Di tab tersebut, baik klien maupun freelancer memiliki tombol 'Pulihkan Proyek' untuk mengembalikannya ke dasbor utama, atau 'Hapus Permanen' untuk menghapusnya selamanya dari sistem."
+      a: "Bisa! Proyek yang selesai atau diarsipkan dipindahkan ke tab khusus 'Diarsipkan'. Di tab tersebut, baik klien maupun freelancer memiliki tombol 'Pulihkan Proyek' untuk mengembalikannya ke dasbor utama agar dapat diakses kembali kapan saja."
     }
   ];
 

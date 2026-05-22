@@ -1,29 +1,17 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, ChevronDown, FileEdit, Check, Search, ShieldCheck, Target, Clock, Briefcase } from "lucide-react";
+import { X, Plus, ChevronDown, FileEdit, Check, Trash2 } from "lucide-react";
 import { useUser } from "../../dashboard/layout";
 import { createClient } from "@/utils/supabase/client";
-import { ONBOARDING_CATEGORIES, getLabelById } from "../../constants/onboarding-categories";
+import { ONBOARDING_CATEGORIES } from "../../constants/onboarding-categories";
+import { parseProjectDescription } from "../../lib/project-helper";
 
 const inputStyle: React.CSSProperties = {
   width: "100%", background: "rgba(255,255,255,0.03)",
   border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px",
   padding: "12px 16px", color: "#fff", fontSize: "14px",
   outline: "none", boxSizing: "border-box", colorScheme: "dark" as any,
-};
-
-const prefBadgeStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  background: "rgba(255, 255, 255, 0.02)",
-  padding: "10px 14px",
-  borderRadius: "12px",
-  border: "1px solid rgba(255, 255, 255, 0.05)",
-  fontSize: "13px",
-  color: "rgba(226, 232, 240, 0.7)",
-  fontWeight: "600"
 };
 
 interface Props {
@@ -140,8 +128,7 @@ function CustomDropdown({ label, value, options, onChange, placeholder = "Pilih.
 export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onSendToClient, initialData }: Props) {
   const supabase = createClient();
   const { user, role } = useUser();
-  // ... rest of the component
-  
+
   const formatRupiah = (value: string) => {
     const numberString = value.replace(/[^,\d]/g, "").toString();
     const split = numberString.split(",");
@@ -158,26 +145,43 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
     return rupiah ? "Rp " + rupiah : "";
   };
 
+  const parsedDesc = parseProjectDescription(initialData?.description || "");
+
   const [form, setForm] = useState({
     name: initialData?.title || "",
     clientId: (role === "client" ? initialData?.freelancer_id : initialData?.client_id) || "",
     clientName: (role === "client" ? initialData?.freelancer?.full_name : initialData?.client?.full_name) || "",
     budget: initialData?.budget ? formatRupiah(initialData.budget) : "",
-    description: initialData?.description || "",
     negotiation_reason: initialData?.rejection_reason || "",
     categoryId: initialData?.category_id || "",
     skills: (initialData?.required_skills || []) as string[],
-    experienceLevel: initialData?.experience_level || "mid",
-    workType: initialData?.work_type || "one-time"
+    
+    // Rich marketplace fields
+    summary: parsedDesc.is_rich ? parsedDesc.summary : "",
+    description: parsedDesc.description,
+    goals: parsedDesc.goals,
+    deliverables: parsedDesc.deliverables,
+    budget_type: parsedDesc.is_rich ? parsedDesc.budget_type : "fixed",
+    duration: parsedDesc.duration,
+    deadline: parsedDesc.deadline || initialData?.deadline || "",
+    experienceLevel: parsedDesc.is_rich ? parsedDesc.experienceLevel : (initialData?.experience_level || "mid"),
+    workType: initialData?.work_type || "one-time",
+    communication_preference: parsedDesc.communication_preference,
+    screening_questions: parsedDesc.screening_questions,
+    attachments: parsedDesc.attachments,
+    posting_status: parsedDesc.is_rich 
+      ? parsedDesc.posting_status 
+      : (initialData?.status === "cancelled" ? "closed" : (initialData?.status === "published" ? "published" : "draft"))
   });
+
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newAttachment, setNewAttachment] = useState("");
+
   const [showDropdown, setShowDropdown] = useState(false);
-  const [openExp, setOpenExp] = useState(false);
-  const [openWork, setOpenWork] = useState(false);
   const [clientSearch, setClientSearch] = useState((role === "client" ? initialData?.freelancer?.full_name : initialData?.client?.full_name) || "");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [clientPref, setClientPref] = useState<any>(null);
-  const [showOverrides, setShowOverrides] = useState(false);
 
   useEffect(() => {
     if (role === "client" && user?.id) {
@@ -189,7 +193,6 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
           .maybeSingle();
         if (data) {
           setClientPref(data);
-          // Set default values from profile if project is new
           if (!initialData) {
             setForm(f => ({
               ...f,
@@ -228,34 +231,82 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
     setShowDropdown(false);
   };
 
-  const payload = () => ({
-    title: form.name, 
-    client_id: role === "client" ? null : (form.clientId || null),
-    freelancer_id: role === "client" ? (form.clientId || null) : null,
-    budget: form.budget, 
-    description: form.description,
-    rejection_reason: form.negotiation_reason,
-    category_id: form.categoryId,
-    required_skills: [
-      ...form.skills,
-      `EXP:${form.experienceLevel}`,
-      `WORK:${form.workType}`
-    ],
-  });
+  const addQuestion = () => {
+    if (newQuestion.trim()) {
+      setForm(f => ({ ...f, screening_questions: [...f.screening_questions, newQuestion.trim()] }));
+      setNewQuestion("");
+    }
+  };
+  const removeQuestion = (idx: number) => {
+    setForm(f => ({ ...f, screening_questions: f.screening_questions.filter((_, i) => i !== idx) }));
+  };
+
+  const addAttachment = () => {
+    if (newAttachment.trim()) {
+      setForm(f => ({ ...f, attachments: [...f.attachments, newAttachment.trim()] }));
+      setNewAttachment("");
+    }
+  };
+  const removeAttachment = (idx: number) => {
+    setForm(f => ({ ...f, attachments: f.attachments.filter((_, i) => i !== idx) }));
+  };
+
+  const payload = (targetStatus?: string) => {
+    const isPublicMarket = role === "client" && !form.clientId;
+    let finalStatus = "draft";
+    if (targetStatus) {
+      finalStatus = targetStatus;
+    } else if (initialData?.status) {
+      finalStatus = initialData.status;
+    } else {
+      finalStatus = form.posting_status || "draft";
+    }
+
+    const serializedDescription = JSON.stringify({
+      is_rich: true,
+      summary: form.summary,
+      description: form.description,
+      goals: form.goals,
+      deliverables: form.deliverables,
+      budget_type: form.budget_type,
+      duration: form.duration,
+      deadline: form.deadline,
+      experienceLevel: form.experienceLevel,
+      communication_preference: form.communication_preference,
+      screening_questions: form.screening_questions,
+      attachments: form.attachments,
+      posting_status: finalStatus === "cancelled" ? "closed" : finalStatus
+    });
+
+    return {
+      title: form.name, 
+      client_id: role === "client" ? null : (form.clientId || null),
+      freelancer_id: role === "client" ? (form.clientId || null) : null,
+      budget: form.budget, 
+      deadline: form.deadline || null,
+      description: serializedDescription,
+      rejection_reason: form.negotiation_reason,
+      category_id: form.categoryId,
+      required_skills: [
+        ...form.skills,
+        `EXP:${form.experienceLevel}`,
+        `WORK:${form.workType}`
+      ],
+      status: finalStatus === "closed" ? "cancelled" : finalStatus
+    };
+  };
 
   const validate = (isPublishMarket = false) => {
     if (!form.name.trim()) { setErr("Nama proyek wajib diisi"); return false; }
-    
-    // Kategori wajib untuk semua proyek agar terorganisir
     if (!form.categoryId) { setErr("Pilih kategori proyek agar mudah ditemukan"); return false; }
+    if (!form.budget.trim()) { setErr("Anggaran wajib diisi"); return false; }
+    if (!form.summary.trim()) { setErr("Ringkasan singkat proyek wajib diisi"); return false; }
+    if (!form.description.trim()) { setErr("Deskripsi lengkap proyek wajib diisi"); return false; }
 
-    if (role === "client") {
-      // Client tidak wajib pilih freelancer jika post ke Market
-    } else {
+    if (role !== "client") {
       if (!form.clientId) { setErr("Pilih klien terlebih dahulu"); return false; }
     }
     
-    if (!form.description.trim()) { setErr("Deskripsi proyek wajib diisi"); return false; }
     setErr("");
     return true;
   };
@@ -263,19 +314,24 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
   const handleDraft = async () => {
     if (!validate()) return;
     setLoading(true);
-    try { await onSaveDraft(payload()); onClose(); }
+    try { 
+      const finalPayload = payload(initialData ? initialData.status : "draft");
+      await onSaveDraft(finalPayload); 
+      onClose(); 
+    }
     catch (e: any) { setErr(e.message); }
     setLoading(false);
   };
 
   const handleSend = async () => {
-    const isPublishMarket = role === "client" && !form.clientId;
-    if (!validate(isPublishMarket)) return;
+    const isPublicMarket = role === "client" && !form.clientId;
+    if (!validate(isPublicMarket)) return;
     setLoading(true);
     try { 
-      const finalPayload = payload();
-      if (isPublishMarket) {
-        await onSaveDraft({ ...finalPayload, status: "published" }); 
+      const activeStatus = isPublicMarket ? "published" : (initialData?.status || "draft");
+      const finalPayload = payload(activeStatus);
+      if (isPublicMarket) {
+        await onSaveDraft(finalPayload); 
       } else {
         await onSendToClient(finalPayload); 
       }
@@ -291,7 +347,7 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
       style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:"20px"}}>
       <motion.div initial={{scale:0.9,y:20}} animate={{scale:1,y:0}} exit={{scale:0.9,y:20}}
         onClick={e=>e.stopPropagation()} className="glass-card"
-        style={{width:"100%",maxWidth:"560px",padding:"32px",borderRadius:"24px",background:"rgba(15,27,46,0.97)",border:"1px solid rgba(255,255,255,0.08)",maxHeight:"92vh",overflowY:"auto"}}>
+        style={{width:"100%",maxWidth:"600px",padding:"32px",borderRadius:"24px",background:"rgba(15,27,46,0.97)",border:"1px solid rgba(255,255,255,0.08)",maxHeight:"92vh",overflowY:"auto"}}>
         
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"28px"}}>
           <div>
@@ -299,7 +355,7 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
               {initialData ? "Edit" : "Buat"} <span className="gradient-text">{initialData ? "Detail Proyek" : "Proyek Baru"}</span>
             </h2>
             <p style={{fontSize:"13px",color:"rgba(226,232,240,0.4)"}}>
-              {initialData ? "Perbarui informasi proyek Anda" : "Isi detail proyek di bawah ini"}
+              Isi parameter proyek secara profesional untuk marketplace.
             </p>
           </div>
           <button onClick={onClose} style={{width:"36px",height:"36px",borderRadius:"10px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",color:"rgba(226,232,240,0.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
@@ -314,6 +370,12 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
             <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
               <input type="text" placeholder="Nama Proyek (cth. E-Commerce Mobile App)" value={form.name}
                 onChange={e=>setForm(f=>({...f,name:e.target.value}))} style={inputStyle}/>
+
+              <div>
+                <label style={{display:"block",fontSize:"10px",color:"rgba(226,232,240,0.4)",marginBottom:"4px"}}>Ringkasan Singkat Proyek (maks 150 karakter) *</label>
+                <input type="text" placeholder="Tulis ringkasan singkat untuk marketplace card..." value={form.summary}
+                  onChange={e=>setForm(f=>({...f,summary:e.target.value}))} style={inputStyle} maxLength={150}/>
+              </div>
               
               {role === "freelancer" && (
                 <div style={{position:"relative"}}>
@@ -359,7 +421,9 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
                 </div>
               )}
             </div>
-          </div>          {/* Section: Budget & Category */}
+          </div>
+
+          {/* Section: Budget & Category */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1.5fr",gap:"14px"}}>
             <div>
               <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Anggaran *</label>
@@ -385,6 +449,7 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
                   return (
                     <motion.button
                       key={s.id}
+                      type="button"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => {
@@ -416,15 +481,38 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
             </motion.div>
           )}
 
-          {/* Section: Experience & Type */}
+          {/* Section: Budget Type, Duration, and Deadline */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"14px"}}>
+            <CustomDropdown
+              label="Tipe Budget"
+              value={form.budget_type}
+              options={[
+                { id: "fixed", label: "Fixed Price" },
+                { id: "hourly", label: "Hourly Rate" }
+              ]}
+              onChange={(val) => setForm(f => ({ ...f, budget_type: val as "fixed" | "hourly" }))}
+            />
+            <div>
+              <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Estimasi Durasi</label>
+              <input type="text" placeholder="cth. 1 Bulan, 2 Minggu" value={form.duration}
+                onChange={e=>setForm(f=>({...f,duration:e.target.value}))} style={inputStyle}/>
+            </div>
+            <div>
+              <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Deadline Proyek</label>
+              <input type="date" value={form.deadline}
+                onChange={e=>setForm(f=>({...f,deadline:e.target.value}))} style={inputStyle}/>
+            </div>
+          </div>
+
+          {/* Section: Experience Level, Work Type, and Communication Preference */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
             <CustomDropdown
-              label="Level Pengalaman"
+              label="Level Freelancer *"
               value={form.experienceLevel}
               options={[
-                { id: "junior", label: "Junior" },
-                { id: "mid", label: "Intermediate" },
-                { id: "senior", label: "Senior" }
+                { id: "junior", label: "Pemula (Junior)" },
+                { id: "mid", label: "Menengah (Mid)" },
+                { id: "senior", label: "Ahli (Senior)" }
               ]}
               onChange={(val) => setForm(f => ({ ...f, experienceLevel: val }))}
             />
@@ -440,11 +528,71 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
           </div>
 
           <div>
-            <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Deskripsi Proyek *</label>
-            <textarea placeholder="Jelaskan ruang lingkup, tujuan, dan hasil yang diharapkan..." value={form.description}
+            <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Preferensi Komunikasi</label>
+            <input type="text" placeholder="cth. Chat FreeTrack, Google Meet, Slack" value={form.communication_preference}
+              onChange={e=>setForm(f=>({...f,communication_preference:e.target.value}))} style={inputStyle}/>
+          </div>
+
+          {/* Section: Description, Goals, Deliverables */}
+          <div>
+            <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Deskripsi Lengkap Proyek *</label>
+            <textarea placeholder="Jelaskan secara mendalam tentang proyek ini..." value={form.description}
               onChange={e=>setForm(f=>({...f,description:e.target.value}))} rows={4}
               style={{...inputStyle,resize:"vertical" as any,lineHeight:"1.6"}}/>
           </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
+            <div>
+              <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Tujuan Proyek</label>
+              <textarea placeholder="Apa yang ingin dicapai melalui proyek ini..." value={form.goals}
+                onChange={e=>setForm(f=>({...f,goals:e.target.value}))} rows={3}
+                style={{...inputStyle,resize:"vertical" as any,lineHeight:"1.6"}}/>
+            </div>
+            <div>
+              <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Deliverables / Hasil Akhir</label>
+              <textarea placeholder="Hasil konkret yang wajib diserahkan..." value={form.deliverables}
+                onChange={e=>setForm(f=>({...f,deliverables:e.target.value}))} rows={3}
+                style={{...inputStyle,resize:"vertical" as any,lineHeight:"1.6"}}/>
+            </div>
+          </div>
+
+          {/* Section: Screening Questions */}
+          <div>
+            <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Pertanyaan Screening untuk Pelamar (Opsional)</label>
+            <div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>
+              <input type="text" placeholder="Tambah pertanyaan screening pelamar..." value={newQuestion}
+                onChange={e=>setNewQuestion(e.target.value)} style={inputStyle}/>
+              <button type="button" onClick={addQuestion} className="btn-secondary" style={{padding:"0 16px",borderRadius:"12px",cursor:"pointer",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center"}}><Plus size={16}/></button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:"6px"}}>
+              {form.screening_questions.map((q, idx) => (
+                <div key={idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"rgba(255,255,255,0.02)",padding:"8px 12px",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.05)"}}>
+                  <span style={{fontSize:"13px",color:"rgba(255,255,255,0.8)"}}>{q}</span>
+                  <button type="button" onClick={() => removeQuestion(idx)} style={{background:"transparent",border:"none",color:"#FF4D6A",cursor:"pointer"}}><Trash2 size={14}/></button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section: Attachments */}
+          <div>
+            <label style={{display:"block",fontSize:"11px",fontWeight:"900",color:"rgba(226,232,240,0.3)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"}}>Lampiran / Referensi Proyek (Opsional)</label>
+            <div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>
+              <input type="text" placeholder="Tambah link referensi/lampiran..." value={newAttachment}
+                onChange={e=>setNewAttachment(e.target.value)} style={inputStyle}/>
+              <button type="button" onClick={addAttachment} className="btn-secondary" style={{padding:"0 16px",borderRadius:"12px",cursor:"pointer",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center"}}><Plus size={16}/></button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:"6px"}}>
+              {form.attachments.map((a, idx) => (
+                <div key={idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"rgba(255,255,255,0.02)",padding:"8px 12px",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.05)"}}>
+                  <span style={{fontSize:"13px",color:"#00FFA3",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"80%"}}>{a}</span>
+                  <button type="button" onClick={() => removeAttachment(idx)} style={{background:"transparent",border:"none",color:"#FF4D6A",cursor:"pointer"}}><Trash2 size={14}/></button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+
 
           {isNego && (
             <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}}>
@@ -455,7 +603,6 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
                 style={{...inputStyle,borderColor:"rgba(255,191,0,0.3)",background:"rgba(255,191,0,0.02)",resize:"vertical" as any,lineHeight:"1.6"}}/>
             </motion.div>
           )}
-
 
           {err && <p style={{color:"#FF4D6A",fontSize:"13px",margin:0,fontWeight:"600"}}>⚠️ {err}</p>}
         </div>

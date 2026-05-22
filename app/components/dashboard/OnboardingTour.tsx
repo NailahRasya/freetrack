@@ -222,7 +222,7 @@ export default function OnboardingTour() {
           }}>
             <Sparkles size={20} style={{ color: "var(--cyan)", flexShrink: 0 }} />
             <span style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.9)" }}>
-              Semua proyek terarsipkan dipindahkan ke tab khusus <strong>Diarsipkan</strong>, di mana Anda bisa <strong>memulihkan proyek</strong> atau <strong>menghapusnya secara permanen</strong>.
+              Semua proyek terarsipkan dipindahkan ke tab khusus <strong>Diarsipkan</strong>, di mana Anda bisa <strong>memulihkan proyek</strong> kembali ke dasbor utama kapan saja.
             </span>
           </div>
         </div>
