@@ -42,16 +42,7 @@ function PaymentsContent() {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [selectedWithdrawalReceipt, setSelectedWithdrawalReceipt] = useState<any | null>(null);
 
-  // Custom Payment Modal states
-  const [selectedMilestone, setSelectedMilestone] = useState<any | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"bank" | "qris" | "card" | null>(null);
-  const [isPaying, setIsPaying] = useState(false);
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [isCopied, setIsCopied] = useState(false);
-  const [paymentLoaderStatus, setPaymentLoaderStatus] = useState("Memproses Pembayaran...");
+
 
   // Load persistent withdrawals from localStorage based on authenticated user ID
   useEffect(() => {
@@ -93,6 +84,19 @@ function PaymentsContent() {
 
   useEffect(() => {
     fetchPendingMilestones();
+
+    // Dynamically load Midtrans Snap client library for Sandbox
+    const snapScriptUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
+    const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "Mid-client-ORTfzLZfOGMF2pdp";
+    
+    let script = document.querySelector(`script[src="${snapScriptUrl}"]`) as HTMLScriptElement;
+    if (!script) {
+      script = document.createElement("script");
+      script.src = snapScriptUrl;
+      script.setAttribute("data-client-key", clientKey);
+      script.async = true;
+      document.body.appendChild(script);
+    }
   }, []);
 
   // Listen to approved milestone payout redirect parameters
@@ -175,110 +179,151 @@ function PaymentsContent() {
     }
   };
 
-  const handlePayDP = (milestone: any) => {
-    setSelectedMilestone(milestone);
-    setPaymentMethod(null);
-    setCardNumber("");
-    setCardExpiry("");
-    setCardCvv("");
-    setCardName("");
-    setIsCopied(false);
-  };
-
-  const processPayment = async () => {
-    if (!selectedMilestone || !paymentMethod) return;
-
-    setIsPaying(true);
-    setPaymentLoaderStatus("Memproses Pembayaran...");
+  const handlePayDP = async (milestone: any) => {
+    if (processing) return;
+    setProcessing(milestone.id);
 
     try {
-      // 1. Simulates realistic payment loading steps
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setPaymentLoaderStatus("Memverifikasi Escrow...");
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setPaymentLoaderStatus("Menyinkronkan Auto-Invoice...");
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Determine textual method for invoices
-      let methodText = "Bank Transfer";
-      if (paymentMethod === "qris") {
-        methodText = "E-Wallet (QRIS)";
-      } else if (paymentMethod === "card") {
-        methodText = "Kartu Kredit";
-      }
-
-      // 2. Update milestone status to "In Progress" & payment_status to "Escrowed"
-      const milestoneRes = await fetch("/api/milestones", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: selectedMilestone.id,
-          status: "In Progress",
-          payment_status: "Escrowed",
-        }),
-      });
-
-      if (!milestoneRes.ok) {
-        const data = await milestoneRes.ok;
-        throw new Error("Failed to process milestone payment update");
-      }
-
-      // 3. Create the auto-invoice immediately
-      const invoiceRes = await fetch("/api/invoices", {
+      // 1. Get Midtrans Snap Token from Next.js API Route
+      const res = await fetch("/api/midtrans/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          milestone_id: selectedMilestone.id,
-          payment_method: methodText,
-        }),
+        body: JSON.stringify({ milestone_id: milestone.id }),
       });
 
-      if (!invoiceRes.ok) {
-        console.error("Auto-invoice creation failed");
+      const data = await res.json();
+      if (!res.ok || !data.token) {
+        throw new Error(data.error || "Gagal mendapatkan token transaksi.");
       }
 
-      // 4. Success alert
-      await Swal.fire({
-        icon: "success",
-        title: "Pembayaran Berhasil!",
-        html: `
-          <div style="text-align: center; padding: 20px;">
-            <p style="margin-bottom: 12px; color: #10b981; font-size: 16px; font-weight: 600;">
-              ✅ DP sebesar Rp ${selectedMilestone.amount?.toLocaleString("id-ID") || "0"} telah disimpan di escrow
-            </p>
-            <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 8px;">
-              Metode Pembayaran: <strong>${methodText}</strong>
-            </p>
-            <p style="color: #94a3b8; font-size: 13px;">
-              Freelancer sekarang dapat mulai mengerjakan milestone ini. Invoice Anda telah berhasil digenerate di menu Invoice.
-            </p>
-          </div>
-        `,
-        background: "rgba(13, 27, 62, 0.95)",
-        color: "#fff",
-        timer: 4000,
-        showConfirmButton: true,
-        confirmButtonText: "Selesai",
-        confirmButtonColor: "#10b981",
+      // 2. Trigger Midtrans Snap Popup Modal
+      const snap = (window as any).snap;
+      if (!snap) {
+        throw new Error("Midtrans SDK belum terpasang di browser. Silakan segarkan halaman.");
+      }
+
+      snap.pay(data.token, {
+        onSuccess: async (result: any) => {
+          // Temporarily set processing to show loading spinner during DB update
+          setProcessing(milestone.id);
+          try {
+            // Determine friendly text for the payment method used
+            let methodText = "Midtrans (Simulation)";
+            if (result.payment_type) {
+              if (result.payment_type === "qris" || result.payment_type === "gopay") {
+                methodText = "E-Wallet (QRIS)";
+              } else if (result.payment_type === "credit_card") {
+                methodText = "Kartu Kredit";
+              } else if (result.payment_type === "bank_transfer") {
+                const bankName = result.va_numbers?.[0]?.bank || "Bank";
+                methodText = `Virtual Account (${bankName.toUpperCase()})`;
+              }
+            }
+
+            // Sync with existing backend endpoints (update database milestone status & payment status)
+            const milestoneRes = await fetch("/api/milestones", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: milestone.id,
+                status: "In Progress",
+                payment_status: "Escrowed",
+              }),
+            });
+
+            if (!milestoneRes.ok) {
+              throw new Error("Gagal memperbarui status milestone di database.");
+            }
+
+            // Generate auto-invoice
+            const invoiceRes = await fetch("/api/invoices", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                milestone_id: milestone.id,
+                payment_method: methodText,
+              }),
+            });
+
+            if (!invoiceRes.ok) {
+              console.error("Gagal melakukan generate invoice otomatis.");
+            }
+
+            // Celebration Alert
+            await Swal.fire({
+              icon: "success",
+              title: "Pembayaran Berhasil!",
+              html: `
+                <div style="text-align: center; padding: 20px; font-family: inherit;">
+                  <p style="margin-bottom: 12px; color: #10b981; font-size: 16px; font-weight: 600;">
+                    ✅ DP sebesar Rp ${milestone.amount?.toLocaleString("id-ID") || "0"} telah disimpan di escrow
+                  </p>
+                  <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 8px;">
+                    Metode Pembayaran: <strong>${methodText}</strong>
+                  </p>
+                  <p style="color: #94a3b8; font-size: 13px; line-height: 1.5;">
+                    Freelancer sekarang dapat mulai mengerjakan milestone ini. Invoice Anda telah berhasil digenerate di menu Invoice.
+                  </p>
+                </div>
+              `,
+              background: "rgba(13, 27, 62, 0.95)",
+              color: "#fff",
+              confirmButtonText: "Selesai",
+              confirmButtonColor: "#10b981",
+            });
+
+            // Refresh milestone list
+            fetchPendingMilestones();
+          } catch (updateErr: any) {
+            console.error("Database update error:", updateErr);
+            Swal.fire({
+              icon: "error",
+              title: "Update Status Gagal",
+              text: updateErr.message || "Gagal menyinkronkan status pembayaran ke database.",
+              background: "rgba(13, 27, 62, 0.95)",
+              color: "#fff",
+            });
+          } finally {
+            setProcessing(null);
+          }
+        },
+        onPending: (result: any) => {
+          console.log("Payment pending:", result);
+          Swal.fire({
+            icon: "info",
+            title: "Pembayaran Tertunda",
+            text: "Silakan selesaikan pembayaran Anda di aplikasi/m-banking Anda.",
+            background: "rgba(13, 27, 62, 0.95)",
+            color: "#fff",
+          });
+          setProcessing(null);
+        },
+        onError: (result: any) => {
+          console.error("Payment error:", result);
+          Swal.fire({
+            icon: "error",
+            title: "Pembayaran Gagal",
+            text: "Terjadi kesalahan saat memproses pembayaran dengan Midtrans.",
+            background: "rgba(13, 27, 62, 0.95)",
+            color: "#fff",
+          });
+          setProcessing(null);
+        },
+        onClose: () => {
+          console.log("Midtrans Snap Modal closed by user");
+          setProcessing(null);
+        }
       });
-
-      // Close modal & refresh
-      setSelectedMilestone(null);
-      fetchPendingMilestones();
-
     } catch (err: any) {
-      console.error("Payment error:", err);
-      let errorMessage = err.message || "Terjadi kesalahan saat memproses pembayaran";
-      
+      console.error("Payment initiation error:", err);
       Swal.fire({
         icon: "error",
-        title: "Pembayaran Gagal",
-        text: errorMessage,
+        title: "Gagal Memulai Pembayaran",
+        text: err.message || "Terjadi kesalahan koneksi.",
         background: "rgba(13, 27, 62, 0.95)",
         color: "#fff",
       });
-    } finally {
-      setIsPaying(false);
+      setProcessing(null);
     }
   };
 
@@ -1878,693 +1923,171 @@ function PaymentsContent() {
         </div>
       )}
 
-      {/* Note */}
+      {/* Sandbox Simulator Helper Card */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="glass-card"
         style={{
-          padding: "20px 24px",
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.05)",
-          borderRadius: "16px",
+          padding: "24px",
+          background: "linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)",
+          border: "1px solid rgba(16, 185, 129, 0.15)",
+          borderRadius: "20px",
+          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
+          marginTop: "16px",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <h4 style={{ fontSize: "13px", fontWeight: "700", color: "rgba(226, 232, 240, 0.6)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-          ℹ️ Catatan Penting
-        </h4>
-        <ul style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.5)", lineHeight: "1.8", paddingLeft: "20px" }}>
-          <li>Pembayaran ini adalah simulasi untuk testing. Di production akan terintegrasi dengan payment gateway.</li>
-          <li>Uang akan disimpan di escrow (ditahan platform) hingga Anda approve hasil kerja freelancer.</li>
-          <li>Setelah DP dibayar, freelancer dapat mulai mengerjakan milestone.</li>
-          <li>Anda dapat meminta revisi jika hasil tidak sesuai sebelum approve.</li>
-        </ul>
+        {/* Glow effect */}
+        <div style={{
+          position: "absolute", top: "-50px", left: "-50px",
+          width: "200px", height: "200px",
+          background: "#10b981",
+          filter: "blur(80px)",
+          opacity: 0.05,
+          pointerEvents: "none",
+        }} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: "32px", height: "32px",
+            background: "rgba(16, 185, 129, 0.1)",
+            border: "1px solid rgba(16, 185, 129, 0.25)",
+            borderRadius: "10px",
+            color: "#10b981"
+          }}>
+            <ShieldCheck size={18} />
+          </div>
+          <div>
+            <h4 style={{ fontSize: "15px", fontWeight: "800", color: "#fff" }}>
+              🛠️ Panduan & Alat Uji Coba (Sandbox Simulator)
+            </h4>
+            <p style={{ fontSize: "12px", color: "rgba(226, 232, 240, 0.45)" }}>
+              QRIS yang muncul adalah Sandbox. Pembayaran ini disimulasikan sukses GRATIS tanpa uang asli!
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "14px" }}>
+          {/* QRIS Simulation */}
+          <div style={{
+            padding: "16px",
+            background: "rgba(255, 255, 255, 0.02)",
+            border: "1px solid rgba(255, 255, 255, 0.05)",
+            borderRadius: "14px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <QrCode size={14} style={{ color: "#10b981" }} />
+              <span style={{ fontSize: "13px", fontWeight: "700", color: "#fff" }}>Metode QRIS / GoPay:</span>
+            </div>
+            <ol style={{ fontSize: "12px", color: "rgba(226, 232, 240, 0.6)", lineHeight: "1.7", paddingLeft: "16px", margin: 0 }}>
+              <li>Klik kanan pada gambar kode QR yang muncul di pop-up Midtrans Snap, lalu pilih <strong>"Copy image link"</strong> (Salin tautan gambar).</li>
+              <li>Buka simulator utama Midtrans melalui tombol berikut:</li>
+              <a 
+                href="https://simulator.sandbox.midtrans.com/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  color: "#00FFA3",
+                  fontWeight: "700",
+                  textDecoration: "none",
+                  marginTop: "6px",
+                  marginBottom: "6px",
+                  fontSize: "12px",
+                  borderBottom: "1px dashed rgba(0, 255, 163, 0.4)",
+                  transition: "all 0.2s"
+                }}
+                onMouseOver={(e) => e.currentTarget.style.color = "#fff"}
+                onMouseOut={(e) => e.currentTarget.style.color = "#00FFA3"}
+              >
+                Buka Simulator Midtrans Sandbox <ArrowUpRight size={12} />
+              </a>
+              <li>Di halaman simulator tersebut, klik tab menu <strong>"QRIS"</strong>.</li>
+              <li>Tempelkan (*paste*) URL tautan gambar tersebut ke kolom <strong>"QR Code Image URL"</strong>, lalu klik tombol <strong>"Pay"</strong>.</li>
+              <li>Status pembayaran di simulator akan sukses, dan dalam 2 detik pop-up Midtrans di FreeTrack akan otomatis memproses milestone Anda menjadi aktif!</li>
+            </ol>
+          </div>
+
+          {/* Other simulation methods */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: "12px"
+          }}>
+            {/* VA Bank Transfer */}
+            <div style={{
+              padding: "14px",
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.05)",
+              borderRadius: "12px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <Landmark size={14} style={{ color: "#10b981" }} />
+                <span style={{ fontSize: "12px", fontWeight: "700", color: "#fff" }}>Metode Virtual Account (BCA/Mandiri/dll):</span>
+              </div>
+              <p style={{ fontSize: "11px", color: "rgba(226, 232, 240, 0.55)", lineHeight: "1.6", margin: "0 0 8px 0" }}>
+                Salin nomor Virtual Account dari pop-up Midtrans, lalu buka simulator utama dan pilih tab bank yang sesuai (misal: <strong>BCA VA</strong>):
+              </p>
+              <a 
+                href="https://simulator.sandbox.midtrans.com/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  color: "#00FFA3",
+                  fontWeight: "700",
+                  textDecoration: "none",
+                  fontSize: "11.5px",
+                  borderBottom: "1px dashed rgba(0, 255, 163, 0.4)"
+                }}
+                onMouseOver={(e) => e.currentTarget.style.color = "#fff"}
+                onMouseOut={(e) => e.currentTarget.style.color = "#00FFA3"}
+              >
+                Buka Simulator Virtual Account <ArrowUpRight size={11} />
+              </a>
+            </div>
+
+            {/* Credit Card */}
+            <div style={{
+              padding: "14px",
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.05)",
+              borderRadius: "12px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <CreditCard size={14} style={{ color: "#10b981" }} />
+                <span style={{ fontSize: "12px", fontWeight: "700", color: "#fff" }}>Metode Kartu Kredit Uji Coba:</span>
+              </div>
+              <p style={{ fontSize: "11px", color: "rgba(226, 232, 240, 0.55)", lineHeight: "1.6", margin: 0 }}>
+                Gunakan nomor kartu: <code style={{ color: "#00FFA3", background: "rgba(0, 255, 163, 0.1)", padding: "2px 6px", borderRadius: "6px", fontFamily: "monospace", fontSize: "11px" }}>4811 1111 1111 1111</code>. Expiry/CVV bebas (misal 12/28, CVV 123). Saat diminta OTP, masukkan angka: <code style={{ color: "#00FFA3", background: "rgba(0, 255, 163, 0.1)", padding: "2px 6px", borderRadius: "6px", fontFamily: "monospace", fontSize: "11px" }}>112233</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          marginTop: "16px",
+          paddingTop: "12px",
+          borderTop: "1px solid rgba(255,255,255,0.05)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: "11px",
+          color: "rgba(226, 232, 240, 0.35)"
+        }}>
+          <span>🛡️ Escrow Platform Terjamin Aman</span>
+          <span>Status Mode: Midtrans Sandbox (Development)</span>
+        </div>
       </motion.div>
 
-      {/* ── CUSTOM PAYMENT MODAL ── */}
-      <AnimatePresence>
-        {selectedMilestone && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 1000,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(0, 0, 0, 0.75)",
-              backdropFilter: "blur(12px)",
-              padding: "20px",
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 350 }}
-              style={{
-                width: "100%",
-                maxWidth: "600px",
-                maxHeight: "90vh",
-                overflowY: "auto",
-                background: "rgba(13, 27, 62, 0.95)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "24px",
-                padding: "28px 32px",
-                position: "relative",
-                backdropFilter: "blur(30px)",
-                boxShadow: "0 25px 80px rgba(0, 0, 0, 0.6)",
-                color: "#fff",
-              }}
-            >
-              {/* Close Button */}
-              {!isPaying && (
-                <button
-                  onClick={() => setSelectedMilestone(null)}
-                  style={{
-                    position: "absolute",
-                    top: "24px",
-                    right: "24px",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "10px",
-                    width: "36px",
-                    height: "36px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    color: "rgba(226,232,240,0.5)",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = "rgba(239,68,68,0.1)";
-                    e.currentTarget.style.color = "#EF4444";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                    e.currentTarget.style.color = "rgba(226,232,240,0.5)";
-                  }}
-                >
-                  <X size={18} />
-                </button>
-              )}
 
-              {/* Title Section */}
-              <div style={{ marginBottom: "24px", paddingRight: "40px" }}>
-                <h3 style={{ fontSize: "20px", fontWeight: "900", color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px" }}>
-                  {paymentMethod ? (
-                    <button
-                      onClick={() => setPaymentMethod(null)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "var(--cyan)",
-                        cursor: "pointer",
-                        fontSize: "14px",
-                        fontWeight: "700",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        padding: "0",
-                        marginBottom: "12px",
-                      }}
-                    >
-                      <ArrowLeft size={14} /> Kembali ke Pilihan Metode
-                    </button>
-                  ) : null}
-                  <div>Metode Pembayaran DP</div>
-                </h3>
-                <p style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.4)", lineHeight: "1.6" }}>
-                  Milestone: <strong style={{ color: "#fff" }}>{selectedMilestone.title}</strong> · Tagihan: <strong style={{ color: "var(--accent)" }}>{formatCurrency(selectedMilestone.amount || 0)}</strong>
-                </p>
-              </div>
-
-              {/* Loader overlay inside modal */}
-              {isPaying && (
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    zIndex: 10,
-                    background: "rgba(13, 27, 62, 0.95)",
-                    backdropFilter: "blur(8px)",
-                    borderRadius: "24px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "16px",
-                  }}
-                >
-                  <div style={{ width: "48px", height: "48px", border: "4px solid rgba(6, 182, 212, 0.1)", borderTop: "4px solid var(--cyan)", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                  <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff" }}>
-                    {paymentLoaderStatus}
-                  </div>
-                  <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>
-                    Mohon tunggu sebentar, sistem sedang mengamankan dana di escrow.
-                  </div>
-                </div>
-              )}
-
-              {/* ── STEP 1: METHOD SELECTION ── */}
-              {!paymentMethod && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                  {/* Bank Transfer */}
-                  <div
-                    onClick={() => setPaymentMethod("bank")}
-                    style={{
-                      padding: "20px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "16px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
-                      transition: "all 0.2s",
-                    }}
-                    className="payment-method-card"
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                      e.currentTarget.style.border = "1px solid rgba(6, 182, 212, 0.4)";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                      e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
-                  >
-                    <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--cyan)", flexShrink: 0 }}>
-                      <Landmark size={22} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ fontSize: "15px", fontWeight: "800", color: "#fff", marginBottom: "4px" }}>Transfer Bank</h4>
-                      <p style={{ fontSize: "12px", color: "rgba(226, 232, 240, 0.4)", lineHeight: "1.4" }}>Bayar via Virtual Account Mandiri / BCA / BNI</p>
-                    </div>
-                  </div>
-
-                  {/* E-Wallet (QRIS) */}
-                  <div
-                    onClick={() => setPaymentMethod("qris")}
-                    style={{
-                      padding: "20px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "16px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
-                      transition: "all 0.2s",
-                    }}
-                    className="payment-method-card"
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                      e.currentTarget.style.border = "1px solid rgba(6, 182, 212, 0.4)";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                      e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
-                  >
-                    <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", flexShrink: 0 }}>
-                      <QrCode size={22} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ fontSize: "15px", fontWeight: "800", color: "#fff", marginBottom: "4px" }}>E-Wallet (QRIS untuk Semua)</h4>
-                      <p style={{ fontSize: "12px", color: "rgba(226, 232, 240, 0.4)", lineHeight: "1.4" }}>Pindai kode QRIS via GoPay, OVO, Dana, LinkAja</p>
-                    </div>
-                  </div>
-
-                  {/* Credit Card */}
-                  <div
-                    onClick={() => setPaymentMethod("card")}
-                    style={{
-                      padding: "20px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "16px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
-                      transition: "all 0.2s",
-                    }}
-                    className="payment-method-card"
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                      e.currentTarget.style.border = "1px solid rgba(6, 182, 212, 0.4)";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                      e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
-                  >
-                    <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#f59e0b", flexShrink: 0 }}>
-                      <CreditCard size={22} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ fontSize: "15px", fontWeight: "800", color: "#fff", marginBottom: "4px" }}>Kartu Kredit</h4>
-                      <p style={{ fontSize: "12px", color: "rgba(226, 232, 240, 0.4)", lineHeight: "1.4" }}>Mendukung kartu Visa, MasterCard, JCB dengan aman</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── STEP 2A: BANK TRANSFER SCREEN ── */}
-              {paymentMethod === "bank" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                  {/* Virtual Account Card */}
-                  <div
-                    style={{
-                      padding: "24px",
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.05)",
-                      borderRadius: "16px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "16px",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontSize: "11px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Nama Bank</span>
-                      <h4 style={{ fontSize: "16px", fontWeight: "800", color: "#fff", marginTop: "4px" }}>Bank Mandiri Escrow</h4>
-                    </div>
-
-                    <div>
-                      <span style={{ fontSize: "11px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Nomor Virtual Account</span>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "4px" }}>
-                        <span style={{ fontSize: "20px", fontWeight: "900", color: "var(--cyan)", letterSpacing: "1px" }}>8830 1928 3746 5928</span>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText("8830192837465928");
-                            setIsCopied(true);
-                            setTimeout(() => setIsCopied(false), 2000);
-                          }}
-                          style={{
-                            padding: "8px 12px",
-                            background: "rgba(6, 182, 212, 0.12)",
-                            border: "1px solid rgba(6, 182, 212, 0.2)",
-                            borderRadius: "8px",
-                            color: "var(--cyan)",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          {isCopied ? <Check size={13} /> : <Copy size={13} />}
-                          {isCopied ? "Tersalin!" : "Salin"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <span style={{ fontSize: "11px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Total Nominal</span>
-                      <h4 style={{ fontSize: "18px", fontWeight: "900", color: "var(--accent)", marginTop: "4px" }}>{formatCurrency(selectedMilestone.amount || 0)}</h4>
-                    </div>
-                  </div>
-
-                  {/* Transfer Note */}
-                  <div style={{ padding: "14px 18px", background: "rgba(6,182,212,0.03)", border: "1px solid rgba(6,182,212,0.1)", borderRadius: "12px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
-                    <Shield size={16} style={{ color: "var(--cyan)", flexShrink: 0, marginTop: "2px" }} />
-                    <p style={{ fontSize: "12px", color: "rgba(226,232,240,0.5)", lineHeight: "1.5" }}>
-                      Silakan selesaikan transfer dari mobile banking atau ATM Anda. Pembayaran akan terverifikasi secara instan setelah Anda mengklik tombol konfirmasi di bawah.
-                    </p>
-                  </div>
-
-                  {/* Confirm Button */}
-                  <button
-                    onClick={processPayment}
-                    style={{
-                      width: "100%",
-                      padding: "14px",
-                      background: "linear-gradient(135deg, #10b981, #059669)",
-                      border: "none",
-                      borderRadius: "12px",
-                      color: "#fff",
-                      fontSize: "14px",
-                      fontWeight: "700",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 8px 20px rgba(16, 185, 129, 0.3)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    Saya Sudah Transfer
-                  </button>
-                </div>
-              )}
-
-              {/* ── STEP 2B: E-WALLET (QRIS) SCREEN ── */}
-              {paymentMethod === "qris" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "20px", alignItems: "center" }}>
-                  {/* Dynamic QRIS Box */}
-                  <div
-                    style={{
-                      padding: "24px",
-                      background: "#fff",
-                      borderRadius: "20px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "12px",
-                      boxShadow: "0 10px 40px rgba(0,0,0,0.4)",
-                      width: "100%",
-                      maxWidth: "320px",
-                    }}
-                  >
-                    {/* Header QRIS */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", borderBottom: "2px solid #000", paddingBottom: "8px" }}>
-                      <span style={{ fontWeight: "900", color: "#1e3a8a", fontSize: "16px" }}>QRIS</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700", color: "#EF4444" }}>GPN INDONESIA</span>
-                    </div>
-
-                    {/* Premium Simulated QR Code SVG Grid */}
-                    <div style={{ width: "200px", height: "200px", background: "#f8fafc", padding: "10px", borderRadius: "12px", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="180" height="180" viewBox="0 0 100 100">
-                        {/* Outer framing squares (simulating dynamic code grid) */}
-                        <rect x="5" y="5" width="25" height="25" fill="#0f172a" />
-                        <rect x="9" y="9" width="17" height="17" fill="#fff" />
-                        <rect x="13" y="13" width="9" height="9" fill="#0f172a" />
-
-                        <rect x="70" y="5" width="25" height="25" fill="#0f172a" />
-                        <rect x="74" y="9" width="17" height="17" fill="#fff" />
-                        <rect x="78" y="13" width="9" height="9" fill="#0f172a" />
-
-                        <rect x="5" y="70" width="25" height="25" fill="#0f172a" />
-                        <rect x="9" y="74" width="17" height="17" fill="#fff" />
-                        <rect x="13" y="78" width="9" height="9" fill="#0f172a" />
-
-                        {/* Random simulated code dot grid pattern */}
-                        <rect x="35" y="5" width="5" height="10" fill="#0f172a" />
-                        <rect x="45" y="10" width="10" height="5" fill="#0f172a" />
-                        <rect x="60" y="5" width="5" height="15" fill="#0f172a" />
-                        <rect x="35" y="20" width="15" height="5" fill="#0f172a" />
-                        
-                        <rect x="5" y="35" width="10" height="5" fill="#0f172a" />
-                        <rect x="20" y="35" width="10" height="10" fill="#0f172a" />
-                        <rect x="35" y="35" width="30" height="5" fill="#0f172a" />
-                        <rect x="50" y="45" width="10" height="15" fill="#0f172a" />
-                        
-                        <rect x="5" y="50" width="5" height="15" fill="#0f172a" />
-                        <rect x="15" y="55" width="15" height="5" fill="#0f172a" />
-                        <rect x="35" y="50" width="5" height="20" fill="#0f172a" />
-                        <rect x="45" y="60" width="15" height="5" fill="#0f172a" />
-                        
-                        <rect x="70" y="35" width="15" height="10" fill="#0f172a" />
-                        <rect x="75" y="50" width="10" height="5" fill="#0f172a" />
-                        <rect x="70" y="60" width="5" height="15" fill="#0f172a" />
-                        <rect x="80" y="70" width="15" height="5" fill="#0f172a" />
-                        <rect x="70" y="80" width="25" height="5" fill="#0f172a" />
-                        <rect x="85" y="90" width="10" height="5" fill="#0f172a" />
-
-                        <rect x="35" y="75" width="10" height="10" fill="#0f172a" />
-                        <rect x="50" y="75" width="15" height="5" fill="#0f172a" />
-                        <rect x="35" y="90" width="25" height="5" fill="#0f172a" />
-
-                        {/* Mid center lock logo */}
-                        <rect x="42" y="42" width="16" height="16" rx="4" fill="#06b6d4" />
-                        <rect x="47" y="48" width="6" height="5" rx="1" fill="#fff" />
-                        <path d="M49 48V46.5C49 45.7 49.7 45 50.5 45S52 45.7 52 46.5V48" stroke="#fff" strokeWidth="1.2" fill="none" />
-                      </svg>
-                    </div>
-
-                    {/* QR Details */}
-                    <div style={{ textAlign: "center" }}>
-                      <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>NMID</span>
-                      <div style={{ fontSize: "11px", fontWeight: "800", color: "#1e293b", letterSpacing: "0.5px" }}>ID1020304050607</div>
-                      <div style={{ fontSize: "15px", fontWeight: "900", color: "#0f172a", marginTop: "6px" }}>
-                        {formatCurrency(selectedMilestone.amount || 0)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* QRIS instruction */}
-                  <p style={{ fontSize: "12px", color: "rgba(226,232,240,0.5)", textAlign: "center", lineHeight: "1.6", maxWidth: "400px" }}>
-                    Kode QRIS ini berlaku untuk semua e-wallet & m-banking Indonesia. Pindai QR di atas dan selesaikan pembayaran Anda di ponsel.
-                  </p>
-
-                  {/* Action button */}
-                  <button
-                    onClick={processPayment}
-                    style={{
-                      width: "100%",
-                      padding: "14px",
-                      background: "linear-gradient(135deg, #10b981, #059669)",
-                      border: "none",
-                      borderRadius: "12px",
-                      color: "#fff",
-                      fontSize: "14px",
-                      fontWeight: "700",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 8px 20px rgba(16, 185, 129, 0.3)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    Selesai Pindai & Bayar
-                  </button>
-                </div>
-              )}
-
-              {/* ── STEP 2C: CREDIT CARD FORM SCREEN ── */}
-              {paymentMethod === "card" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                  {/* Dynamic Floating Credit Card Graphic */}
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "170px",
-                      background: "linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%)",
-                      backdropFilter: "blur(20px)",
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: "16px",
-                      padding: "20px 24px",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      position: "relative",
-                      overflow: "hidden",
-                      boxShadow: "0 15px 35px rgba(0,0,0,0.3)",
-                    }}
-                  >
-                    {/* Glow design elements */}
-                    <div style={{ position: "absolute", top: "-50px", right: "-50px", width: "120px", height: "120px", background: "var(--cyan)", filter: "blur(50px)", opacity: 0.2, pointerEvents: "none" }} />
-                    <div style={{ position: "absolute", bottom: "-30px", left: "-30px", width: "100px", height: "100px", background: "var(--primary-light)", filter: "blur(40px)", opacity: 0.15, pointerEvents: "none" }} />
-
-                    {/* Top row */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "14px", fontWeight: "900", letterSpacing: "1px", color: "rgba(255,255,255,0.8)" }}>FreeTrack ESCROW</span>
-                      {/* Premium Chip SVG */}
-                      <svg width="28" height="22" viewBox="0 0 28 22" fill="none">
-                        <rect x="0.5" y="0.5" width="27" height="21" rx="4" fill="#E2E8F0" stroke="#CBD5E1" />
-                        <rect x="4" y="4" width="7" height="6" rx="1" fill="#94A3B8" />
-                        <rect x="17" y="4" width="7" height="6" rx="1" fill="#94A3B8" />
-                        <rect x="4" y="12" width="7" height="6" rx="1" fill="#94A3B8" />
-                        <rect x="17" y="12" width="7" height="6" rx="1" fill="#94A3B8" />
-                        <line x1="11" y1="7" x2="17" y2="7" stroke="#94A3B8" strokeWidth="1.5" />
-                        <line x1="11" y1="15" x2="17" y2="15" stroke="#94A3B8" strokeWidth="1.5" />
-                      </svg>
-                    </div>
-
-                    {/* Card Number */}
-                    <div style={{ fontSize: "18px", fontWeight: "700", color: "#fff", letterSpacing: "2.5px", fontFamily: "monospace", margin: "14px 0" }}>
-                      {cardNumber ? cardNumber.replace(/(\d{4})/g, "$1 ").trim() : "•••• •••• •••• ••••"}
-                    </div>
-
-                    {/* Bottom row */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                      <div>
-                        <div style={{ fontSize: "8px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase" }}>Pemilik Kartu</div>
-                        <div style={{ fontSize: "12px", fontWeight: "800", color: "#fff", textTransform: "uppercase", marginTop: "2px" }}>
-                          {cardName || "NAMA PEMILIK"}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "8px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", textAlign: "right" }}>Berlaku Hingga</div>
-                        <div style={{ fontSize: "12px", fontWeight: "800", color: "#fff", marginTop: "2px", textAlign: "right" }}>
-                          {cardExpiry || "BB/TT"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Input Form Fields */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", marginBottom: "6px" }}>
-                        Nomor Kartu
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="4123 4567 8901 2345"
-                        maxLength={16}
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ""))}
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "rgba(255,255,255,0.03)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: "10px",
-                          color: "#fff",
-                          fontSize: "14px",
-                          outline: "none",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", marginBottom: "6px" }}>
-                        Nama Pada Kartu
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Eko Muhammad F"
-                        value={cardName}
-                        onChange={(e) => setCardName(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "rgba(255,255,255,0.03)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: "10px",
-                          color: "#fff",
-                          fontSize: "14px",
-                          outline: "none",
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                      <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", marginBottom: "6px" }}>
-                          Masa Berlaku
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="MM/YY"
-                          maxLength={5}
-                          value={cardExpiry}
-                          onChange={(e) => {
-                            let val = e.target.value.replace(/\D/g, "");
-                            if (val.length > 2) {
-                              val = val.substring(0, 2) + "/" + val.substring(2, 4);
-                            }
-                            setCardExpiry(val);
-                          }}
-                          style={{
-                            width: "100%",
-                            padding: "12px 16px",
-                            background: "rgba(255,255,255,0.03)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            borderRadius: "10px",
-                            color: "#fff",
-                            fontSize: "14px",
-                            outline: "none",
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", marginBottom: "6px" }}>
-                          CVV
-                        </label>
-                        <input
-                          type="password"
-                          placeholder="•••"
-                          maxLength={3}
-                          value={cardCvv}
-                          onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
-                          style={{
-                            width: "100%",
-                            padding: "12px 16px",
-                            background: "rgba(255,255,255,0.03)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            borderRadius: "10px",
-                            color: "#fff",
-                            fontSize: "14px",
-                            outline: "none",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pay button */}
-                  <button
-                    onClick={processPayment}
-                    disabled={!cardNumber || !cardExpiry || !cardCvv || !cardName}
-                    style={{
-                      width: "100%",
-                      padding: "14px",
-                      background: (!cardNumber || !cardExpiry || !cardCvv || !cardName) 
-                        ? "rgba(16, 185, 129, 0.4)" 
-                        : "linear-gradient(135deg, #10b981, #059669)",
-                      border: "none",
-                      borderRadius: "12px",
-                      color: "#fff",
-                      fontSize: "14px",
-                      fontWeight: "700",
-                      cursor: (!cardNumber || !cardExpiry || !cardCvv || !cardName) ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseOver={(e) => {
-                      if (cardNumber && cardExpiry && cardCvv && cardName) {
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.boxShadow = "0 8px 20px rgba(16, 185, 129, 0.3)";
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    Bayar Sekarang
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <style jsx>{`
         @keyframes spin {
