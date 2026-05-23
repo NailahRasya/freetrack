@@ -293,26 +293,24 @@ export async function PUT(request: NextRequest) {
     // Auto-create chat message and in-app notification when client requests revision or rejects
     if (currentMilestone && (payload.status === "In Progress" || payload.status === "Rejected")) {
       const isRevision = payload.status === "In Progress";
-      const statusTitle = isRevision ? "REVISION REQUESTED" : "SUBMISSION REJECTED";
-      const statusEmoji = isRevision ? "⚠️" : "❌";
+      const statusTitle = isRevision ? "Ada Penyesuaian Sedikit" : "Penyerahan Pekerjaan Belum Disetujui";
+      const statusEmoji = isRevision ? "😊" : "🙏";
       
       let checklistSummary = "";
       if (reviewChecklist) {
-        checklistSummary = "\n\n📋 **Validation & Quality Review:**\n" +
-          `${reviewChecklist.uploaded ? "✅" : "❌"} Bukti berhasil diupload\n` +
-          `${reviewChecklist.deliverable ? "✅" : "❌"} Deliverable sesuai milestone\n` +
-          `${reviewChecklist.quality ? "✅" : "❌"} Kualitas pekerjaan sesuai\n` +
-          `${reviewChecklist.completeFiles ? "✅" : "❌"} Tidak ada file yang kurang\n` +
-          `${reviewChecklist.validProgress ? "✅" : "❌"} Progress valid`;
+        checklistSummary = "\n\n📋 Hasil Review & Validasi:\n" +
+          `${reviewChecklist.uploaded ? "✅" : "❌"} Bukti berhasil diunggah\n` +
+          `${reviewChecklist.deliverable ? "✅" : "❌"} Hasil kerja sesuai milestone\n` +
+          `${reviewChecklist.quality ? "✅" : "❌"} Kualitas pekerjaan sesuai harapan\n` +
+          `${reviewChecklist.completeFiles ? "✅" : "❌"} Kelengkapan dokumen/berkas lengkap\n` +
+          `${reviewChecklist.validProgress ? "✅" : "❌"} Progres pekerjaan valid`;
       }
 
       const notesSummary = reviewNotes && reviewNotes.trim() 
-        ? `\n\n💬 **Catatan dari Klien:**\n"${reviewNotes.trim()}"`
+        ? `\n\n💬 Catatan Hangat dari Klien:\n"${reviewNotes.trim()}"`
         : "";
 
-      const messageContent = `${statusEmoji} **${statusTitle}**\n` +
-        `Milestone: *${currentMilestone.title}*\n` +
-        `Status: ${isRevision ? "Kembali ke 'Dalam Pengerjaan'" : "Ditolak"}` +
+      const messageContent = `${statusEmoji} Halo! Ada pembaruan mengenai milestone "${currentMilestone.title}". Klien menyampaikan masukan: ${statusTitle} (${isRevision ? "Kembali ke status Dalam Pengerjaan" : "Ditolak saat ini"}). Tetap semangat ya, mari kita sesuaikan detailnya.` +
         checklistSummary +
         notesSummary;
 
@@ -370,10 +368,7 @@ export async function PUT(request: NextRequest) {
         ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(currentMilestone.amount)
         : "sesuai kesepakatan";
 
-      const messageContent = `🎉 **MILESTONE DISETUJUI & DANA ESCROW CAIR**\n\n` +
-        `Milestone: *${currentMilestone.title}*\n` +
-        `Klien telah menyetujui hasil pekerjaan Anda. Dana sebesar **${amountStr}** yang ditahan di escrow telah otomatis dicairkan ke saldo FreeTrack Anda!\n\n` +
-        `Terima kasih atas kerja keras Anda! 🚀`;
+      const messageContent = `🎉 Hore! Hasil pekerjaan Anda untuk milestone "${currentMilestone.title}" telah disetujui oleh Klien dan dana sebesar ${amountStr} sudah otomatis dicairkan ke saldo FreeTrack Anda! Terima kasih banyak atas dedikasi dan kerja keras luar biasa Anda. Sukses selalu ya! 🚀`;
 
       // Send to freelancer
       if (currentMilestone.freelancer_id) {

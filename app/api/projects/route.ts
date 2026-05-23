@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   if (role === "client" && send_to_client && final_freelancer_id) {
-    const msgContent = `Halo! Saya telah menginisiasi proyek "${title.trim()}" dengan penawaran anggaran ${budget || "yang belum ditentukan"}. Mari diskusikan detailnya di sini.`;
+    const msgContent = `👋 Halo! Senang sekali bisa terhubung. Saya telah menginisiasi draf proyek baru "${title.trim()}" dengan penawaran anggaran sebesar ${budget || "yang bisa kita diskusikan bersama"}. Yuk, mari kita bahas detail pengerjaan dan langkah seru selanjutnya di sini! 😊`;
     await supabase.from("messages").insert({
       sender_id: user.id,
       receiver_id: final_freelancer_id,
@@ -183,8 +183,8 @@ export async function PATCH(request: NextRequest) {
     if (!error && data && payload.status === "pending_freelancer" && data.freelancer_id) {
       const isInitiation = currentProject?.status === "draft";
       const msgContent = isInitiation 
-        ? `Halo! Saya telah menginisiasi proyek "${data.title}" dengan penawaran anggaran ${data.budget || "yang belum ditentukan"}. Mari diskusikan detailnya di sini.`
-        : `Halo! Saya telah memperbarui detail/penawaran untuk proyek "${data.title}". Silakan tinjau kembali.`;
+        ? `👋 Halo! Senang sekali bisa terhubung. Saya telah menginisiasi draf proyek baru "${data.title}" dengan penawaran anggaran sebesar ${data.budget || "yang bisa kita diskusikan bersama"}. Yuk, mari kita bahas detail pengerjaan dan langkah seru selanjutnya di sini! 😊`
+        : `👋 Halo! Saya baru saja melakukan beberapa penyesuaian detail dan penawaran anggaran untuk proyek "${data.title}" agar lebih sesuai dengan rencana kita. Silakan ditinjau kembali ya, semoga suka! 😊`;
         
       await supabase.from("messages").insert({
         sender_id: user.id,
@@ -241,7 +241,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (!error && data && payload.status === "pending_client" && data.client_id) {
-      const msgContent = `Halo, Klien. Saya mengajukan revisi/penawaran baru untuk proyek "${data.title}" dengan anggaran ${data.budget || "yang belum ditentukan"}. Bagaimana menurut Anda?`;
+      const msgContent = `👋 Halo, Klien! Saya sudah mengajukan penyesuaian penawaran baru untuk proyek "${data.title}" dengan usulan anggaran sebesar ${data.budget || "yang bisa kita sepakati bersama"}. Bagaimana tanggapan Anda? Semoga kita bisa segera berkolaborasi! 😊`;
       await supabase.from("messages").insert({
         sender_id: user.id,
         receiver_id: data.client_id,

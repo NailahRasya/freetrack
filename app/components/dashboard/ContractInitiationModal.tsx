@@ -7,6 +7,7 @@ import {
   Briefcase, FileText, Clock, ChevronRight, CheckCircle2 
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import Swal from "sweetalert2";
 
 interface Milestone {
   title: string;
@@ -111,14 +112,24 @@ export default function ContractInitiationModal({ isOpen, onClose, project, onSu
       await supabase.from("messages").insert({
         sender_id: user.id,
         receiver_id: project.client_id,
-        content: `Saya telah mengirimkan proposal kontrak untuk proyek "${project.title}". Silakan tinjau milestone dan detail pembayarannya.`
+        content: `👋 Halo! Saya sudah menyiapkan dan mengirimkan proposal kontrak digital untuk proyek "${project.title}". Silakan ditinjau detail pembagian milestone dan rencana pembayarannya ya. Semoga semuanya sesuai dengan harapan Anda! 😊`
       });
 
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
       console.error("Contract initiation failed:", err);
-      alert("Gagal mengirim kontrak. Silakan coba lagi.");
+      Swal.fire({
+        title: "Gagal",
+        text: "Gagal mengirim kontrak. Silakan coba lagi.",
+        icon: "error",
+        background: "#0F1B2E",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+        customClass: {
+          popup: "rounded-2xl border border-white/10 shadow-2xl"
+        }
+      });
     } finally {
       setLoading(false);
     }

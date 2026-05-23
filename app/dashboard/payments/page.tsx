@@ -246,7 +246,8 @@ function PaymentsContent() {
             });
 
             if (!invoiceRes.ok) {
-              console.error("Gagal melakukan generate invoice otomatis.");
+              const errText = await invoiceRes.text().catch(() => "Unknown error response");
+              console.error("Gagal melakukan generate invoice otomatis:", errText);
             }
 
             // Celebration Alert

@@ -336,7 +336,7 @@ function InvoiceDetailModal({
             <InfoBlock
               icon={Calendar}
               label="Tanggal Terbit"
-              value={formatDate(invoice.issued_at)}
+              value={formatDate(invoice.issued_at || invoice.created_at)}
             />
             <InfoBlock
               icon={Clock}

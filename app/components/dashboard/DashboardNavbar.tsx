@@ -106,6 +106,48 @@ export default function DashboardNavbar() {
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
+  const markAllAsRead = async () => {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+      
+      Swal.fire({
+        title: "Berhasil",
+        text: "Semua notifikasi telah ditandai sebagai dibaca.",
+        icon: "success",
+        background: "#0F1B2E",
+        color: "#fff",
+        timer: 1500,
+        showConfirmButton: false,
+        customClass: {
+          popup: "rounded-2xl border border-white/10 shadow-2xl"
+        }
+      });
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+      Swal.fire({
+        title: "Gagal",
+        text: "Terjadi kesalahan saat menandai semua pesan dibaca.",
+        icon: "error",
+        background: "#0F1B2E",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+        customClass: {
+          popup: "rounded-2xl border border-white/10 shadow-2xl"
+        }
+      });
+    }
+  };
+
   const handleLogout = async () => {
     try {
       setShowProfile(false);
@@ -260,7 +302,43 @@ export default function DashboardNavbar() {
                       </div>
                     ))}
                   </div>
-                  <button onClick={() => setShowNotifications(false)} style={{ width: "100%", marginTop: "12px", padding: "8px", background: "rgba(255,255,255,0.05)", border: "none", borderRadius: "8px", color: "rgba(226, 232, 240, 0.6)", fontSize: "12px", cursor: "pointer" }}>{t("cancel")}</button>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+                    <button 
+                      onClick={() => setShowNotifications(false)} 
+                      style={{ 
+                        flex: 1, 
+                        padding: "8px 12px", 
+                        background: "rgba(255,255,255,0.05)", 
+                        border: "1px solid rgba(255,255,255,0.08)", 
+                        borderRadius: "8px", 
+                        color: "rgba(226, 232, 240, 0.5)", 
+                        fontSize: "12px", 
+                        cursor: "pointer",
+                        fontWeight: "600"
+                      }}
+                    >
+                      {t("cancel")}
+                    </button>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={markAllAsRead} 
+                        style={{ 
+                          flex: 2, 
+                          padding: "8px 12px", 
+                          background: "var(--gradient-primary)", 
+                          border: "none", 
+                          borderRadius: "8px", 
+                          color: "#fff", 
+                          fontSize: "12px", 
+                          cursor: "pointer",
+                          fontWeight: "700",
+                          boxShadow: "0 4px 12px rgba(26,54,240,0.25)"
+                        }}
+                      >
+                        ✔ Tandai Semua Dibaca
+                      </button>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

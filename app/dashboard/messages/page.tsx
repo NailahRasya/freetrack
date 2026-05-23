@@ -23,6 +23,9 @@ function MessagesContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const hasScrolledForUserRef = useRef<Record<string, boolean>>({});
+  const lastMessagesCountRef = useRef<number>(0);
 
   const { messages, loading: messagesLoading, sendMessage, markAsRead, refetch: refetchMessages } = useMessages(selectedUserId || undefined);
   const [showOptions, setShowOptions] = useState(false);
@@ -117,8 +120,33 @@ function MessagesContent() {
   }, [user?.id, selectedUserId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (!selectedUserId) {
+      lastMessagesCountRef.current = 0;
+      return;
+    }
+
+    const hasScrolled = hasScrolledForUserRef.current[selectedUserId] || false;
+    const isMessageCountChanged = lastMessagesCountRef.current !== messages.length;
+    lastMessagesCountRef.current = messages.length;
+
+    const container = chatContainerRef.current;
+    if (container) {
+      if (!hasScrolled && messages.length > 0) {
+        // Initial load of messages: scroll instantly to bottom
+        container.scrollTop = container.scrollHeight;
+        hasScrolledForUserRef.current[selectedUserId] = true;
+      } else if (isMessageCountChanged && messages.length > 0) {
+        // Message count changed: either sent by me, or user was already near the bottom
+        const lastMsg = messages[messages.length - 1];
+        const sentByMe = lastMsg?.sender_id === user?.id;
+        const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 250;
+
+        if (sentByMe || isNearBottom) {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }
+  }, [messages, selectedUserId, user?.id]);
 
   useEffect(() => {
     async function fetchUserInfo() {
@@ -433,7 +461,7 @@ function MessagesContent() {
               </div>
             </div>
 
-            <div style={{ flex: 1, padding: "24px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div ref={chatContainerRef} style={{ flex: 1, padding: "24px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}>
               {messages.map((m: any, i: number) => (
                 <div key={m.id || i} style={{ display: "flex", flexDirection: "column", alignItems: m.sender_id === user?.id ? "flex-end" : "flex-start" }}>
                   <div style={{ 

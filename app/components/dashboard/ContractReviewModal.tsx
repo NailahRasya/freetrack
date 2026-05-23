@@ -92,7 +92,7 @@ export default function ContractReviewModal({ isOpen, onClose, project, onSucces
         await supabase.from("messages").insert({
           sender_id: user.id,
           receiver_id: project.freelancer_id,
-          content: `Kontrak digital untuk proyek "${project.title}" telah disetujui! Proyek kini berstatus Aktif. Mari kita mulai pengerjaannya.`
+          content: `🎉 Hore! Kontrak digital untuk proyek "${project.title}" sudah resmi disetujui! Status proyek sekarang sudah Aktif. Selamat berkolaborasi dan mari kita mulai petualangan pengerjaan proyek seru ini! 🚀`
         });
 
         Swal.fire({
@@ -127,7 +127,7 @@ export default function ContractReviewModal({ isOpen, onClose, project, onSucces
         await supabase.from("messages").insert({
           sender_id: user.id,
           receiver_id: project.freelancer_id,
-          content: `Saya telah meninjau proposal kontrak untuk "${project.title}" namun ada beberapa hal yang perlu disesuaikan kembali. Mari diskusikan.`
+          content: `👋 Halo! Saya baru saja meninjau draf proposal kontrak untuk proyek "${project.title}". Sepertinya ada beberapa poin kecil yang perlu kita sesuaikan atau diskusikan kembali agar lebih mantap. Mari kita ngobrol santai di sini ya! 😊`
         });
 
         Swal.fire({
@@ -144,7 +144,17 @@ export default function ContractReviewModal({ isOpen, onClose, project, onSucces
       onClose();
     } catch (err) {
       console.error("Approval action failed:", err);
-      alert("Terjadi kesalahan saat memproses persetujuan.");
+      Swal.fire({
+        title: "Gagal",
+        text: "Terjadi kesalahan saat memproses persetujuan.",
+        icon: "error",
+        background: "#0F1B2E",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+        customClass: {
+          popup: "rounded-2xl border border-white/10 shadow-2xl"
+        }
+      });
     } finally {
       setLoading(false);
     }

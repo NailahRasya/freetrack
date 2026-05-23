@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Edit2, Trash2, CheckCircle2, Lock, UploadCloud, Clock } from "lucide-react";
 import UploadEvidenceModal from "./UploadEvidenceModal";
+import Swal from "sweetalert2";
 
 import CreateMilestoneModal from "./CreateMilestoneModal";
 import { useProjects } from "@/lib/hooks/useProjects";
@@ -153,7 +154,17 @@ export default function MilestoneManager({
       const finalProjectId = data.project_id || projectId || localProjectId;
 
       if (!finalProjectId) {
-        alert("Silakan pilih proyek/klien terlebih dahulu.");
+        Swal.fire({
+          title: "Peringatan",
+          text: "Silakan pilih proyek/klien terlebih dahulu.",
+          icon: "warning",
+          background: "#0F1B2E",
+          color: "#fff",
+          confirmButtonColor: "#3b82f6",
+          customClass: {
+            popup: "rounded-2xl border border-white/10 shadow-2xl"
+          }
+        });
         setIsSubmitting(false);
         return;
       }
@@ -178,14 +189,46 @@ export default function MilestoneManager({
         }
         onMilestoneCreated?.();
         setIsModalOpen(false); // Only close on success
+        Swal.fire({
+          title: "Berhasil",
+          text: "Milestone berhasil dibuat!",
+          icon: "success",
+          background: "#0F1B2E",
+          color: "#fff",
+          timer: 1500,
+          showConfirmButton: false,
+          customClass: {
+            popup: "rounded-2xl border border-white/10 shadow-2xl"
+          }
+        });
       } else {
         const errorData = await res.json();
         console.error("Server error creating milestone:", errorData.error);
-        alert("Gagal membuat milestone: " + (errorData.error || "Terjadi kesalahan server"));
+        Swal.fire({
+          title: "Gagal",
+          text: "Gagal membuat milestone: " + (errorData.error || "Terjadi kesalahan server"),
+          icon: "error",
+          background: "#0F1B2E",
+          color: "#fff",
+          confirmButtonColor: "#ef4444",
+          customClass: {
+            popup: "rounded-2xl border border-white/10 shadow-2xl"
+          }
+        });
       }
     } catch (err) {
       console.error("Network error creating milestone:", err);
-      alert("Gagal membuat milestone: Masalah koneksi jaringan");
+      Swal.fire({
+        title: "Gagal",
+        text: "Gagal membuat milestone: Masalah koneksi jaringan",
+        icon: "error",
+        background: "#0F1B2E",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+        customClass: {
+          popup: "rounded-2xl border border-white/10 shadow-2xl"
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -226,19 +269,59 @@ export default function MilestoneManager({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Hapus milestone ini?")) return;
-    
-    try {
-      const res = await fetch(`/api/milestones?id=${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        onMilestoneCreated?.();
+    Swal.fire({
+      title: "Hapus Milestone?",
+      text: "Apakah Anda yakin ingin menghapus milestone ini?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "rgba(255,255,255,0.08)",
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Batal",
+      background: "#0F1B2E",
+      color: "#fff",
+      customClass: {
+        popup: "rounded-2xl border border-white/10 shadow-2xl"
       }
-    } catch (err) {
-      console.error("Failed to delete milestone:", err);
-    }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await fetch(`/api/milestones?id=${id}`, {
+            method: "DELETE",
+          });
+
+          if (res.ok) {
+            Swal.fire({
+              title: "Berhasil",
+              text: "Milestone berhasil dihapus.",
+              icon: "success",
+              background: "#0F1B2E",
+              color: "#fff",
+              confirmButtonColor: "#10b981",
+              timer: 1500,
+              showConfirmButton: false,
+              customClass: {
+                popup: "rounded-2xl border border-white/10 shadow-2xl"
+              }
+            });
+            onMilestoneCreated?.();
+          }
+        } catch (err) {
+          console.error("Failed to delete milestone:", err);
+          Swal.fire({
+            title: "Gagal",
+            text: "Gagal menghapus milestone.",
+            icon: "error",
+            background: "#0F1B2E",
+            color: "#fff",
+            confirmButtonColor: "#ef4444",
+            customClass: {
+              popup: "rounded-2xl border border-white/10 shadow-2xl"
+            }
+          });
+        }
+      }
+    });
   };
 
   const getStatusColor = (status: string) => {

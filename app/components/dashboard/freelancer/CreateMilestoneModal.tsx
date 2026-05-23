@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Target, DollarSign, Calendar, AlignLeft, Send, Loader2 } from "lucide-react";
+import Swal from "sweetalert2";
 
 import { formatRupiah, parseRupiah } from "@/utils/format";
 
@@ -46,7 +47,17 @@ export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.project_id) {
-      alert("Proyek tidak valid atau belum dipilih.");
+      Swal.fire({
+        title: "Peringatan",
+        text: "Proyek tidak valid atau belum dipilih.",
+        icon: "warning",
+        background: "#0F1B2E",
+        color: "#fff",
+        confirmButtonColor: "#3b82f6",
+        customClass: {
+          popup: "rounded-2xl border border-white/10 shadow-2xl"
+        }
+      });
       return;
     }
     onSubmit(formData);

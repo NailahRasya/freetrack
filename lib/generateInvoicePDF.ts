@@ -27,6 +27,7 @@ interface InvoiceData {
     timestamp: string;
     actor: string;
   }>;
+  created_at?: string;
 }
 
 function formatRupiahPDF(value: number): string {
@@ -125,7 +126,7 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...darkText);
-  doc.text(formatDatePDF(invoice.issued_at), margin + 8, y + 16);
+  doc.text(formatDatePDF(invoice.issued_at || invoice.created_at || ""), margin + 8, y + 16);
   doc.text(formatDatePDF(invoice.due_date), margin + 50, y + 16);
   if (invoice.paid_at) {
     doc.text(formatDatePDF(invoice.paid_at), margin + 92, y + 16);
@@ -338,7 +339,7 @@ export function generateInvoicePDF(invoice: InvoiceData): void {
     footerY
   );
   doc.text(
-    `${invoice.invoice_number} · ${formatDatePDF(invoice.issued_at)}`,
+    `${invoice.invoice_number} · ${formatDatePDF(invoice.issued_at || invoice.created_at || "")}`,
     pageWidth - margin,
     footerY,
     { align: "right" }

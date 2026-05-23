@@ -3,80 +3,84 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, Clock, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { useUser } from "../../dashboard/layout";
-
-/**
- * Data dummy untuk riwayat pembayaran.
- */
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/utils/format";
+import { useRouter } from "next/navigation";
+import UploadEvidenceModal from "./freelancer/UploadEvidenceModal";
 
 /**
  * Komponen PaymentTracker memantau status dana dan pembayaran per milestone.
  */
 export default function PaymentTracker() {
+  const router = useRouter();
   const { user, role } = useUser();
   const isFreelancer = role === "freelancer";
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [uploadModalState, setUploadModalState] = useState<{isOpen: boolean, milestoneId: string | null, title: string}>({
+    isOpen: false,
+    milestoneId: null,
+    title: ""
+  });
+
+  const fetchPayments = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from("milestones")
+        .select(`
+          id,
+          title,
+          amount,
+          status,
+          created_at,
+          projects!inner (
+            title,
+            client_id,
+            freelancer_id
+          )
+        `)
+        .or(`client_id.eq.${user.id},freelancer_id.eq.${user.id}`, { foreignTable: 'projects' })
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      if (data) {
+        const mapped = data.map(m => {
+          const statusMap: any = {
+            "Approved": { label: "Dirilis", color: "var(--accent)", icon: CheckCircle2 },
+            "Disetujui": { label: "Dirilis", color: "var(--accent)", icon: CheckCircle2 },
+            "Menunggu DP": { label: "Menunggu DP", color: "var(--warning)", icon: Clock },
+            "Waiting for Approval": { label: "Menunggu Persetujuan", color: "var(--warning)", icon: Clock },
+            "Menunggu Persetujuan": { label: "Menunggu Persetujuan", color: "var(--warning)", icon: Clock },
+            "Dalam Pengerjaan": { label: "Dalam Escrow", color: "var(--cyan)", icon: ShieldCheck },
+            "In Progress": { label: "Dalam Escrow", color: "var(--cyan)", icon: ShieldCheck },
+          };
+          const s = statusMap[m.status] || { label: m.status, color: "rgba(226, 232, 240, 0.4)", icon: Clock };
+          
+          return {
+            id: m.id,
+            milestone: m.title,
+            project: (m.projects as any).title,
+            amount: formatRupiah(m.amount || 0),
+            status: s.label,
+            color: s.color,
+            icon: s.icon,
+          };
+        });
+        setPayments(mapped);
+      }
+    } catch (err) {
+      console.error("Error fetching payments:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!user?.id) return;
-
-    const fetchPayments = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("milestones")
-          .select(`
-            id,
-            title,
-            amount,
-            status,
-            created_at,
-            projects!inner (
-              title,
-              client_id,
-              freelancer_id
-            )
-          `)
-          .or(`client_id.eq.${user.id},freelancer_id.eq.${user.id}`, { foreignTable: 'projects' })
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        if (error) throw error;
-
-        if (data) {
-          const mapped = data.map(m => {
-            const statusMap: any = {
-              "Approved": { label: "Dirilis", color: "var(--accent)", icon: CheckCircle2 },
-              "Disetujui": { label: "Dirilis", color: "var(--accent)", icon: CheckCircle2 },
-              "Menunggu DP": { label: "Menunggu DP", color: "var(--warning)", icon: Clock },
-              "Waiting for Approval": { label: "Menunggu Persetujuan", color: "var(--warning)", icon: Clock },
-              "Menunggu Persetujuan": { label: "Menunggu Persetujuan", color: "var(--warning)", icon: Clock },
-              "Dalam Pengerjaan": { label: "Dalam Escrow", color: "var(--cyan)", icon: ShieldCheck },
-              "In Progress": { label: "Dalam Escrow", color: "var(--cyan)", icon: ShieldCheck },
-            };
-            const s = statusMap[m.status] || { label: m.status, color: "rgba(226, 232, 240, 0.4)", icon: Clock };
-            
-            return {
-              id: m.id,
-              milestone: m.title,
-              project: (m.projects as any).title,
-              amount: formatRupiah(m.amount || 0),
-              status: s.label,
-              color: s.color,
-              icon: s.icon,
-            };
-          });
-          setPayments(mapped);
-        }
-      } catch (err) {
-        console.error("Error fetching payments:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPayments();
   }, [user?.id]);
 
@@ -84,7 +88,14 @@ export default function PaymentTracker() {
     <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff" }}>Pelacak Pembayaran</h3>
-        <ArrowUpRight size={18} style={{ color: "rgba(226, 232, 240, 0.4)", cursor: "pointer" }} />
+        <motion.div
+          whileHover={{ scale: 1.1, color: "#fff" }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => router.push("/dashboard/payments")}
+          style={{ color: "rgba(226, 232, 240, 0.4)", cursor: "pointer", display: "flex", alignItems: "center" }}
+        >
+          <ArrowUpRight size={18} />
+        </motion.div>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -170,6 +181,11 @@ export default function PaymentTracker() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 suppressHydrationWarning
+                onClick={() => setUploadModalState({
+                  isOpen: true,
+                  milestoneId: payment.id,
+                  title: payment.milestone
+                })}
                 style={{
                   background: "var(--accent)",
                   border: "none",
@@ -198,6 +214,7 @@ export default function PaymentTracker() {
         }}
         whileTap={{ scale: 0.98 }}
         suppressHydrationWarning
+        onClick={() => router.push("/dashboard/payments")}
         style={{
           width: "100%",
           marginTop: "20px",
@@ -214,7 +231,17 @@ export default function PaymentTracker() {
       >
         Lihat Riwayat
       </motion.button>
+
+      {/* Upload Evidence Modal Dialog */}
+      <UploadEvidenceModal
+        isOpen={uploadModalState.isOpen}
+        onClose={() => setUploadModalState({ ...uploadModalState, isOpen: false })}
+        milestoneId={uploadModalState.milestoneId}
+        milestoneTitle={uploadModalState.title}
+        onSuccess={() => {
+          fetchPayments(); // Refresh list immediately after upload success!
+        }}
+      />
     </div>
   );
 }
-
