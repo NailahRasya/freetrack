@@ -21,6 +21,9 @@
 13. [Flow 12 — Klien Melihat & Membayar DP Milestone](#13-flow-12--klien-melihat--membayar-dp-milestone)
 14. [Status Lifecycle Milestone](#14-status-lifecycle-milestone)
 15. [Diagram Alur Keseluruhan](#15-diagram-alur-keseluruhan)
+16. [Flow Khusus: Bagaimana Klien Menemukan Freelancer](#16-flow-khusus-bagaimana-klien-menemukan-freelancer)
+17. [Flow Khusus: Bagaimana Freelancer Menemukan Klien & Proyek](#17-flow-khusus-bagaimana-freelancer-menemukan-klien--proyek)
+18. [Rekomendasi Best Practice untuk Peningkatan Flow](#18-rekomendasi-best-practice-untuk-peningkatan-flow)
 
 ---
 
@@ -599,4 +602,105 @@ Landing Page (/)
 
 ---
 
-*Dokumen ini di-generate berdasarkan analisis kode sumber FreeTrack pada 13 Mei 2026.*
+## 16. Flow Khusus: Bagaimana Klien Menemukan Freelancer
+
+Sistem FreeTrack menyediakan dua cara utama bagi Klien untuk menemukan dan terhubung dengan Freelancer profesional:
+
+### 16a. Pencocokan Otomatis (Auto-Matching Recommendations)
+Saat Klien membuka Dashboard (`/dashboard/client`), sistem secara dinamis memuat komponen `RecommendedFreelancers.tsx` yang melakukan kalkulasi skor kecocokan secara real-time.
+*   **Sumber Data**: 
+    1. Preferensi yang diinput oleh klien saat proses onboarding (`onboarding_client`).
+    2. Data profil freelancer (`profiles` dengan `role = 'freelancer'`).
+    3. Preferensi kerja freelancer (`onboarding_freelancer`).
+    4. Rating & reputasi freelancer (`reviews`).
+*   **Algoritma Skoring**:
+    *   **Level Pengalaman**: Jika level pengalaman freelancer cocok dengan preferensi klien → **+40 Poin**.
+    *   **Tipe Kerjasama**: Jika tipe kerjasama pilihan klien (misal: Berkelanjutan) didukung oleh preferensi freelancer → **+30 Poin**.
+    *   **Skala Bisnis**: Jika skala bisnis klien tercantum di daftar skala bisnis yang disukai freelancer → **+20 Poin**.
+    *   **Keahlian & Tools**: Setiap tumpang tindih (overlap) antara keahlian yang dicari klien dengan daftar keahlian/tools freelancer → **+15 Poin per keahlian**.
+*   **Aksi Diskusi**: Klien dapat langsung menekan tombol **"Mulai Diskusi"** pada salah satu profil rekomendasi. Tindakan ini memicu:
+    1. Pembuatan relasi kontak baru secara otomatis di tabel `contacts` via hooks `ensureContact` dengan status `accepted`.
+    2. Pengalihan halaman ke menu Pesan (`/dashboard/messages?chat={freelancer_id}`) untuk memulai diskusi secara instan.
+
+### 16b. Publikasi Proyek Publik (Marketplace Job Postings)
+Klien dapat mempublikasikan deskripsi kebutuhan kerja mereka ke marketplace umum:
+1. Klien membuka modal pembuatan proyek dan mengisi informasi detail proyek (Kategori, Anggaran, Batas Waktu, Deskripsi, Tujuan, Hasil Akhir, Pertanyaan Penyaringan, dan Lampiran).
+2. Klien menyimpan proyek dengan status **`published`** (atau mengubah status dari draf menjadi dipublikasikan).
+3. Proyek ini masuk ke antrean marketplace umum yang dapat dijelajahi oleh seluruh freelancer.
+
+---
+
+## 17. Flow Khusus: Bagaimana Freelancer Menemukan Klien & Proyek
+
+Freelancer menggunakan umpan marketplace (marketplace feed) untuk mencari pekerjaan dan bernegosiasi dengan klien:
+
+### 17a. Menjelajahi Marketplace (`/dashboard/marketplace`)
+Saat freelancer membuka menu **Marketplace**, sistem memuat umpan proyek aktif (`ProjectMarketFeed.tsx`) melalui API `/api/projects/market`.
+*   **Penyaringan Sesuai Keahlian**: Secara otomatis, sistem mengurutkan daftar proyek berdasarkan kecocokan skor tertinggi dengan keahlian freelancer (memakai algoritma pencocokan yang sejenis dengan sisi klien).
+*   **Tab Filter**:
+    *   *Semua Proyek*: Menampilkan seluruh proyek dengan status `published`.
+    *   *Sesuai Keahlian*: Menyaring dan hanya menampilkan proyek dengan kecocokan skor di atas ambang batas (`matchScore >= 50`).
+    *   *Tersimpan*: Proyek yang dibookmark oleh freelancer (menggunakan state `localStorage` lokal `freetrack_saved_projects`).
+
+### 17b. Proses Pengajuan Lamaran (Application Process)
+Setelah freelancer menemukan proyek yang cocok:
+1. Freelancer membuka halaman detail proyek di `/dashboard/marketplace/[projectId]`.
+2. Jika ada kecocokan awal, freelancer dapat menekan tombol **"Ajukan Lamaran"** untuk membuka modal proposal.
+3. Freelancer mengisi surat lamaran (Cover Letter) dan wajib menjawab seluruh Pertanyaan Penyaringan (Screening Questions) yang diajukan klien.
+4. **Logika Duplikasi & Isolasi Lamaran (Database Level)**:
+   *   Saat freelancer mengirim lamaran (`PATCH /api/projects`), endpoint `/api/projects/route.ts` mendeteksi bahwa proyek berstatus `published` dan belum memiliki freelancer.
+   *   Sistem tidak langsung mengubah baris proyek asli menjadi milik freelancer. Alih-alih, sistem **membuat salinan baru (kloning)** dari baris proyek tersebut dengan:
+       *   `freelancer_id` diisi ID freelancer pelamar.
+       *   `status` disetel ke `pending_client`.
+       *   `proposal_reason` diisi hasil gabungan Cover Letter dan jawaban screening.
+       *   Tanda asal proyek disematkan di deskripsi dalam format tag `[source_id:{original_project_id}]`.
+   *   Hal ini memungkinkan **banyak freelancer melamar proyek yang sama secara bersamaan**, masing-masing memiliki salinan negosiasi proyek sendiri yang terisolasi dengan klien.
+5. **Notifikasi Chat Otomatis**: Setelah lamaran terkirim, pesan sambutan otomatis dikirimkan ke chatroom klien dan freelancer untuk memicu diskusi negosiasi lebih lanjut.
+6. **Kesepakatan Akhir**: Jika klien menyetujui salah satu lamaran (status diubah ke `agreed` -> `active`), sistem (melalui Next.js API route admin bypass) otomatis menghapus postingan proyek asli di marketplace (menggunakan pencarian `source_id` di database) sehingga proyek tersebut tidak dapat dilamar lagi oleh freelancer lainnya.
+
+---
+
+## 18. Rekomendasi Best Practice untuk Peningkatan Flow
+
+Untuk mengoptimalkan keandalan arsitektur dan kualitas pengalaman pengguna (UX) FreeTrack, berikut beberapa rekomendasi perbaikan berbasis best practices industri:
+
+### 18a. Penggunaan Tabel Khusus Lamaran (`proposals` / `bids`)
+*   **Kondisi Saat Ini**: Sistem menduplikasi baris di tabel `projects` setiap kali freelancer melamar pekerjaan. Hal ini menyebabkan polusi data pada tabel `projects` (banyak baris proyek duplikat dengan status `pending_client`), serta ketergantungan pada parsing string regex `[source_id:...]` untuk melacak asal proyek asli.
+*   **Rekomendasi Best Practice**: Buat tabel `proposals` yang berdiri sendiri untuk memisahkan entitas pekerjaan dengan lamaran.
+    ```sql
+    CREATE TABLE proposals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+        freelancer_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+        cover_letter TEXT NOT NULL,
+        screening_answers JSONB, -- Menyimpan jawaban Q&A secara terstruktur
+        proposed_budget NUMERIC,
+        proposed_duration VARCHAR(100),
+        status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'countered')),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    );
+    ```
+    *Keuntungan*: Menjaga database tetap bersih, mempermudah penghapusan/penolakan lamaran secara otomatis jika salah satu lamaran diterima, dan mempermudah pelacakan histori penawaran harga.
+
+### 18b. Alur Persetujuan Kontak yang Konsisten (Double-Opt-In)
+*   **Kondisi Saat Ini**: Klien yang menekan tombol "Mulai Diskusi" pada rekomendasi otomatis secara instan memaksa pembentukan kontak dengan status `accepted` tanpa persetujuan dari freelancer. Namun, di sisi lain, freelancer harus melewati alur pengiriman permintaan kontak (`pending`) yang menunggu persetujuan klien.
+*   **Rekomendasi Best Practice**: Terapkan alur masuk (inbox) permintaan pesan / permintaan diskusi. Diskusi awal dapat dilakukan di ruang pesan khusus "Permintaan", dan status koneksi kontak hanya menjadi `accepted` setelah kedua belah pihak secara sadar menekan tombol persetujuan atau ketika kontrak proyek pertama kali diinisiasi.
+
+### 18c. Direktori Freelancer untuk Pencarian Klien (Freelancer Directory)
+*   **Kondisi Saat Ini**: Klien tidak memiliki alat pencarian freelancer aktif. Klien sepenuhnya bergantung pada 4 rekomendasi acak yang ditampilkan di dashboard mereka.
+*   **Rekomendasi Best Practice**: Sediakan halaman khusus **Direktori Freelancer** (`/dashboard/freelancers`) bagi Klien.
+    *   Halaman ini menyediakan bilah pencarian nama/kata kunci keahlian.
+    *   Sistem filter berdasarkan kategori keahlian, tarif per jam, tingkat pengalaman, lokasi, dan rating minimum.
+    *   Hal ini memberi kendali penuh bagi klien untuk mencari dan mengundang freelancer secara proaktif ke draf proyek mereka.
+
+### 18d. Antarmuka Manajemen Pelamar (Applicant Review Dashboard)
+*   **Kondisi Saat Ini**: Klien melihat proyek yang dilamar oleh freelancer sebagai draf proyek terpisah di tab proyeknya. Klien tidak memiliki satu dasbor terpadu untuk membandingkan pelamar pada satu proyek tertentu.
+*   **Rekomendasi Best Practice**: Pada detail proyek yang dipublikasikan oleh Klien, tampilkan tab khusus **"Pelamar & Proposal"** (Applicants).
+    *   Menampilkan kartu ringkasan masing-masing freelancer pelamar (skor kecocokan, portofolio, rating, dan cover letter).
+    *   Tombol aksi langsung: **[Hubungi / Chat]**, **[Tolak Proposal]**, atau **[Setujui & Buat Kontrak]**.
+    *   Hal ini membuat proses penyeleksian jauh lebih efisien dan terorganisir.
+
+---
+
+*Dokumen ini di-generate berdasarkan analisis kode sumber FreeTrack pada 13 Mei 2026, dan diperbarui dengan panduan flow pencarian kerja serta rekomendasi arsitektur best practices.*
+

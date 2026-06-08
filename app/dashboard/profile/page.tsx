@@ -632,6 +632,116 @@ export default function ProfilePage() {
               </div>
             </div>
 
+             {/* Kartu Reputasi & Ulasan - Khusus Freelancer */}
+             {!isClient && (
+               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: "32px" }}>
+                 <h4 style={{ fontSize: "16px", fontWeight: "800", color: "#fff", marginBottom: "24px", display: "flex", alignItems: "center", gap: "10px" }}>
+                   <Star size={18} fill="#FFD700" color="#FFD700" /> Reputasi &amp; Ulasan Klien
+                 </h4>
+
+                 {reviewsLoading ? (
+                   <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "rgba(226,232,240,0.4)", padding: "20px 0" }}>
+                     <Loader2 size={18} className="animate-spin" /> Memuat ulasan...
+                   </div>
+                 ) : totalReviews === 0 ? (
+                   <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                     <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "rgba(255, 215, 0, 0.05)", border: "1px solid rgba(255, 215, 0, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                       <Star size={24} color="rgba(255, 215, 0, 0.3)" />
+                     </div>
+                     <p style={{ color: "rgba(226,232,240,0.4)", fontSize: "14px" }}>Belum ada ulasan dari klien.</p>
+                     <p style={{ color: "rgba(226,232,240,0.25)", fontSize: "12px", marginTop: "6px" }}>Ulasan akan muncul setelah proyek selesai dan klien memberikan penilaian.</p>
+                   </div>
+                 ) : (
+                   <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                     {/* Summary Bar */}
+                     <div style={{ display: "flex", alignItems: "center", gap: "32px", padding: "24px", background: "linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(77, 99, 255, 0.05))", borderRadius: "20px", border: "1px solid rgba(255, 215, 0, 0.1)" }}>
+                       <div style={{ textAlign: "center", flexShrink: 0 }}>
+                         <div style={{ fontSize: "48px", fontWeight: "900", color: "#FFD700", lineHeight: 1, marginBottom: "4px" }}>{averageRating.toFixed(1)}</div>
+                         <div style={{ display: "flex", gap: "3px", justifyContent: "center", marginBottom: "6px" }}>
+                           {[1,2,3,4,5].map(s => (
+                             <Star key={s} size={14} fill={s <= Math.round(averageRating) ? "#FFD700" : "transparent"} color={s <= Math.round(averageRating) ? "#FFD700" : "rgba(255,255,255,0.15)"} />
+                           ))}
+                         </div>
+                         <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>{totalReviews} ulasan</div>
+                       </div>
+                       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                         {[5,4,3,2,1].map(star => {
+                           const count = reviews.filter(r => r.rating === star).length;
+                           const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+                           return (
+                             <div key={star} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12px" }}>
+                               <span style={{ color: "rgba(226,232,240,0.5)", width: "20px", textAlign: "right", flexShrink: 0 }}>{star}</span>
+                               <Star size={11} fill="#FFD700" color="#FFD700" style={{ flexShrink: 0 }} />
+                               <div style={{ flex: 1, height: "6px", background: "rgba(255,255,255,0.05)", borderRadius: "3px", overflow: "hidden" }}>
+                                 <motion.div
+                                   initial={{ width: 0 }}
+                                   animate={{ width: `${pct}%` }}
+                                   transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 * (5 - star) }}
+                                   style={{ height: "100%", background: "linear-gradient(90deg, #FFD700, #FF8C42)", borderRadius: "3px" }}
+                                 />
+                               </div>
+                               <span style={{ color: "rgba(226,232,240,0.4)", width: "24px", flexShrink: 0 }}>{count}</span>
+                             </div>
+                           );
+                         })}
+                       </div>
+                     </div>
+
+                     {/* Daftar Ulasan */}
+                     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                       {reviews.map((review: any) => (
+                         <motion.div
+                           key={review.id}
+                           initial={{ opacity: 0, y: 10 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           style={{
+                             padding: "20px",
+                             background: "rgba(255, 255, 255, 0.02)",
+                             border: "1px solid rgba(255, 255, 255, 0.06)",
+                             borderRadius: "16px",
+                             transition: "all 0.2s",
+                           }}
+                         >
+                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "12px" }}>
+                             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                               <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800", fontSize: "16px", flexShrink: 0 }}>
+                                 {review.client?.full_name?.[0] ?? "?"}
+                               </div>
+                               <div>
+                                 <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>{review.client?.full_name || "Klien"}</div>
+                                 {review.project?.title && (
+                                   <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.35)", marginTop: "2px" }}>
+                                     Proyek: {review.project.title}
+                                   </div>
+                                 )}
+                               </div>
+                             </div>
+                             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", flexShrink: 0 }}>
+                               <div style={{ display: "flex", gap: "3px" }}>
+                                 {[1,2,3,4,5].map(s => (
+                                   <Star key={s} size={13} fill={s <= review.rating ? "#FFD700" : "transparent"} color={s <= review.rating ? "#FFD700" : "rgba(255,255,255,0.15)"} />
+                                 ))}
+                               </div>
+                               <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>
+                                 {new Date(review.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                               </div>
+                             </div>
+                           </div>
+                           {review.comment ? (
+                             <p style={{ color: "rgba(226, 232, 240, 0.65)", fontSize: "14px", lineHeight: "1.6", fontStyle: "italic" }}>
+                               "{review.comment}"
+                             </p>
+                           ) : (
+                             <p style={{ color: "rgba(226, 232, 240, 0.25)", fontSize: "13px", fontStyle: "italic" }}>Tidak ada komentar.</p>
+                           )}
+                         </motion.div>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+               </motion.div>
+             )}
+
             {isClient ? (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: "32px" }}>
                 <h4 style={{ fontSize: "16px", fontWeight: "800", color: "#fff", marginBottom: "24px", display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1067,115 +1177,7 @@ export default function ProfilePage() {
               </motion.div>
             )}
 
-            {/* Kartu Reputasi & Ulasan - Khusus Freelancer */}
-            {!isClient && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: "32px" }}>
-                <h4 style={{ fontSize: "16px", fontWeight: "800", color: "#fff", marginBottom: "24px", display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Star size={18} fill="#FFD700" color="#FFD700" /> Reputasi &amp; Ulasan Klien
-                </h4>
 
-                {reviewsLoading ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "rgba(226,232,240,0.4)", padding: "20px 0" }}>
-                    <Loader2 size={18} className="animate-spin" /> Memuat ulasan...
-                  </div>
-                ) : totalReviews === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                    <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "rgba(255, 215, 0, 0.05)", border: "1px solid rgba(255, 215, 0, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-                      <Star size={24} color="rgba(255, 215, 0, 0.3)" />
-                    </div>
-                    <p style={{ color: "rgba(226,232,240,0.4)", fontSize: "14px" }}>Belum ada ulasan dari klien.</p>
-                    <p style={{ color: "rgba(226,232,240,0.25)", fontSize: "12px", marginTop: "6px" }}>Ulasan akan muncul setelah proyek selesai dan klien memberikan penilaian.</p>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-                    {/* Summary Bar */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "32px", padding: "24px", background: "linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(77, 99, 255, 0.05))", borderRadius: "20px", border: "1px solid rgba(255, 215, 0, 0.1)" }}>
-                      <div style={{ textAlign: "center", flexShrink: 0 }}>
-                        <div style={{ fontSize: "48px", fontWeight: "900", color: "#FFD700", lineHeight: 1, marginBottom: "4px" }}>{averageRating.toFixed(1)}</div>
-                        <div style={{ display: "flex", gap: "3px", justifyContent: "center", marginBottom: "6px" }}>
-                          {[1,2,3,4,5].map(s => (
-                            <Star key={s} size={14} fill={s <= Math.round(averageRating) ? "#FFD700" : "transparent"} color={s <= Math.round(averageRating) ? "#FFD700" : "rgba(255,255,255,0.15)"} />
-                          ))}
-                        </div>
-                        <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>{totalReviews} ulasan</div>
-                      </div>
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
-                        {[5,4,3,2,1].map(star => {
-                          const count = reviews.filter(r => r.rating === star).length;
-                          const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
-                          return (
-                            <div key={star} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12px" }}>
-                              <span style={{ color: "rgba(226,232,240,0.5)", width: "20px", textAlign: "right", flexShrink: 0 }}>{star}</span>
-                              <Star size={11} fill="#FFD700" color="#FFD700" style={{ flexShrink: 0 }} />
-                              <div style={{ flex: 1, height: "6px", background: "rgba(255,255,255,0.05)", borderRadius: "3px", overflow: "hidden" }}>
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${pct}%` }}
-                                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 * (5 - star) }}
-                                  style={{ height: "100%", background: "linear-gradient(90deg, #FFD700, #FF8C42)", borderRadius: "3px" }}
-                                />
-                              </div>
-                              <span style={{ color: "rgba(226,232,240,0.4)", width: "24px", flexShrink: 0 }}>{count}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Daftar Ulasan */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                      {reviews.map((review: any) => (
-                        <motion.div
-                          key={review.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          style={{
-                            padding: "20px",
-                            background: "rgba(255, 255, 255, 0.02)",
-                            border: "1px solid rgba(255, 255, 255, 0.06)",
-                            borderRadius: "16px",
-                            transition: "all 0.2s",
-                          }}
-                        >
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "12px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                              <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800", fontSize: "16px", flexShrink: 0 }}>
-                                {review.client?.full_name?.[0] ?? "?"}
-                              </div>
-                              <div>
-                                <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>{review.client?.full_name || "Klien"}</div>
-                                {review.project?.title && (
-                                  <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.35)", marginTop: "2px" }}>
-                                    Proyek: {review.project.title}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", flexShrink: 0 }}>
-                              <div style={{ display: "flex", gap: "3px" }}>
-                                {[1,2,3,4,5].map(s => (
-                                  <Star key={s} size={13} fill={s <= review.rating ? "#FFD700" : "transparent"} color={s <= review.rating ? "#FFD700" : "rgba(255,255,255,0.15)"} />
-                                ))}
-                              </div>
-                              <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>
-                                {new Date(review.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-                              </div>
-                            </div>
-                          </div>
-                          {review.comment ? (
-                            <p style={{ color: "rgba(226, 232, 240, 0.65)", fontSize: "14px", lineHeight: "1.6", fontStyle: "italic" }}>
-                              "{review.comment}"
-                            </p>
-                          ) : (
-                            <p style={{ color: "rgba(226, 232, 240, 0.25)", fontSize: "13px", fontStyle: "italic" }}>Tidak ada komentar.</p>
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            )}
 
             <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
               onClick={handleUpdate} disabled={updating}
