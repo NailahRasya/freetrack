@@ -12,6 +12,7 @@ import { useContacts } from "@/lib/hooks/useContacts";
 import { ChevronDown, User, Briefcase as BriefcaseIcon } from "lucide-react";
 
 import { formatRupiah, parseRupiah } from "@/utils/format";
+import CustomFilterDropdown from "../CustomFilterDropdown";
 
 interface Milestone {
   id: string;
@@ -388,43 +389,45 @@ export default function MilestoneManager({
               border: "1px solid rgba(255,255,255,0.05)"
             }}>
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "800", color: "rgba(226,232,240,0.3)", textTransform: "uppercase" }}>Klien</label>
-                <div style={{ position: "relative" }}>
-                  <User size={12} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.2)" }} />
-                  <select 
-                    value={selectedClientId || ""} 
-                    onChange={(e) => {
-                      setSelectedClientId(e.target.value);
-                      setLocalProjectId(null);
-                    }}
-                    style={{ ...selectStyle, paddingLeft: "28px" }}
-                  >
-                    <option value="" style={{ background: "#0F172A" }}>Pilih Klien...</option>
-                    {contacts.map(c => (
-                      <option key={c.id} value={c.client?.id} style={{ background: "#0F172A" }}>
-                        {c.client?.full_name || "Tanpa Nama"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <label style={{ fontSize: "10px", fontWeight: "800", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", marginBottom: "4px" }}>Klien</label>
+                <CustomFilterDropdown
+                  value={selectedClientId || ""}
+                  onChange={(val) => {
+                    setSelectedClientId(val);
+                    setLocalProjectId(null);
+                  }}
+                  placeholder="Pilih Klien..."
+                  options={contacts.map(c => ({
+                    id: c.client?.id || "",
+                    label: c.client?.full_name || "Tanpa Nama"
+                  }))}
+                  triggerStyle={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                    fontSize: "12px",
+                  }}
+                />
               </div>
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "800", color: "rgba(226,232,240,0.3)", textTransform: "uppercase" }}>Proyek</label>
-                <div style={{ position: "relative" }}>
-                  <BriefcaseIcon size={12} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.2)" }} />
-                  <select 
-                    value={localProjectId || ""} 
-                    onChange={(e) => setLocalProjectId(e.target.value)}
-                    style={{ ...selectStyle, paddingLeft: "28px" }}
-                  >
-                    <option value="" style={{ background: "#0F172A" }}>Pilih Proyek...</option>
-                    {clientFilteredProjects.map(p => (
-                      <option key={p.id} value={p.id} style={{ background: "#0F172A" }}>
-                        {p.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <label style={{ fontSize: "10px", fontWeight: "800", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", marginBottom: "4px" }}>Proyek</label>
+                <CustomFilterDropdown
+                  value={localProjectId || ""}
+                  onChange={(val) => setLocalProjectId(val)}
+                  placeholder="Pilih Proyek..."
+                  options={clientFilteredProjects.map(p => ({
+                    id: p.id,
+                    label: p.title
+                  }))}
+                  triggerStyle={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                    fontSize: "12px",
+                  }}
+                />
               </div>
             </div>
           )}

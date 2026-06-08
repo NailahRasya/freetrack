@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "../../../dashboard/layout";
 import { formatRupiah, parseRupiah } from "@/utils/format";
+import CustomFilterDropdown from "../CustomFilterDropdown";
 
 interface ChangeRequestModalProps {
   isOpen: boolean;
@@ -286,33 +287,22 @@ export default function ChangeRequestModal({
                     <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
                       Pilih Proyek Aktif <span style={{ color: "var(--danger)" }}>*</span>
                     </label>
-                    <div style={{ position: "relative" }}>
-                      <Briefcase size={16} style={{ position: "absolute", left: "14px", top: "14px", color: "rgba(255,255,255,0.3)" }} />
-                      <select 
-                        required
-                        value={selectedProjectId}
-                        onChange={(e) => setSelectedProjectId(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px 12px 40px",
-                          background: "rgba(0,0,0,0.2)",
-                          border: "1px solid rgba(255,255,255,0.1)",
-                          borderRadius: "10px",
-                          color: "#fff",
-                          outline: "none",
-                          fontSize: "14px",
-                          cursor: "pointer",
-                          appearance: "none"
-                        }}
-                      >
-                        <option value="" style={{ background: "#0F172A" }}>Pilih Proyek...</option>
-                        {activeProjects.map((p) => (
-                          <option key={p.id} value={p.id} style={{ background: "#0F172A" }}>
-                            {p.title} {p.client?.full_name ? `— ${p.client.full_name}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <CustomFilterDropdown
+                      value={selectedProjectId}
+                      onChange={(val) => setSelectedProjectId(val)}
+                      placeholder="Pilih Proyek..."
+                      options={activeProjects.map((p) => ({
+                        id: p.id,
+                        label: `${p.title}${p.client?.full_name ? ` — ${p.client.full_name}` : ""}`
+                      }))}
+                      triggerStyle={{
+                        background: "rgba(0,0,0,0.2)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "10px",
+                        padding: "12px 16px",
+                        fontSize: "14px",
+                      }}
+                    />
                     {activeProjects.length === 0 && !isLoadingProjects && (
                       <p style={{ color: "var(--danger)", fontSize: "12px", marginTop: "4px" }}>
                         Anda tidak memiliki proyek aktif saat ini.

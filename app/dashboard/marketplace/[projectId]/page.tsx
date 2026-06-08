@@ -26,10 +26,41 @@ import {
 import { useUser } from "../../layout";
 import { useContacts } from "@/lib/hooks/useContacts";
 import { parseProjectDescription } from "@/app/lib/project-helper";
-import { getLabelById } from "@/app/constants/onboarding-categories";
+import { getLabelById, ONBOARDING_CATEGORIES } from "@/app/constants/onboarding-categories";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Swal from "sweetalert2";
+
+function findSkillAndCategory(searchStr: string) {
+  try {
+    if (!searchStr) return { categoryId: null, skillId: null };
+    const normalized = String(searchStr).toLowerCase().trim();
+    if (typeof ONBOARDING_CATEGORIES === "undefined" || !ONBOARDING_CATEGORIES) {
+      return { categoryId: null, skillId: null };
+    }
+    for (const cat of ONBOARDING_CATEGORIES) {
+      if (!cat) continue;
+      const catId = cat.id ? String(cat.id).toLowerCase() : "";
+      const catLabel = cat.label ? String(cat.label).toLowerCase() : "";
+      if (catId === normalized || catLabel === normalized) {
+        return { categoryId: cat.id, skillId: null };
+      }
+      if (cat.skills && Array.isArray(cat.skills)) {
+        for (const skill of cat.skills) {
+          if (!skill) continue;
+          const skillId = skill.id ? String(skill.id).toLowerCase() : "";
+          const skillLabel = skill.label ? String(skill.label).toLowerCase() : "";
+          if (skillId === normalized || skillLabel === normalized) {
+            return { categoryId: cat.id, skillId: skill.id };
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error in findSkillAndCategory:", err);
+  }
+  return { categoryId: null, skillId: null };
+}
 
 export default function ProjectDetailPage() {
   const { user, role } = useUser();
@@ -52,7 +83,10 @@ export default function ProjectDetailPage() {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [submittingProposal, setSubmittingProposal] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
+  const [expectedTimeline, setExpectedTimeline] = useState("");
+  const [expectedBudget, setExpectedBudget] = useState("");
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [matchPercent, setMatchPercent] = useState(60);
 
   useEffect(() => {
     if (!projectId) return;
@@ -85,6 +119,7 @@ export default function ProjectDetailPage() {
         setProject(data);
 
         // Fetch client onboarding stats
+        let clientObData = null;
         if (data.client_id) {
           const { data: obData } = await supabase
             .from("onboarding_client")
@@ -92,6 +127,71 @@ export default function ProjectDetailPage() {
             .eq("user_id", data.client_id)
             .maybeSingle();
           setClientOb(obData);
+          clientObData = obData;
+        }
+
+        // Fetch freelancer onboarding and calculate match score
+        let freelancerPref = null;
+        if (user?.id && role === "freelancer") {
+          const { data: frePrefs } = await supabase
+            .from("onboarding_freelancer")
+            .select("*")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          freelancerPref = frePrefs || null;
+        }
+
+        if (freelancerPref && data) {
+          const clientObInfo = clientObData || {};
+          const cleanSkills = data.required_skills?.filter((s: string) => s && !s.startsWith("EXP:") && !s.startsWith("WORK:")) || [];
+          
+          const embeddedExp = data.required_skills?.find((s: string) => s && s.startsWith("EXP:"))?.replace("EXP:", "");
+          const embeddedWork = data.required_skills?.find((s: string) => s && s.startsWith("WORK:"))?.replace("WORK:", "");
+          
+          const effectiveExp = embeddedExp || clientObInfo.experience_preference;
+          const effectiveWork = embeddedWork || clientObInfo.work_type;
+
+          const freelancerSkillIds: string[] = Array.isArray(freelancerPref.skill_categories)
+            ? freelancerPref.skill_categories.filter(Boolean).map((s: string) => String(s).toLowerCase())
+            : [];
+
+          const freelancerCategoryIds: string[] = Array.from(new Set(
+            freelancerSkillIds.map(sid => {
+              const match = findSkillAndCategory(sid);
+              return match?.categoryId ?? null;
+            }).filter(Boolean) as string[]
+          ));
+
+          let categoryMatchScore = 0;
+          const categoryMatch = freelancerCategoryIds.includes(String(data.category_id || "").toLowerCase());
+          if (categoryMatch) {
+            categoryMatchScore = 50;
+          }
+
+          let skillsScore = 0;
+          for (const skillLabel of cleanSkills) {
+            const resolved = findSkillAndCategory(String(skillLabel));
+            const skillMatchesFreelancer =
+              (resolved.skillId && freelancerSkillIds.includes(resolved.skillId.toLowerCase())) ||
+              (resolved.categoryId && freelancerCategoryIds.includes(resolved.categoryId.toLowerCase())) ||
+              freelancerSkillIds.includes(String(skillLabel).toLowerCase()) ||
+              freelancerCategoryIds.includes(String(skillLabel).toLowerCase());
+
+            if (skillMatchesFreelancer) {
+              skillsScore += 15;
+            }
+          }
+
+          let score = 10 + categoryMatchScore + skillsScore;
+          if (Array.isArray(freelancerPref.preferred_client_scales) && freelancerPref.preferred_client_scales.includes(clientObInfo.business_scale)) score += 20;
+          if (Array.isArray(freelancerPref.work_type_preference) && freelancerPref.work_type_preference.includes(effectiveWork)) score += 20;
+          if (freelancerPref.experience_level === effectiveExp) score += 30;
+
+          let percent = 60;
+          if (score >= 100) percent = 95;
+          else if (score >= 70) percent = 88;
+          else if (score >= 40) percent = 75;
+          setMatchPercent(percent);
         }
 
         // Check if freelancer already applied to this project
@@ -262,13 +362,15 @@ export default function ProjectDetailPage() {
   const handleApplyProposal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!coverLetter.trim()) {
-      Swal.fire({
-        title: "Peringatan",
-        text: "Surat lamaran wajib diisi.",
-        icon: "warning",
-        background: "#0F1B2E",
-        color: "#fff"
-      });
+      Swal.fire({ title: "Peringatan", text: "Surat lamaran wajib diisi.", icon: "warning", background: "#0F1B2E", color: "#fff" });
+      return;
+    }
+    if (!expectedBudget.trim()) {
+      Swal.fire({ title: "Peringatan", text: "Anggaran yang diharapkan wajib diisi.", icon: "warning", background: "#0F1B2E", color: "#fff" });
+      return;
+    }
+    if (!expectedTimeline.trim()) {
+      Swal.fire({ title: "Peringatan", text: "Estimasi waktu pengerjaan wajib diisi.", icon: "warning", background: "#0F1B2E", color: "#fff" });
       return;
     }
 
@@ -292,10 +394,23 @@ export default function ProjectDetailPage() {
 
     try {
       setSubmittingProposal(true);
+      Swal.fire({
+        title: "Mengirim Proposal...",
+        text: "Menduplikasi proyek penawaran dan inisiasi kontak.",
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => { Swal.showLoading(); },
+        background: "#0F1B2E",
+        color: "#fff"
+      });
 
-      // Structure cover letter + Q&As
+      // Structure proposal fields
       let formattedProposalReason = `--- SURAT LAMARAN ---
-${coverLetter.trim()}`;
+${coverLetter.trim()}
+
+--- ANGGARAN & LINIMASA DIHARAPKAN ---
+Anggaran: ${expectedBudget.trim()}
+Estimasi Waktu: ${expectedTimeline.trim()}`;
 
       if (parsed.screening_questions && parsed.screening_questions.length > 0) {
         formattedProposalReason += `\n\n--- PERTANYAAN SCREENING ---`;
@@ -318,16 +433,24 @@ ${coverLetter.trim()}`;
       const json = await res.json();
       if (json.error) throw new Error(json.error);
 
+      // Create contact chat instantly
+      await ensureContact(project.client_id);
+
       setShowApplyModal(false);
       setHasApplied(true);
+      Swal.close();
 
-      Swal.fire({
-        title: "Berhasil Melamar!",
-        text: "Lamaran Anda telah terkirim ke klien. Status dapat dipantau di menu Proyek Saya.",
+      await Swal.fire({
+        title: "Proposal Terkirim! 🎉",
+        text: "Lamaran berhasil dibuat. Anda diarahkan ke obrolan diskusi bersama klien.",
         icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
         background: "#0F1B2E",
         color: "#fff"
       });
+
+      router.push(`/dashboard/messages?chat=${project.client_id}&project=${project.id}`);
     } catch (err: any) {
       Swal.fire({
         title: "Gagal",
@@ -410,6 +533,19 @@ ${coverLetter.trim()}`;
                 <span style={{ padding: "6px 12px", background: "rgba(77, 99, 255, 0.1)", borderRadius: "8px", color: "#4D63FF", fontSize: "11px", fontWeight: "900", textTransform: "uppercase" }}>
                   {getLabelById(project.category_id) || "Design"}
                 </span>
+                {role === "freelancer" && (
+                  <span style={{
+                    padding: "6px 12px",
+                    borderRadius: "8px",
+                    fontSize: "11px",
+                    fontWeight: "900",
+                    background: matchPercent >= 85 ? "rgba(16,185,129,0.1)" : "rgba(6,182,212,0.1)",
+                    color: matchPercent >= 85 ? "#10B981" : "#06B6D4",
+                    border: `1px solid ${matchPercent >= 85 ? "rgba(16,185,129,0.15)" : "rgba(6,182,212,0.15)"}`
+                  }}>
+                    {matchPercent}% Match
+                  </span>
+                )}
                 <span style={{ fontSize: "12px", color: "rgba(226, 232, 240, 0.35)", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Calendar size={13} /> Dibuat pada {formattedDate}
                 </span>
@@ -705,7 +841,13 @@ ${coverLetter.trim()}`;
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowApplyModal(true)}
+                  onClick={() => {
+                    setCoverLetter("");
+                    setExpectedBudget(project.budget || "");
+                    setExpectedTimeline("");
+                    setAnswers({});
+                    setShowApplyModal(true);
+                  }}
                   style={{
                     width: "100%", padding: "16px", borderRadius: "14px",
                     background: "linear-gradient(135deg, #4D63FF, #06B6D4)", color: "#fff",
@@ -805,12 +947,47 @@ ${coverLetter.trim()}`;
                     onChange={(e) => setCoverLetter(e.target.value)}
                     placeholder="Tulis alasan mengapa Anda adalah orang yang tepat untuk proyek ini, keahlian relevan, serta portofolio pengerjaan serupa..."
                     style={{
-                      width: "100%", minHeight: "150px", background: "rgba(255,255,255,0.02)",
+                      width: "100%", minHeight: "130px", background: "rgba(255,255,255,0.02)",
                       border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "14px 16px",
                       color: "#fff", fontSize: "14px", outline: "none", resize: "vertical", fontFamily: "inherit",
                       lineHeight: "1.5"
                     }}
                   />
+                </div>
+
+                {/* Expected Budget & Timeline Row */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }} className="grid grid-cols-1 sm:grid-cols-2">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>Anggaran yang Diharapkan <span style={{ color: "#EF4444" }}>*</span></label>
+                    <input
+                      required
+                      type="text"
+                      value={expectedBudget}
+                      onChange={(e) => setExpectedBudget(e.target.value)}
+                      placeholder="Contoh: Rp 5.000.000 atau Rp 200.000/Jam"
+                      style={{
+                        width: "100%", background: "rgba(255,255,255,0.02)",
+                        border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px 14px",
+                        color: "#fff", fontSize: "14px", outline: "none"
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>Estimasi Waktu Pengerjaan <span style={{ color: "#EF4444" }}>*</span></label>
+                    <input
+                      required
+                      type="text"
+                      value={expectedTimeline}
+                      onChange={(e) => setExpectedTimeline(e.target.value)}
+                      placeholder="Contoh: 3 Minggu, 1 Bulan"
+                      style={{
+                        width: "100%", background: "rgba(255,255,255,0.02)",
+                        border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px 14px",
+                        color: "#fff", fontSize: "14px", outline: "none"
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Screening Questions Inputs */}

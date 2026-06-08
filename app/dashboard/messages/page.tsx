@@ -4,18 +4,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import ContractInitiationModal from "../../components/dashboard/ContractInitiationModal";
 import ContractReviewModal from "../../components/dashboard/ContractReviewModal";
 import NegotiationSidebar from "../../components/dashboard/NegotiationSidebar";
-import { Search, Send, User, Loader2, MessageSquare, MoreVertical, Trash2, UserMinus, ShieldCheck, UserPlus } from "lucide-react";
+import { Search, Send, User, Loader2, MessageSquare, MoreVertical, Trash2, UserMinus, ShieldCheck, UserPlus, Briefcase } from "lucide-react";
 import { useUser } from "../layout";
 import { useContacts } from "@/lib/hooks/useContacts";
 import { useMessages } from "@/lib/hooks/useMessages";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { supabase } from "@/lib/supabase";
+import HireFreelancerModal from "../../components/dashboard/HireFreelancerModal";
 
 function MessagesContent() {
   const { user, role } = useUser();
   const { contacts, loading: contactsLoading, ensureContact, refetch: refetchContacts } = useContacts();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialUserId = searchParams.get("chat") || searchParams.get("userId");
   const projectId = searchParams.get("project");
 
@@ -36,6 +38,7 @@ function MessagesContent() {
   const [loadingProject, setLoadingProject] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showHireModal, setShowHireModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
@@ -450,14 +453,37 @@ function MessagesContent() {
                 </div>
               </div>
 
-              <div style={{ position: "relative" }} ref={optionsRef}>
-                <motion.button onClick={() => setShowOptions(!showOptions)} style={{ width: "40px", height: "40px", borderRadius: "50%", background: "transparent", border: "none", color: "rgba(226,232,240,0.4)", cursor: "pointer" }}><MoreVertical size={20} /></motion.button>
-                <AnimatePresence>{showOptions && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ position: "absolute", top: "100%", right: 0, width: "200px", background: "#161B22", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "12px", zIndex: 100, padding: "8px" }}>
-                    <button onClick={handleDeleteChat} style={{ width: "100%", padding: "10px", background: "transparent", border: "none", color: "#fff", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "10px" }}><Trash2 size={16} color="#FF4D6A" /> Hapus Riwayat</button>
-                    {selectedContact && <button onClick={handleDeleteContact} style={{ width: "100%", padding: "10px", background: "transparent", border: "none", color: "#fff", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "10px" }}><UserMinus size={16} color="#FF4D6A" /> Hapus Kontak</button>}
-                  </motion.div>
-                )}</AnimatePresence>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                {role === "client" && selectedTarget && (
+                  <button
+                    onClick={() => setShowHireModal(true)}
+                    style={{
+                      background: "linear-gradient(135deg, #00F2FE, #4FACFE)",
+                      border: "none",
+                      borderRadius: "10px",
+                      padding: "8px 16px",
+                      color: "#0f172a",
+                      fontSize: "12.5px",
+                      fontWeight: "750",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      boxShadow: "0 4px 15px rgba(0, 242, 254, 0.3)"
+                    }}
+                  >
+                    <Briefcase size={14} /> Tawarkan Proyek
+                  </button>
+                )}
+                <div style={{ position: "relative" }} ref={optionsRef}>
+                  <motion.button onClick={() => setShowOptions(!showOptions)} style={{ width: "40px", height: "40px", borderRadius: "50%", background: "transparent", border: "none", color: "rgba(226,232,240,0.4)", cursor: "pointer" }}><MoreVertical size={20} /></motion.button>
+                  <AnimatePresence>{showOptions && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ position: "absolute", top: "100%", right: 0, width: "200px", background: "#161B22", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "12px", zIndex: 100, padding: "8px" }}>
+                      <button onClick={handleDeleteChat} style={{ width: "100%", padding: "10px", background: "transparent", border: "none", color: "#fff", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "10px" }}><Trash2 size={16} color="#FF4D6A" /> Hapus Riwayat</button>
+                      {selectedContact && <button onClick={handleDeleteContact} style={{ width: "100%", padding: "10px", background: "transparent", border: "none", color: "#fff", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "10px" }}><UserMinus size={16} color="#FF4D6A" /> Hapus Kontak</button>}
+                    </motion.div>
+                  )}</AnimatePresence>
+                </div>
               </div>
             </div>
 
@@ -513,6 +539,21 @@ function MessagesContent() {
           />
         )}
       </div>
+
+      {selectedUserId && selectedTarget && (
+        <HireFreelancerModal
+          isOpen={showHireModal}
+          onClose={() => setShowHireModal(false)}
+          freelancerId={selectedUserId}
+          freelancerName={selectedTarget.full_name || "Freelancer"}
+          onSuccess={(newProjectId) => {
+            const params = new URLSearchParams(window.location.search);
+            params.set("project", newProjectId);
+            router.replace(`${window.location.pathname}?${params.toString()}`);
+            refetchProject();
+          }}
+        />
+      )}
     </div>
   );
 }

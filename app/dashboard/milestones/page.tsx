@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useAccessDeniedToast } from "@/lib/hooks/useAccessDeniedToast";
 import ProjectCompletionBanner from "../../components/dashboard/milestones/ProjectCompletionBanner";
 import { useSearchParams } from "next/navigation";
+import CustomFilterDropdown from "../../components/dashboard/CustomFilterDropdown";
 
 // ── Inner component (needs Suspense for useSearchParams) ─────────────────────
 function MilestonesContent() {
@@ -174,11 +175,7 @@ function MilestonesContent() {
         console.error("Failed to auto-create invoice:", invoiceErr);
       }
 
-      setMilestones((prev) =>
-        prev.map((m) =>
-          m.id === id ? { ...m, status: "Approved" } : m
-        )
-      );
+      setRefreshKey(prev => prev + 1);
     } catch {
       setActionError("Network error — please try again.");
     }
@@ -267,65 +264,55 @@ function MilestonesContent() {
         {/* Client & Project Selection */}
         <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", display: "flex", flexDirection: "column", gap: "20px" }}>
            <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
-             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-               <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Pilih Klien</label>
-               <select 
-                 value={selectedContactId || ""} 
-                 onChange={(e) => {
-                   setSelectedContactId(e.target.value);
-                   setSelectedProjectId(null); // Reset project when client changes
+             <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "240px" }}>
+               <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase", marginBottom: "4px" }}>Pilih Klien</label>
+               <CustomFilterDropdown
+                 value={selectedContactId || ""}
+                 onChange={(val) => {
+                   setSelectedContactId(val);
+                   setSelectedProjectId(null);
                  }}
-                 style={{
+                 placeholder="Pilih klien terhubung..."
+                 options={contacts.map(contact => {
+                   const clientProfile = contact.client;
+                   return {
+                     id: contact.id,
+                     label: clientProfile?.full_name || clientProfile?.email || "Klien Tanpa Nama"
+                   };
+                 })}
+                 triggerStyle={{
                    background: "rgba(255,255,255,0.05)",
                    border: "1px solid rgba(255,255,255,0.1)",
-                   padding: "10px 16px",
                    borderRadius: "12px",
-                   color: "#fff",
-                   outline: "none",
+                   padding: "10px 16px",
                    fontSize: "14px",
-                   minWidth: "240px"
                  }}
-               >
-                 <option value="" style={{ background: "#0B1220" }}>Pilih klien terhubung...</option>
-                 {contacts.map(contact => {
-                   const clientProfile = contact.client;
-                   return (
-                     <option key={contact.id} value={contact.id} style={{ background: "#0B1220" }}>
-                       {clientProfile?.full_name || clientProfile?.email || "Klien Tanpa Nama"}
-                     </option>
-                   );
-                 })}
-               </select>
+               />
              </div>
 
              {selectedContact && (
                <motion.div 
                  initial={{ opacity: 0, x: 10 }}
                  animate={{ opacity: 1, x: 0 }}
-                 style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+                 style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "240px" }}
                >
-                 <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Pilih Proyek</label>
-                 <select 
-                   value={selectedProjectId || ""} 
-                   onChange={(e) => setSelectedProjectId(e.target.value)}
-                   style={{
+                 <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase", marginBottom: "4px" }}>Pilih Proyek</label>
+                 <CustomFilterDropdown
+                   value={selectedProjectId || ""}
+                   onChange={(val) => setSelectedProjectId(val)}
+                   placeholder="Pilih proyek aktif..."
+                   options={filteredProjects.map(project => ({
+                     id: project.id,
+                     label: project.title
+                   }))}
+                   triggerStyle={{
                      background: "rgba(255,255,255,0.05)",
                      border: "1px solid rgba(255,255,255,0.1)",
-                     padding: "10px 16px",
                      borderRadius: "12px",
-                     color: "#fff",
-                     outline: "none",
+                     padding: "10px 16px",
                      fontSize: "14px",
-                     minWidth: "240px"
                    }}
-                 >
-                   <option value="" style={{ background: "#0B1220" }}>Pilih proyek aktif...</option>
-                   {filteredProjects.map(project => (
-                     <option key={project.id} value={project.id} style={{ background: "#0B1220" }}>
-                       {project.title}
-                     </option>
-                   ))}
-                 </select>
+                 />
                </motion.div>
              )}
            </div>
@@ -484,29 +471,24 @@ function MilestonesContent() {
 
       {/* Project Selector for Client */}
       <div className="glass-card" style={{ padding: "24px", background: "rgba(15, 27, 46, 0.4)", marginBottom: "32px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase" }}>Pilih Proyek Anda</label>
-          <select 
-            value={selectedProjectId || ""} 
-            onChange={(e) => setSelectedProjectId(e.target.value)}
-            style={{
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxWidth: "400px" }}>
+          <label style={{ fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase", marginBottom: "4px" }}>Pilih Proyek Anda</label>
+          <CustomFilterDropdown
+            value={selectedProjectId || ""}
+            onChange={(val) => setSelectedProjectId(val)}
+            placeholder="Pilih proyek yang ingin dipantau..."
+            options={clientProjects.map(project => ({
+              id: project.id,
+              label: project.title
+            }))}
+            triggerStyle={{
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,255,255,0.1)",
-              padding: "12px 16px",
               borderRadius: "12px",
-              color: "#fff",
-              outline: "none",
+              padding: "12px 16px",
               fontSize: "14px",
-              maxWidth: "400px"
             }}
-          >
-            <option value="" style={{ background: "#0B1220" }}>Pilih proyek yang ingin dipantau...</option>
-            {clientProjects.map(project => (
-              <option key={project.id} value={project.id} style={{ background: "#0B1220" }}>
-                {project.title}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 

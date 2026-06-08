@@ -37,8 +37,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Filtering berdasarkan kategori (Opsional: bisa dilakukan di klien atau server)
-  // Di sini kita biarkan klien yang memfilter agar lebih fleksibel (atau bisa dikirim semuanya dulu)
+  // Auto clean-up and filter out expired agreed projects (> 60 seconds)
+  const now = new Date();
+  const validData = [];
   
-  return NextResponse.json({ data });
+  if (data) {
+    for (const p of data) {
+      const match = p.description?.match(/\[agreed_at:([^\]]+)\]/i);
+      if (match) {
+        const agreedAt = new Date(match[1]);
+        const diffSeconds = Math.floor((now.getTime() - agreedAt.getTime()) / 1000);
+        if (diffSeconds >= 60) {
+          // Asynchronously delete the project in the background so database stays clean
+          supabase.from("projects").delete().eq("id", p.id).then();
+          continue; // Filter out from response
+        }
+      }
+      validData.push(p);
+    }
+  }
+
+  return NextResponse.json({ data: validData });
 }

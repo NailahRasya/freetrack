@@ -125,7 +125,7 @@ export default function ProjectCompletionBanner({
   };
 
   // Only show banner if project is completed OR eligible for completion
-  const isEligible = allMilestonesApproved && allInvoicesPaid;
+  const isEligible = allMilestonesApproved;
   if (!isCompleted && !isEligible) return null;
 
   return (

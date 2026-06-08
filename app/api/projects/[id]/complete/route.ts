@@ -93,55 +93,7 @@ export async function POST(
     );
   }
 
-  // 4. Fetch all invoices for this project
-  const { data: invoices, error: invoicesError } = await supabase
-    .from("invoices")
-    .select("id, milestone_id, status")
-    .eq("project_id", projectId);
-
-  if (invoicesError) {
-    return NextResponse.json(
-      { error: "Gagal memuat tagihan proyek: " + invoicesError.message },
-      { status: 500 }
-    );
-  }
-
-  // 5. Verify every milestone has a paid invoice
-  const unpaidMilestones: string[] = [];
-  const missingInvoiceMilestones: string[] = [];
-
-  for (const milestone of milestones) {
-    const matchingInvoice = invoices?.find(
-      (inv) => inv.milestone_id === milestone.id
-    );
-    if (!matchingInvoice) {
-      missingInvoiceMilestones.push(milestone.title);
-    } else if (matchingInvoice.status !== "paid") {
-      unpaidMilestones.push(milestone.title);
-    }
-  }
-
-  if (missingInvoiceMilestones.length > 0) {
-    return NextResponse.json(
-      {
-        error: `Tagihan belum dibuat untuk milestone: "${missingInvoiceMilestones.join(
-          '", "'
-        )}". Pastikan milestone telah disetujui dengan benar.`,
-      },
-      { status: 400 }
-    );
-  }
-
-  if (unpaidMilestones.length > 0) {
-    return NextResponse.json(
-      {
-        error: `Pembayaran belum selesai (belum lunas) untuk milestone: "${unpaidMilestones.join(
-          '", "'
-        )}". Semua pembayaran harus berstatus Paid sebelum proyek dinyatakan selesai secara resmi.`,
-      },
-      { status: 400 }
-    );
-  }
+  // 4. (Bypassed) Strict invoice paid verification has been removed as requested.
 
   // 6. Update project status and progress
   const { error: updateError } = await supabase

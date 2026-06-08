@@ -33,14 +33,17 @@ export default async function proxy(request: NextRequest) {
     const userRole: string = user.user_metadata?.role ?? "client";
 
     // ── 2a. Perlindungan sub-dashboard spesifik peran ───────────────────────
-    if (path.startsWith("/dashboard/client") && userRole !== "client") {
+    if (
+      (path === "/dashboard/client" || path.startsWith("/dashboard/client/")) &&
+      userRole !== "client"
+    ) {
       url.pathname = "/login";
       url.searchParams.set("role", "client");
       return NextResponse.redirect(url);
     }
 
     if (
-      path.startsWith("/dashboard/freelancer") &&
+      (path === "/dashboard/freelancer" || path.startsWith("/dashboard/freelancer/")) &&
       userRole !== "freelancer"
     ) {
       url.pathname = "/login";

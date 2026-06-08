@@ -208,8 +208,37 @@ export default function NegotiationSidebar({ project, role, userId, onUpdate }: 
               <DollarSign size={14} style={{ color: "#00FFA3" }} />
               <div style={{ fontSize: "14px", color: "#fff", fontWeight: "700" }}>{formatRupiah(String(project.budget || ""))}</div>
             </div>
+            {project.deadline && (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Calendar size={14} style={{ color: "var(--cyan)" }} />
+                <div style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.85)" }}>Batas Waktu: {project.deadline}</div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Proposal / Surat Lamaran section (visible during negotiations or if project is not yet agreed) */}
+        {!isAgreed && !isActive && project.proposal_reason && (
+          <div className="glass-card" style={{ padding: "20px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", marginBottom: "24px" }}>
+            <h5 style={{ fontSize: "13px", fontWeight: "800", color: "var(--cyan)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
+              <FileText size={14} /> Proposal & Surat Lamaran
+            </h5>
+            <div style={{ 
+              fontSize: "13px", 
+              color: "rgba(226, 232, 240, 0.8)", 
+              lineHeight: "1.6", 
+              whiteSpace: "pre-line",
+              background: "rgba(0, 0, 0, 0.15)",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid rgba(255, 255, 255, 0.03)",
+              maxHeight: "240px",
+              overflowY: "auto"
+            }}>
+              {project.proposal_reason}
+            </div>
+          </div>
+        )}
 
         {/* Negotiation Actions */}
         <AnimatePresence mode="wait">

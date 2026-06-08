@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { validateClientMilestonePayload } from "@/lib/rbac";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 // ── Shared helper: resolve authenticated user or return 401 ───────────────────
 
@@ -229,7 +230,7 @@ export async function PUT(request: NextRequest) {
     // Fetch current milestone to get current status and context
     const { data: currentMilestone } = await supabase
       .from("milestones")
-      .select("status, project_id, title, freelancer_id, description, amount")
+      .select("status, project_id, title, freelancer_id, description, amount, client_id")
       .eq("id", id)
       .single();
 
@@ -364,6 +365,105 @@ export async function PUT(request: NextRequest) {
         });
       }
     } else if (currentMilestone && payload.status === "Approved") {
+      // 1. Auto-create invoice for this milestone
+      try {
+        const { data: existingInvoice } = await supabaseAdmin
+          .from("invoices")
+          .select("id")
+          .eq("milestone_id", id)
+          .maybeSingle();
+
+        if (!existingInvoice) {
+          const { data: project } = await supabaseAdmin
+            .from("projects")
+            .select("*")
+            .eq("id", currentMilestone.project_id)
+            .single();
+
+          if (project) {
+            const { data: clientProfile } = await supabaseAdmin
+              .from("profiles")
+              .select("full_name, email")
+              .eq("id", currentMilestone.client_id)
+              .single();
+
+            const { data: freelancerProfile } = await supabaseAdmin
+              .from("profiles")
+              .select("full_name, email")
+              .eq("id", currentMilestone.freelancer_id)
+              .single();
+
+            const year = new Date().getFullYear();
+            const prefix = `INV-${year}-`;
+            const { data: lastInvoice } = await supabaseAdmin
+              .from("invoices")
+              .select("invoice_number")
+              .like("invoice_number", `${prefix}%`)
+              .order("invoice_number", { ascending: false })
+              .limit(1);
+
+            let nextNumber = 1;
+            if (lastInvoice && lastInvoice.length > 0) {
+              const lastNumber = lastInvoice[0].invoice_number;
+              const lastSeq = parseInt(lastNumber.replace(prefix, ""), 10);
+              if (!isNaN(lastSeq)) {
+                nextNumber = lastSeq + 1;
+              }
+            }
+            const invoiceNumber = `${prefix}${String(nextNumber).padStart(4, "0")}`;
+
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+            const dueDateStr = dueDate.toISOString().split("T")[0];
+
+            const activityLog = [
+              {
+                action: "invoice_created",
+                label: "Invoice berhasil dibuat",
+                timestamp: new Date().toISOString(),
+                actor: user.user_metadata?.full_name || user.email || "System",
+              },
+              {
+                action: "milestone_approved",
+                label: "Milestone disetujui",
+                timestamp: new Date().toISOString(),
+                actor: user.user_metadata?.full_name || user.email || "System",
+              },
+              {
+                action: "payment_completed",
+                label: "Pembayaran selesai via Bank Transfer",
+                timestamp: new Date().toISOString(),
+                actor: "System",
+                payment_method: "Bank Transfer",
+              },
+            ];
+
+            await supabaseAdmin.from("invoices").insert({
+              invoice_number: invoiceNumber,
+              project_id: currentMilestone.project_id,
+              milestone_id: id,
+              client_id: currentMilestone.client_id,
+              freelancer_id: currentMilestone.freelancer_id,
+              project_title: project.title,
+              milestone_title: currentMilestone.title,
+              milestone_description: currentMilestone.description || null,
+              client_name: clientProfile?.full_name || "Client",
+              freelancer_name: freelancerProfile?.full_name || "Freelancer",
+              client_email: clientProfile?.email || null,
+              freelancer_email: freelancerProfile?.email || null,
+              amount: currentMilestone.amount || 0,
+              status: "paid",
+              paid_at: new Date().toISOString(),
+              due_date: dueDateStr,
+              activity_log: activityLog,
+            });
+          }
+        }
+      } catch (invoiceErr) {
+        console.error("Failed to auto-create invoice in milestone PUT:", invoiceErr);
+      }
+
+      // 2. Chat messages and notifications
       const amountStr = currentMilestone.amount 
         ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(currentMilestone.amount)
         : "sesuai kesepakatan";

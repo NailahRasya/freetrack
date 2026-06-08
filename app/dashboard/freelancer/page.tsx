@@ -10,6 +10,7 @@ import MessagesPreview from "../../components/dashboard/MessagesPreview";
 import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
 import ProgressTrackerCard from "../../components/dashboard/ProgressTrackerCard";
 import ProjectMarketFeed from "../../components/dashboard/ProjectMarketFeed";
+import RecommendedProjects from "../../components/dashboard/freelancer/RecommendedProjects";
 import { useUser } from "../layout";
 
 import OnboardingWelcomeBanner from "../../components/dashboard/OnboardingWelcomeBanner";
@@ -179,6 +180,7 @@ export default function FreelancerDashboardPage() {
       }}>
         {/* Kolom Kiri */}
         <div style={{ display: "flex", flexDirection: "column", gap: "32px", minWidth: 0 }}>
+          <RecommendedProjects />
           <ProjectMarketFeed />
           <MilestoneManager />
           

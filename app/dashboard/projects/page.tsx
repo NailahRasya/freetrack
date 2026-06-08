@@ -326,6 +326,7 @@ export default function ProjectsPage() {
             contacts={contacts}
             initialData={projectToEdit}
             onClose={() => { setShowCreate(false); setProjectToEdit(null); }}
+            onDelete={deleteProject}
             onSaveDraft={async d => {
               try {
                 if (projectToEdit) {

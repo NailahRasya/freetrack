@@ -54,6 +54,14 @@ export default function DashboardSidebar() {
       href: "/dashboard/marketplace", 
       icon: Sparkles 
     },
+    ...(role === "client" ? [
+      { 
+        key: "find_freelancer", 
+        label: t("find_freelancer"), 
+        href: "/dashboard/freelancers", 
+        icon: Users 
+      }
+    ] : []),
     {
       key: "projects_group",
       label: t("projects_group"),

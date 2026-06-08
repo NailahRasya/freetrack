@@ -135,8 +135,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Fetch milestone data
-  const { data: milestone, error: milestoneError } = await supabase
+  // Fetch milestone data using admin client to guarantee access
+  const { data: milestone, error: milestoneError } = await supabaseAdmin
     .from("milestones")
     .select("*")
     .eq("id", milestone_id)
@@ -149,8 +149,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Fetch project data
-  const { data: project, error: projectError } = await supabase
+  // Fetch project data using admin client to guarantee access
+  const { data: project, error: projectError } = await supabaseAdmin
     .from("projects")
     .select("*")
     .eq("id", milestone.project_id)

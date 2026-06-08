@@ -284,19 +284,41 @@ export async function PATCH(request: NextRequest) {
       const sourceIdMatch = data.description?.match(/\[source_id:([a-f0-9-]+)\]/);
       const sourceId = sourceIdMatch ? sourceIdMatch[1] : null;
 
+      const agreedAt = new Date().toISOString();
+      const marker = `\n\n[agreed_at:${agreedAt}]`;
+
       if (sourceId) {
-        await supabaseAdmin
+        // Ambil data description lama dari database
+        const { data: origProj } = await supabaseAdmin
           .from("projects")
-          .delete()
-          .eq("id", sourceId);
+          .select("description")
+          .eq("id", sourceId)
+          .maybeSingle();
+        if (origProj) {
+          const updatedDesc = (origProj.description || "") + marker;
+          await supabaseAdmin
+            .from("projects")
+            .update({ description: updatedDesc })
+            .eq("id", sourceId);
+        }
       } else {
         // Fallback: cari berdasarkan judul jika ID tidak ditemukan (untuk data lama)
-        await supabaseAdmin
+        const { data: origProjs } = await supabaseAdmin
           .from("projects")
-          .delete()
+          .select("id, description")
           .eq("client_id", data.client_id)
           .eq("status", "published")
           .ilike("title", data.title.trim());
+        
+        if (origProjs && origProjs.length > 0) {
+          for (const op of origProjs) {
+            const updatedDesc = (op.description || "") + marker;
+            await supabaseAdmin
+              .from("projects")
+              .update({ description: updatedDesc })
+              .eq("id", op.id);
+          }
+        }
       }
     }
   }

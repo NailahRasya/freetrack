@@ -22,6 +22,7 @@ interface Props {
   onSaveDraft: (data: any) => Promise<void>;
   onSendToClient: (data: any) => Promise<void>;
   initialData?: any;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 interface DropdownProps {
@@ -92,7 +93,7 @@ function CustomDropdown({ label, value, options, onChange, placeholder = "Pilih.
               border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: "14px",
               overflow: "hidden",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.5)"
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.5)"
             }}
           >
             <div style={{ maxHeight: "200px", overflowY: "auto", padding: "6px" }}>
@@ -130,7 +131,7 @@ function CustomDropdown({ label, value, options, onChange, placeholder = "Pilih.
   );
 }
 
-export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onSendToClient, initialData }: Props) {
+export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onSendToClient, initialData, onDelete }: Props) {
   const supabase = createClient();
   const { user, role, t } = useUser();
 
@@ -191,6 +192,7 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [clientPref, setClientPref] = useState<any>(null);
+  const [isDemoFilled, setIsDemoFilled] = useState(false);
 
   // Load draft from localStorage on mount/open
   useEffect(() => {
@@ -332,6 +334,70 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
     };
   };
 
+  const handleQuickFill = () => {
+    if (isDemoFilled) {
+      // Clear/Reset Form
+      setForm({
+        name: "",
+        clientId: "",
+        clientName: "",
+        budget: "",
+        negotiation_reason: "",
+        categoryId: "",
+        skills: [],
+        summary: "",
+        description: "",
+        goals: "",
+        deliverables: "",
+        budget_type: "fixed",
+        duration: "",
+        deadline: "",
+        experienceLevel: "mid",
+        workType: "one-time",
+        communication_preference: "",
+        screening_questions: [],
+        attachments: [],
+        posting_status: "draft"
+      });
+      setClientSearch("");
+      setIsDemoFilled(false);
+    } else {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 30);
+      const deadlineString = futureDate.toISOString().split('T')[0];
+
+      setForm({
+        name: "E-Commerce Mobile Application Development",
+        clientId: form.clientId,
+        clientName: form.clientName,
+        budget: "Rp 25.000.000",
+        negotiation_reason: form.negotiation_reason,
+        categoryId: "development",
+        skills: ["Website Development", "Mobile App Development", "Frontend Development", "Backend Development"],
+        summary: "Membangun aplikasi e-commerce mobile cross-platform (iOS & Android) terintegrasi dengan payment gateway lokal dan dashboard admin.",
+        description: "Kami membutuhkan freelancer berpengalaman untuk membangun aplikasi e-commerce mobile menggunakan React Native atau Flutter. Proyek ini mencakup integrasi dengan sistem pembayaran Midtrans, pengelolaan keranjang belanja, checkout, tracking pesanan secara realtime, serta integrasi REST API dengan backend yang sudah kami siapkan.",
+        goals: "Meningkatkan penjualan digital produk retail kami dan memberikan pengalaman berbelanja mobile yang seamless bagi pelanggan.",
+        deliverables: "1. Source code lengkap di repository GitHub privat.\n2. APK & IPA build file untuk testing.\n3. Dokumentasi arsitektur dan panduan setup environment.",
+        budget_type: "fixed",
+        duration: "1 Bulan",
+        deadline: deadlineString,
+        experienceLevel: "mid",
+        workType: "one-time",
+        communication_preference: "Chat FreeTrack, Slack, Google Meet",
+        screening_questions: [
+          "Apakah Anda memiliki portofolio aplikasi e-commerce mobile yang sudah live?",
+          "Tech stack apa yang Anda rekomendasikan untuk proyek ini (Flutter atau React Native) dan mengapa?"
+        ],
+        attachments: ["https://example.com/project-brief.pdf"],
+        posting_status: form.posting_status
+      });
+      setIsDemoFilled(true);
+    }
+
+    setErrors({});
+    setErr("");
+  };
+
   // Step-by-step Validation
   const validateStep = (currentStep: number): boolean => {
     setErr("");
@@ -367,6 +433,47 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
 
   const handlePrevStep = () => {
     setStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleDelete = async () => {
+    if (!initialData?.id || !onDelete) return;
+
+    const result = await Swal.fire({
+      title: "Hapus proyek ini?",
+      text: "Tindakan ini tidak dapat dibatalkan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#FF4D6A",
+      cancelButtonColor: "rgba(255,255,255,0.1)",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal",
+      background: "#0F1B2E",
+      color: "#fff"
+    });
+
+    if (result.isConfirmed) {
+      setLoading(true);
+      try {
+        await onDelete(initialData.id);
+        Swal.fire({
+          title: "Dihapus!",
+          text: "Proyek telah berhasil dihapus.",
+          icon: "success",
+          background: "#0F1B2E",
+          color: "#fff",
+          timer: 1500,
+          showConfirmButton: false
+        });
+        if (user?.id) {
+          localStorage.removeItem(`freetrack_project_form_draft_${user.id}`);
+        }
+        onClose();
+      } catch (err: any) {
+        setErr(err.message || "Gagal menghapus proyek.");
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleDraft = async () => {
@@ -458,9 +565,35 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
                 Wizard Langkah {step} dari 5: {stepsConfig[step-1].label}
               </p>
             </div>
-            <button onClick={onClose} style={{width:"36px",height:"36px",borderRadius:"10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",color:"rgba(226,232,240,0.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer", transition:"all 0.2s"}}>
-              <X size={16}/>
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {!initialData && (
+                <button
+                  type="button"
+                  onClick={handleQuickFill}
+                  style={{
+                    background: isDemoFilled 
+                      ? "rgba(255, 255, 255, 0.05)" 
+                      : "linear-gradient(135deg, #FF007A, #7928CA)",
+                    border: isDemoFilled ? "1px solid rgba(255, 255, 255, 0.15)" : "none",
+                    borderRadius: "10px",
+                    padding: "8px 14px",
+                    color: isDemoFilled ? "rgba(226, 232, 240, 0.7)" : "#fff",
+                    fontSize: "12px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    boxShadow: isDemoFilled ? "none" : "0 0 15px rgba(255, 0, 122, 0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px"
+                  }}
+                >
+                  {isDemoFilled ? "🧹 Hapus Isi Demo" : "✨ Isi Cepat Demo"}
+                </button>
+              )}
+              <button onClick={onClose} style={{width:"36px",height:"36px",borderRadius:"10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",color:"rgba(226,232,240,0.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer", transition:"all 0.2s"}}>
+                <X size={16}/>
+              </button>
+            </div>
           </div>
 
           {/* Stepper Progress bar */}
@@ -949,6 +1082,34 @@ export default function CreateProjectModal({ contacts, onClose, onSaveDraft, onS
           )}
 
           <div style={{flex: 1}} />
+
+          {/* Delete Button (Visible only when editing an existing project) */}
+          {initialData?.id && onDelete && (
+            <motion.button 
+              type="button"
+              whileHover={{scale:1.02}} 
+              whileTap={{scale:0.98}} 
+              onClick={handleDelete} 
+              disabled={loading}
+              style={{
+                padding:"10px 18px",
+                borderRadius:"12px",
+                fontSize:"13px",
+                fontWeight:"700",
+                cursor:"pointer",
+                background: "rgba(239, 68, 68, 0.08)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                color: "#EF4444",
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"center",
+                gap:"6px",
+                transition: "all 0.2s"
+              }}
+            >
+              <Trash2 size={14}/> Hapus
+            </motion.button>
+          )}
 
           {/* Explicit Save Draft Button (Visible on all steps except negotiation) */}
           {(!initialData || initialData.status === "draft" || initialData.status === "published" || isNego) && (
