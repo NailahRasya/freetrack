@@ -49,7 +49,7 @@ async function updateProjectProgress(supabase: any, projectId: string) {
   // 1. Fetch all milestones for this project
   const { data: milestones, error: fetchError } = await supabase
     .from("milestones")
-    .select("status")
+    .select("status, deadline")
     .eq("project_id", projectId);
 
   if (fetchError || !milestones) {
@@ -70,14 +70,29 @@ async function updateProjectProgress(supabase: any, projectId: string) {
 
   const progress = Math.round((completed / total) * 100);
 
-  // 3. Update projects table
+  // 3. Find max deadline from milestones
+  const validDeadlines = milestones
+    .map((m: any) => m.deadline)
+    .filter((d: any) => d && d.trim() !== "");
+    
+  let maxDeadline = null;
+  if (validDeadlines.length > 0) {
+    maxDeadline = validDeadlines.reduce((max: string, d: string) => d > max ? d : max, validDeadlines[0]);
+  }
+
+  // 4. Update projects table
+  const updatePayload: any = { progress };
+  if (maxDeadline) {
+    updatePayload.deadline = maxDeadline;
+  }
+
   const { error: updateError } = await supabase
     .from("projects")
-    .update({ progress })
+    .update(updatePayload)
     .eq("id", projectId);
 
   if (updateError) {
-    console.error("Error updating project progress:", updateError);
+    console.error("Error updating project progress and deadline:", updateError);
   }
 }
 
@@ -146,24 +161,49 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Resolve client_id: try body first, then fallback to project data
+  // Resolve client_id and budget: try body first, then fallback to project data
   let finalClientId = client_id;
-  if (!finalClientId && project_id) {
-    const { data: project, error: projectError } = await supabase
-      .from("projects")
-      .select("client_id")
-      .eq("id", project_id)
-      .single();
-    
-    if (projectError) {
-      console.error("Failed to fetch project for client_id resolution:", projectError);
-    } else {
+  let projectBudget = 0;
+  
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("client_id, budget")
+    .eq("id", project_id)
+    .single();
+  
+  if (projectError) {
+    console.error("Failed to fetch project details:", projectError);
+  } else {
+    if (!finalClientId) {
       finalClientId = project?.client_id;
+    }
+    if (project?.budget) {
+      projectBudget = parseInt(project.budget.replace(/[^0-9]/g, ""), 10) || 0;
     }
   }
 
   if (!finalClientId) {
     return NextResponse.json({ error: "Gagal menghubungkan milestone ke klien. Pastikan proyek memiliki klien yang valid." }, { status: 400 });
+  }
+
+  // Budget validation: sum of milestones cannot exceed project budget
+  if (projectBudget > 0) {
+    const { data: existingMilestones, error: msError } = await supabase
+      .from("milestones")
+      .select("amount")
+      .eq("project_id", project_id);
+
+    if (!msError && existingMilestones) {
+      const existingSum = existingMilestones.reduce((sum: number, m: any) => sum + (parseInt(m.amount, 10) || 0), 0);
+      const newAmount = parseInt(amount, 10) || 0;
+      if (existingSum + newAmount > projectBudget) {
+        const fmtSum = new Intl.NumberFormat("id-ID").format(existingSum + newAmount);
+        const fmtBudget = new Intl.NumberFormat("id-ID").format(projectBudget);
+        return NextResponse.json({ 
+          error: `Total nilai milestone (Rp ${fmtSum}) tidak boleh melebihi anggaran proyek (Rp ${fmtBudget}).` 
+        }, { status: 400 });
+      }
+    }
   }
 
   const { data, error } = await supabase
@@ -527,11 +567,46 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ data });
   }
 
-  // ── Freelancer: full update (except payment_status — only client can pay DP) ─
+  // ── Freelancer: full update (except payment_status ── only client can pay DP) ─
   // Strip payment_status from freelancer payload to prevent freelancers from
   // self-approving their own payments.
   const freelancerPayload = { ...payload };
   delete freelancerPayload.payment_status;
+
+  // Budget Validation if freelancer is changing the amount
+  if ("amount" in freelancerPayload && currentMilestone?.project_id) {
+    const newAmount = parseInt(freelancerPayload.amount as string, 10) || 0;
+
+    // Fetch project budget
+    const { data: project } = await supabase
+      .from("projects")
+      .select("budget")
+      .eq("id", currentMilestone.project_id)
+      .single();
+
+    if (project?.budget) {
+      const projectBudget = parseInt(project.budget.replace(/[^0-9]/g, ""), 10) || 0;
+      if (projectBudget > 0) {
+        // Fetch all other milestones for this project (excluding current milestone)
+        const { data: otherMilestones } = await supabase
+          .from("milestones")
+          .select("amount")
+          .eq("project_id", currentMilestone.project_id)
+          .neq("id", id);
+
+        if (otherMilestones) {
+          const otherSum = otherMilestones.reduce((sum: number, m: any) => sum + (parseInt(m.amount, 10) || 0), 0);
+          if (otherSum + newAmount > projectBudget) {
+            const fmtSum = new Intl.NumberFormat("id-ID").format(otherSum + newAmount);
+            const fmtBudget = new Intl.NumberFormat("id-ID").format(projectBudget);
+            return NextResponse.json({ 
+              error: `Total nilai milestone (Rp ${fmtSum}) tidak boleh melebihi anggaran proyek (Rp ${fmtBudget}).` 
+            }, { status: 400 });
+          }
+        }
+      }
+    }
+  }
 
   const { data, error } = await supabase
     .from("milestones")

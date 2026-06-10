@@ -359,7 +359,10 @@ function MilestonesContent() {
                    clientName={selectedContact?.client?.full_name || selectedContact?.client?.email} 
                    projectId={selectedProjectId}
                    initialMilestones={milestones}
-                   onMilestoneCreated={() => setRefreshKey(prev => prev + 1)}
+                   onMilestoneCreated={() => {
+                     refetchProjects();
+                     setRefreshKey(prev => prev + 1);
+                   }}
                  />
                </div>
             </div>

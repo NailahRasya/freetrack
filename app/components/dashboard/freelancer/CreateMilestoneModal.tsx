@@ -14,9 +14,19 @@ interface CreateMilestoneModalProps {
   isSubmitting?: boolean;
   projects?: any[];
   defaultProjectId?: string;
+  projectBudget?: number;
+  existingMilestonesSum?: number;
 }
 
-export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubmitting, defaultProjectId }: CreateMilestoneModalProps) {
+export default function CreateMilestoneModal({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  isSubmitting, 
+  defaultProjectId,
+  projectBudget,
+  existingMilestonesSum
+}: CreateMilestoneModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     price: "",
@@ -60,8 +70,27 @@ export default function CreateMilestoneModal({ isOpen, onClose, onSubmit, isSubm
       });
       return;
     }
+
+    // Client-side Budget Validation
+    const newPrice = parseInt(parseRupiah(formData.price)) || 0;
+    if (projectBudget && projectBudget > 0 && existingMilestonesSum !== undefined) {
+      if (existingMilestonesSum + newPrice > projectBudget) {
+        Swal.fire({
+          title: "Peringatan",
+          text: `Total nilai milestone (Rp ${new Intl.NumberFormat("id-ID").format(existingMilestonesSum + newPrice)}) tidak boleh melebihi anggaran proyek (Rp ${new Intl.NumberFormat("id-ID").format(projectBudget)}).`,
+          icon: "warning",
+          background: "#0F1B2E",
+          color: "#fff",
+          confirmButtonColor: "#3b82f6",
+          customClass: {
+            popup: "rounded-2xl border border-white/10 shadow-2xl"
+          }
+        });
+        return;
+      }
+    }
+
     onSubmit(formData);
-    onClose();
   };
 
   return (

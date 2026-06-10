@@ -148,16 +148,44 @@ export default function MilestoneManager({
     return Math.round((approvedCount / milestones.length) * 100);
   }, [milestones]);
 
+  const projectBudget = useMemo(() => {
+    return currentProject?.budget ? parseInt(parseRupiah(currentProject.budget)) : 0;
+  }, [currentProject]);
+
+  const existingMilestonesSum = useMemo(() => {
+    return milestones.reduce((sum, m) => {
+      const amt = m.amount ? parseInt(m.amount) : parseInt(parseRupiah(m.price || "0"));
+      return sum + (isNaN(amt) ? 0 : amt);
+    }, 0);
+  }, [milestones]);
+
   const handleCreateMilestone = async (data: { title: string; price: string; deadline: string; description: string; project_id?: string }) => {
     setIsSubmitting(true);
     try {
       const amount = parseRupiah(data.price);
+      const amountNum = parseInt(amount) || 0;
       const finalProjectId = data.project_id || projectId || localProjectId;
 
       if (!finalProjectId) {
         Swal.fire({
           title: "Peringatan",
           text: "Silakan pilih proyek/klien terlebih dahulu.",
+          icon: "warning",
+          background: "#0F1B2E",
+          color: "#fff",
+          confirmButtonColor: "#3b82f6",
+          customClass: {
+            popup: "rounded-2xl border border-white/10 shadow-2xl"
+          }
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (projectBudget > 0 && (existingMilestonesSum + amountNum) > projectBudget) {
+        Swal.fire({
+          title: "Peringatan",
+          text: `Total nilai milestone (Rp ${new Intl.NumberFormat("id-ID").format(existingMilestonesSum + amountNum)}) tidak boleh melebihi anggaran proyek (Rp ${new Intl.NumberFormat("id-ID").format(projectBudget)}).`,
           icon: "warning",
           background: "#0F1B2E",
           color: "#fff",
@@ -245,6 +273,31 @@ export default function MilestoneManager({
       if (editForm.price) {
         (payload as any).amount = parseRupiah(editForm.price);
       }
+
+      // Budget validation when editing
+      const newPrice = parseInt(parseRupiah(editForm.price || "0")) || 0;
+      const otherMilestonesSum = milestones
+        .filter(m => m.id !== isEditingId)
+        .reduce((sum, m) => {
+          const amt = m.amount ? parseInt(m.amount) : parseInt(parseRupiah(m.price || "0"));
+          return sum + (isNaN(amt) ? 0 : amt);
+        }, 0);
+
+      if (projectBudget > 0 && (otherMilestonesSum + newPrice) > projectBudget) {
+        Swal.fire({
+          title: "Peringatan",
+          text: `Total nilai milestone (Rp ${new Intl.NumberFormat("id-ID").format(otherMilestonesSum + newPrice)}) tidak boleh melebihi anggaran proyek (Rp ${new Intl.NumberFormat("id-ID").format(projectBudget)}).`,
+          icon: "warning",
+          background: "#0F1B2E",
+          color: "#fff",
+          confirmButtonColor: "#3b82f6",
+          customClass: {
+            popup: "rounded-2xl border border-white/10 shadow-2xl"
+          }
+        });
+        setIsSubmitting(false);
+        return;
+      }
       
       const res = await fetch("/api/milestones", {
         method: "PUT",
@@ -255,9 +308,33 @@ export default function MilestoneManager({
       if (res.ok) {
         onMilestoneCreated?.();
         setIsEditingId(null);
+      } else {
+        const errorData = await res.json();
+        Swal.fire({
+          title: "Gagal",
+          text: "Gagal mengubah milestone: " + (errorData.error || "Terjadi kesalahan server"),
+          icon: "error",
+          background: "#0F1B2E",
+          color: "#fff",
+          confirmButtonColor: "#ef4444",
+          customClass: {
+            popup: "rounded-2xl border border-white/10 shadow-2xl"
+          }
+        });
       }
     } catch (err) {
       console.error("Failed to update milestone:", err);
+      Swal.fire({
+        title: "Gagal",
+        text: "Gagal mengubah milestone: Masalah koneksi jaringan",
+        icon: "error",
+        background: "#0F1B2E",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+        customClass: {
+          popup: "rounded-2xl border border-white/10 shadow-2xl"
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -703,6 +780,8 @@ export default function MilestoneManager({
         isSubmitting={isSubmitting}
         projects={activeProjects}
         defaultProjectId={projectId || localProjectId || undefined}
+        projectBudget={projectBudget}
+        existingMilestonesSum={existingMilestonesSum}
       />
 
       <UploadEvidenceModal 
