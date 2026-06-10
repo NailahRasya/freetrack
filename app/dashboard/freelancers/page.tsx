@@ -190,11 +190,26 @@ export default function FindFreelancerPage() {
         .eq("user_id", user.id);
       const clientPref = clientPrefList && clientPrefList.length > 0 ? clientPrefList[0] : null;
 
-      // 2. Fetch all freelancers profiles
-      const { data: freelancers, error: profilesError } = await supabase
+      // 2. Fetch all freelancers profiles (gracefully check for availability & response_time columns)
+      let freelancers = null;
+      let profilesError = null;
+      
+      const firstQuery = await supabase
         .from("profiles")
-        .select("id, full_name, email, role, avatar_url, bio, skills, average_rating, total_reviews")
+        .select("id, full_name, email, role, avatar_url, bio, skills, average_rating, total_reviews, city, country, billing_rate, billing_type, completed_projects_count, availability, response_time")
         .eq("role", "freelancer");
+
+      if (firstQuery.error) {
+        const fallbackQuery = await supabase
+          .from("profiles")
+          .select("id, full_name, email, role, avatar_url, bio, skills, average_rating, total_reviews, city, country, billing_rate, billing_type, completed_projects_count")
+          .eq("role", "freelancer");
+        freelancers = fallbackQuery.data;
+        profilesError = fallbackQuery.error;
+      } else {
+        freelancers = firstQuery.data;
+        profilesError = firstQuery.error;
+      }
 
       if (profilesError) throw profilesError;
 
@@ -239,6 +254,10 @@ export default function FindFreelancerPage() {
       const mapped = (freelancers || []).map((f: any) => {
         const ob = onboardingData?.find(o => o.user_id === f.id) || {};
         const seeded = seedFreelancerProps(f.id, ob.experience_level || "mid", ob.years_of_experience || 1);
+        
+        // Realtime availability and response time override if present in DB
+        const availability = f.availability || seeded.availability;
+        const responseTime = f.response_time || seeded.responseTime;
 
         // Score Matching Algorithm
         let score = 10;
@@ -264,7 +283,9 @@ export default function FindFreelancerPage() {
         const ratingInfo = ratingMap[f.id] || { totalRating: 0, count: 0 };
         const averageRating = ratingInfo.count > 0 ? ratingInfo.totalRating / ratingInfo.count : (f.average_rating || 0);
         const totalReviews = ratingInfo.count || (f.total_reviews || 0);
-        const totalCompleted = completedProjectMap[f.id] || 0;
+        const totalCompleted = f.completed_projects_count !== null && f.completed_projects_count !== undefined 
+          ? f.completed_projects_count 
+          : (completedProjectMap[f.id] || 0);
 
         // Map Headline based on skills/tools
         let headline = "Professional Freelancer";
@@ -290,7 +311,11 @@ export default function FindFreelancerPage() {
         return {
           ...f,
           ob,
-          seeded,
+          seeded: {
+            ...seeded,
+            availability,
+            responseTime
+          },
           headline,
           score,
           matchPercent,
@@ -721,7 +746,7 @@ export default function FindFreelancerPage() {
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                                 <MapPin size={13} />
-                                {freelancer.seeded?.location}
+                                {freelancer.city && freelancer.country ? `${freelancer.city}, ${freelancer.country}` : freelancer.seeded?.location}
                               </div>
                             </div>
                           </div>
@@ -793,8 +818,14 @@ export default function FindFreelancerPage() {
                         {/* CTAs */}
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }} onClick={e => e.stopPropagation()}>
                           <div style={{ marginRight: "12px", textAlign: "right" }}>
-                            <div style={{ fontSize: "16px", fontWeight: "900", color: "#00FFA3" }}>{freelancer.seeded?.hourlyRate}</div>
-                            <div style={{ fontSize: "10px", color: "rgba(226,232,240,0.3)" }}>Tarif / Jam</div>
+                            <div style={{ fontSize: "16px", fontWeight: "900", color: "#00FFA3" }}>
+                              {freelancer.billing_rate 
+                                ? `Rp ${Number(freelancer.billing_rate).toLocaleString("id-ID")}` 
+                                : freelancer.seeded?.hourlyRate}
+                            </div>
+                            <div style={{ fontSize: "10px", color: "rgba(226,232,240,0.3)" }}>
+                              {freelancer.billing_type === 'fixed' ? 'Fixed Price' : 'Tarif / Jam'}
+                            </div>
                           </div>
                           
                           <button

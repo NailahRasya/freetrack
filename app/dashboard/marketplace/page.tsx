@@ -240,19 +240,36 @@ export default function MarketplacePage() {
       const freelancerPref = prefs || null;
 
       // 3. Fetch already applied projects source IDs
-      const { data: appliedProjs } = await supabase
-        .from("projects")
-        .select("description")
-        .eq("freelancer_id", user.id);
-
       const appliedProjectSourceIds = new Set<string>();
-      if (appliedProjs) {
-        appliedProjs.forEach((ap: any) => {
-          const match = ap.description?.match(/\[source_id:([a-f0-9-]+)\]/);
-          if (match && match[1]) {
-            appliedProjectSourceIds.add(match[1]);
-          }
-        });
+      if (role === "freelancer") {
+        const { data: appliedProjs } = await supabase
+          .from("projects")
+          .select("description")
+          .eq("freelancer_id", user.id);
+
+        if (appliedProjs) {
+          appliedProjs.forEach((ap: any) => {
+            const match = ap.description?.match(/\[source_id:([a-f0-9-]+)\]/);
+            if (match && match[1]) {
+              appliedProjectSourceIds.add(match[1]);
+            }
+          });
+        }
+      } else if (role === "client") {
+        const { data: clientProposals } = await supabase
+          .from("projects")
+          .select("description")
+          .eq("client_id", user.id)
+          .not("freelancer_id", "is", null);
+
+        if (clientProposals) {
+          clientProposals.forEach((ap: any) => {
+            const match = ap.description?.match(/\[source_id:([a-f0-9-]+)\]/);
+            if (match && match[1]) {
+              appliedProjectSourceIds.add(match[1]);
+            }
+          });
+        }
       }
 
       // 4. Fetch all client onboarding infos
@@ -332,7 +349,7 @@ export default function MarketplacePage() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, role]);
 
   useEffect(() => {
     if (user?.id) {
@@ -972,29 +989,47 @@ Estimasi Waktu: ${expectedTimeline.trim()}`;
                             </button>
                           ) : role === "client" ? (
                             project.client_id === user?.id && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setProjectToEdit(project);
-                                  setShowCreateModal(true);
-                                }}
-                                className="btn-secondary"
-                                style={{ 
-                                  padding: "8px 16px", 
-                                  borderRadius: "10px", 
-                                  background: "rgba(255, 255, 255, 0.05)", 
-                                  color: "#fff", 
-                                  border: "1px solid rgba(255, 255, 255, 0.1)", 
-                                  fontSize: "13px", 
-                                  fontWeight: "800", 
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "6px"
-                                }}
-                              >
-                                Edit Postingan
-                              </button>
+                              project.hasApplied ? (
+                                <button
+                                  disabled
+                                  style={{ 
+                                    padding: "8px 16px", 
+                                    borderRadius: "10px", 
+                                    background: "rgba(16, 185, 129, 0.06)", 
+                                    color: "rgba(16, 185, 129, 0.7)", 
+                                    border: "1px solid rgba(16, 185, 129, 0.15)",
+                                    fontSize: "13px", 
+                                    fontWeight: "800",
+                                    cursor: "not-allowed"
+                                  }}
+                                >
+                                  Sudah Dilamar
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setProjectToEdit(project);
+                                    setShowCreateModal(true);
+                                  }}
+                                  className="btn-secondary"
+                                  style={{ 
+                                    padding: "8px 16px", 
+                                    borderRadius: "10px", 
+                                    background: "rgba(255, 255, 255, 0.05)", 
+                                    color: "#fff", 
+                                    border: "1px solid rgba(255, 255, 255, 0.1)", 
+                                    fontSize: "13px", 
+                                    fontWeight: "800", 
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px"
+                                  }}
+                                >
+                                  Edit Postingan
+                                </button>
+                              )
                             )
                           ) : project.hasApplied ? (
                             <button

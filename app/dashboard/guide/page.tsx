@@ -49,15 +49,15 @@ export default function GuidePage() {
       ]
     },
     {
-      title: "2. Menjangkau & Evaluasi Freelancer",
+      title: "2. Cari, Jangkau & Tawarkan Proyek",
       icon: Layers,
       color: "#4D63FF",
-      desc: "Tinjau lamaran pelamar atau jangkau langsung talenta terbaik secara efisien.",
+      desc: "Jelajahi talenta profesional, evaluasi pelamar, dan tawarkan proyek Anda secara langsung.",
       details: [
-        "Proposal pelamar akan terduplikasi secara profesional lengkap dengan isi surat lamaran dan jawaban atas screening questions Anda.",
-        "Anda juga dapat menjangkau langsung talenta pilihan melalui panel <strong>Rekomendasi Freelancer</strong> di dasbor utama dengan mengklik <strong>Mulai Diskusi</strong>.",
-        "Diskusikan parameter proyek secara kontekstual berbasis proyek dengan freelancer tanpa otomatis dipaksa menjadi kontak tetap agar daftar chat rapi.",
-        "Jika ingin terhubung secara formal dan menyimpannya di daftar kontak, gunakan fitur interaktif <strong>Tambahkan ke Kontak</strong>."
+        "Jelajahi daftar talenta terdaftar di menu <strong>Cari Freelancer</strong> untuk memfilter profil berdasarkan kota, negara, ketersediaan, serta tarif kerja.",
+        "Tinjau detail profil freelancer (spesialisasi, rating, ulasan klien lain, portofolio, dan tarif/jam) lalu klik <strong>Mulai Diskusi</strong> untuk terhubung via chat.",
+        "Di dalam ruang chat, klik tombol <strong>Tawarkan Proyek</strong> di sudut kanan atas untuk mengirimkan penawaran proyek Anda yang masih berstatus Draf atau Terpublikasi.",
+        "Proposal pelamar dari proyek publik juga akan terduplikasi secara profesional lengkap dengan isi surat lamaran dan jawaban atas screening questions untuk Anda evaluasi."
       ]
     },
     {
@@ -125,8 +125,8 @@ export default function GuidePage() {
       desc: "Lakukan diskusi lingkup kerja secara terstruktur tanpa membebani daftar kontak Anda.",
       details: [
         "Tekan tombol <strong>Tanya Client</strong> di halaman detail proyek untuk melakukan chat kontekstual langsung terkait proyek spesifik tersebut.",
-        "Anda juga dapat menerima pesan obrolan langsung dari klien yang menjangkau Anda melalui rekomendasi profil (reachout). Chat obrolan ini berjalan mandiri tanpa memaksa Anda menjadi kontak mereka secara otomatis agar daftar hubungan kontak tetap rapi.",
-        "Jika ingin terhubung secara resmi dan menyimpan klien ke dalam daftar kontak tetap Anda, gunakan tombol <strong>Tambahkan ke Kontak</strong> di halaman proyek atau obrolan chat."
+        "Anda juga dapat menerima pesan obrolan langsung dari klien yang menjangkau Anda melalui rekomendasi profil (reachout).",
+        "FreeTrack akan otomatis menghubungkan Anda secara resmi dengan klien begitu Anda mengajukan lamaran proyek atau memulai diskusi obrolan."
       ]
     },
     {
@@ -197,12 +197,16 @@ export default function GuidePage() {
       a: "Freelancer dapat menyimpan proyek menarik menggunakan tombol Simpan (Bookmark) di kartu feed proyek atau halaman detail. Untuk melihat seluruh proyek tersimpan, silakan pilih tab filter 'Tersimpan' di bagian pojok kanan atas halaman feed Marketplace."
     },
     {
-      q: "Mengapa bertanya kepada klien tidak langsung menjadikan mereka teman/kontak?",
-      a: "FreeTrack menerapkan pemisahan hubungan kerja yang bersih. Chat kontekstual melalui 'Tanya Client' digunakan khusus untuk mendiskusikan detail proyek yang diminati. Jika Anda ingin menyimpannya ke daftar kontak permanen, Anda dapat mengajukan permintaan koneksi formal melalui tombol 'Tambahkan ke Kontak' di widget Tentang Klien."
+      q: "Bagaimana hubungan kontak terjalin antara freelancer dan klien?",
+      a: "Hubungan kontak terjalin secara otomatis ketika freelancer mengajukan lamaran proyek atau ketika lamaran disetujui oleh klien. Hal ini memudahkan kedua belah pihak langsung terhubung dalam ruang obrolan tanpa harus mengirimkan permintaan koneksi manual secara terpisah."
     },
     {
       q: "Bagaimana cara Klien menjangkau (reachout) freelancer secara langsung?",
-      a: "Klien dapat melihat daftar 'Rekomendasi Freelancer' yang dipersonalisasi di dasbor utama berdasarkan kriteria proyek. Klien dapat langsung menekan tombol 'Mulai Diskusi' untuk membuka obrolan tanpa membebani daftar kontak. Hubungan kontak baru akan terjalin secara formal apabila klien menekan tombol 'Tambah ke Kontak' di dalam chat room."
+      a: "Klien dapat melihat daftar 'Rekomendasi Freelancer' yang dipersonalisasi di dasbor utama berdasarkan kriteria proyek. Klien dapat langsung menekan tombol 'Mulai Diskusi' pada profil freelancer untuk membuka obrolan dan otomatis terhubung di dalam daftar kontak."
+    },
+    {
+      q: "Bagaimana cara menawarkan proyek secara langsung kepada freelancer pilihan saya?",
+      a: "Cari freelancer yang Anda butuhkan di menu 'Cari Freelancer', lalu klik 'Mulai Diskusi' pada profil mereka. Di halaman chat, klik tombol 'Tawarkan Proyek' di pojok kanan atas, lalu pilih proyek Anda yang berstatus Draf atau Terpublikasi. Setelah dikirimkan, freelancer akan menerima penawaran dan dapat menyetujuinya untuk memulai kerja."
     },
     {
       q: "Mengapa freelancer harus menunggu dana Escrow masuk sebelum bekerja?",

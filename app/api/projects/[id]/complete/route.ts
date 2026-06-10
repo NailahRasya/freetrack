@@ -108,6 +108,22 @@ export async function POST(
     );
   }
 
+  // Increment completed projects count in freelancer's profile
+  if (project.freelancer_id) {
+    const { data: freelancerProfile } = await supabase
+      .from("profiles")
+      .select("completed_projects_count")
+      .eq("id", project.freelancer_id)
+      .maybeSingle();
+
+    const currentCount = freelancerProfile?.completed_projects_count || 0;
+
+    await supabase
+      .from("profiles")
+      .update({ completed_projects_count: currentCount + 1 })
+      .eq("id", project.freelancer_id);
+  }
+
   // 7. Insert notifications
   const notifications = [
     {

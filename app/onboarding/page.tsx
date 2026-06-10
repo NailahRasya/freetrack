@@ -54,11 +54,11 @@ function OnboardingContent() {
     }
 
     if (role === "client" && step === 2) {
-      if (!data.businessScale || !data.workType || !data.experiencePreference) {
+      if (!data.businessScale || !data.workType || !data.experiencePreference || !data.city?.trim() || !data.country?.trim()) {
         const Swal = (await import("sweetalert2")).default;
         Swal.fire({ 
-          title: "Lengkapi Preferensi", 
-          text: "Mohon lengkapi semua preferensi rekrutmen Anda sebelum melanjutkan.", 
+          title: "Lengkapi Preferensi & Lokasi", 
+          text: "Mohon lengkapi semua preferensi rekrutmen serta lokasi (Kota dan Negara) Anda sebelum melanjutkan.", 
           icon: "warning", 
           background: "#0F1B2E", 
           color: "#fff",
@@ -84,7 +84,7 @@ function OnboardingContent() {
     }
 
     if (role === "freelancer" && step === 3) {
-      const { experienceLevel, yearsOfExperience } = data;
+      const { experienceLevel, yearsOfExperience, city, country, billingRate, billingType } = data;
       let isValid = true;
       let msg = "";
 
@@ -100,6 +100,18 @@ function OnboardingContent() {
       } else if (experienceLevel === "senior" && yearsOfExperience < 5) {
         isValid = false;
         msg = "Level Senior minimal harus memiliki 5 tahun pengalaman.";
+      } else if (!city || !city.trim()) {
+        isValid = false;
+        msg = "Mohon masukkan kota domisili Anda.";
+      } else if (!country || !country.trim()) {
+        isValid = false;
+        msg = "Mohon masukkan negara domisili Anda.";
+      } else if (!billingType) {
+        isValid = false;
+        msg = "Mohon pilih tipe tarif Anda.";
+      } else if (!billingRate || billingRate <= 0) {
+        isValid = false;
+        msg = "Mohon masukkan tarif profesional Anda yang valid (harus lebih besar dari 0).";
       }
 
       if (!isValid) {

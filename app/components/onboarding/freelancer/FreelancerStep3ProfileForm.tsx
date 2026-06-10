@@ -5,14 +5,21 @@ import {
   Trophy, 
   Clock, 
   ExternalLink,
-  Award
+  Award,
+  MapPin
 } from "lucide-react";
+import { COUNTRIES, CITIES } from "@/app/constants/locations";
+import LocationSelector from "../LocationSelector";
 
 interface FreelancerStep3Props {
   data: {
     experienceLevel: "junior" | "mid" | "senior" | "expert" | "";
     yearsOfExperience: number;
     portfolioUrl: string;
+    city?: string;
+    country?: string;
+    billingRate?: number;
+    billingType?: "hourly" | "fixed" | "";
   };
   onChange: (fields: Partial<any>) => void;
 }
@@ -104,6 +111,77 @@ export default function FreelancerStep3ProfileForm({
               style={inputStyle}
             />
             <span style={{ position: "absolute", right: "16px", fontSize: "13px", color: "rgba(226, 232, 240, 0.3)" }}>Tahun</span>
+          </div>
+        </div>
+
+        {/* Lokasi (Kota & Negara) */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <LocationSelector
+            label="Kota"
+            value={data.city || ""}
+            onChange={(val) => onChange({ city: val })}
+            options={CITIES}
+            placeholder="Pilih Kota"
+            icon={<MapPin size={16} />}
+          />
+          <LocationSelector
+            label="Negara"
+            value={data.country || ""}
+            onChange={(val) => onChange({ country: val })}
+            options={COUNTRIES}
+            placeholder="Pilih Negara"
+            icon={<MapPin size={16} />}
+          />
+        </div>
+
+        {/* Tipe & Tarif Profesional */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "16px" }}>
+          <div>
+            <label style={labelStyle}>Tipe Tarif</label>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {[
+                { id: "hourly", label: "/ Jam" },
+                { id: "fixed", label: "Fixed" }
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => onChange({ billingType: t.id as any })}
+                  style={{
+                    flex: 1,
+                    padding: "12px 6px",
+                    border: "1px solid",
+                    borderRadius: "12px",
+                    fontSize: "13px",
+                    fontWeight: "750",
+                    cursor: "pointer",
+                    textAlign: "center",
+                    transition: "all 0.2s ease",
+                    background: data.billingType === t.id ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                    borderColor: data.billingType === t.id ? "#10B981" : "rgba(255, 255, 255, 0.08)",
+                    color: data.billingType === t.id ? "#fff" : "rgba(226, 232, 240, 0.6)"
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Tarif ({data.billingType === 'fixed' ? 'Total' : 'Per Jam'})</label>
+            <div style={inputWrap}>
+              <span style={{ position: "absolute", left: "14px", fontSize: "14px", color: "rgba(226, 232, 240, 0.3)", fontWeight: "600" }}>Rp</span>
+              <input
+                type="text"
+                placeholder="350.000"
+                value={data.billingRate ? data.billingRate.toLocaleString("id-ID") : ""}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "");
+                  onChange({ billingRate: Number(raw) || 0 });
+                }}
+                style={{ ...inputStyle, paddingLeft: "36px" }}
+              />
+            </div>
           </div>
         </div>
 

@@ -10,8 +10,11 @@ import {
   Zap, 
   Calendar, 
   Star,
-  Check
+  Check,
+  MapPin
 } from "lucide-react";
+import { COUNTRIES, CITIES } from "@/app/constants/locations";
+import LocationSelector from "@/app/components/onboarding/LocationSelector";
 
 interface ClientStep2Props {
   data: any;
@@ -121,6 +124,30 @@ export default function ClientStep2Preferences({ data, updateData }: ClientStep2
           </div>
         </div>
       </div>
+
+      {/* Section: Lokasi (Kota & Negara) */}
+      <div>
+        <h4 style={sectionTitle}>Lokasi Bisnis / Operasional Anda</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <LocationSelector
+            label="Kota"
+            value={data.city || ""}
+            onChange={(val) => updateData({ city: val })}
+            options={CITIES}
+            placeholder="Pilih Kota"
+            icon={<MapPin size={16} />}
+          />
+          <LocationSelector
+            label="Negara"
+            value={data.country || ""}
+            onChange={(val) => updateData({ country: val })}
+            options={COUNTRIES}
+            placeholder="Pilih Negara"
+            icon={<MapPin size={16} />}
+          />
+        </div>
+      </div>
+
     </div>
   );
 }
@@ -212,4 +239,38 @@ const rowBtn: React.CSSProperties = {
   cursor: "pointer",
   transition: "all 0.2s ease",
   textAlign: "left"
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "12px",
+  fontWeight: "600",
+  color: "rgba(226, 232, 240, 0.45)",
+  marginBottom: "8px",
+  textTransform: "uppercase",
+  letterSpacing: "0.5px",
+};
+
+const inputWrap: React.CSSProperties = {
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+};
+
+const inputIcon: React.CSSProperties = {
+  position: "absolute",
+  left: "14px",
+  color: "rgba(226, 232, 240, 0.3)",
+  pointerEvents: "none",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "12px 14px 12px 40px",
+  background: "rgba(255, 255, 255, 0.03)",
+  border: "1px solid rgba(255, 255, 255, 0.08)",
+  borderRadius: "12px",
+  color: "#fff",
+  fontSize: "14px",
+  outline: "none",
 };

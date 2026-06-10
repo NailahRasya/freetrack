@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 async function getAuth(request: NextRequest) {
   const supabase = await createClient();
@@ -111,6 +111,31 @@ export async function POST(request: NextRequest) {
       receiver_id: final_freelancer_id,
       content: msgContent
     });
+
+    // Ensure contact is created/accepted server-side
+    try {
+      const { data: existing } = await supabaseAdmin
+        .from("contacts")
+        .select("id")
+        .eq("freelancer_id", final_freelancer_id)
+        .eq("client_id", final_client_id)
+        .maybeSingle();
+
+      if (existing) {
+        await supabaseAdmin.from("contacts").update({ status: "accepted" }).eq("id", existing.id);
+      } else {
+        const { data: targetProfile } = await supabaseAdmin.from("profiles").select("email").eq("id", final_freelancer_id).single();
+        await supabaseAdmin.from("contacts").insert({
+          freelancer_id: final_freelancer_id,
+          client_id: final_client_id,
+          invited_by: user.id,
+          invited_email: targetProfile?.email || "",
+          status: "accepted"
+        });
+      }
+    } catch (contactErr) {
+      console.error("Failed to automatically connect contacts:", contactErr);
+    }
   }
 
   return NextResponse.json({ data }, { status: 201 });
@@ -191,6 +216,31 @@ export async function PATCH(request: NextRequest) {
         receiver_id: data.freelancer_id,
         content: msgContent
       });
+
+      // Ensure contact is created/accepted server-side
+      try {
+        const { data: existing } = await supabaseAdmin
+          .from("contacts")
+          .select("id")
+          .eq("freelancer_id", data.freelancer_id)
+          .eq("client_id", data.client_id)
+          .maybeSingle();
+
+        if (existing) {
+          await supabaseAdmin.from("contacts").update({ status: "accepted" }).eq("id", existing.id);
+        } else {
+          const { data: targetProfile } = await supabaseAdmin.from("profiles").select("email").eq("id", data.freelancer_id).single();
+          await supabaseAdmin.from("contacts").insert({
+            freelancer_id: data.freelancer_id,
+            client_id: data.client_id,
+            invited_by: user.id,
+            invited_email: targetProfile?.email || "",
+            status: "accepted"
+          });
+        }
+      } catch (contactErr) {
+        console.error("Failed to automatically connect contacts:", contactErr);
+      }
     }
   } else {
     const updateData: any = { updated_at: new Date().toISOString() };
@@ -247,6 +297,31 @@ export async function PATCH(request: NextRequest) {
         receiver_id: data.client_id,
         content: msgContent
       });
+
+      // Ensure contact is created/accepted server-side
+      try {
+        const { data: existing } = await supabaseAdmin
+          .from("contacts")
+          .select("id")
+          .eq("freelancer_id", data.freelancer_id)
+          .eq("client_id", data.client_id)
+          .maybeSingle();
+
+        if (existing) {
+          await supabaseAdmin.from("contacts").update({ status: "accepted" }).eq("id", existing.id);
+        } else {
+          const { data: targetProfile } = await supabaseAdmin.from("profiles").select("email").eq("id", data.client_id).single();
+          await supabaseAdmin.from("contacts").insert({
+            freelancer_id: data.freelancer_id,
+            client_id: data.client_id,
+            invited_by: user.id,
+            invited_email: targetProfile?.email || "",
+            status: "accepted"
+          });
+        }
+      } catch (contactErr) {
+        console.error("Failed to automatically connect contacts:", contactErr);
+      }
     }
   }
 
@@ -274,11 +349,6 @@ export async function PATCH(request: NextRequest) {
           link: `/dashboard/projects?id=${data.id}`
         }
       ]);
-
-      const supabaseAdmin = createSupabaseClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
 
       // Cari ID postingan asli dari deskripsi
       const sourceIdMatch = data.description?.match(/\[source_id:([a-f0-9-]+)\]/);

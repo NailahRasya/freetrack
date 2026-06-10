@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ContractInitiationModal from "../../components/dashboard/ContractInitiationModal";
 import ContractReviewModal from "../../components/dashboard/ContractReviewModal";
 import NegotiationSidebar from "../../components/dashboard/NegotiationSidebar";
-import { Search, Send, User, Loader2, MessageSquare, MoreVertical, Trash2, UserMinus, ShieldCheck, UserPlus, Briefcase } from "lucide-react";
+import { Search, Send, User, Loader2, MessageSquare, MoreVertical, Trash2, UserMinus, ShieldCheck, Briefcase } from "lucide-react";
 import { useUser } from "../layout";
 import { useContacts } from "@/lib/hooks/useContacts";
 import { useMessages } from "@/lib/hooks/useMessages";
@@ -302,16 +302,6 @@ function MessagesContent() {
     }
   };
 
-  const handleAddToContacts = async () => {
-    if (!selectedUserId) return;
-    try {
-      await ensureContact(selectedUserId);
-      Swal.fire({ title: "Berhasil", text: "Kontak telah ditambahkan.", icon: "success", timer: 1500, showConfirmButton: false, background: "#0F1B2E", color: "#fff" });
-    } catch (err: any) {
-      Swal.fire({ title: "Gagal", text: err.message, icon: "error", background: "#0F1B2E", color: "#fff" });
-    }
-  };
-
   const handleDeleteChat = async () => {
     setShowOptions(false);
     if (!selectedUserId) return;
@@ -445,11 +435,6 @@ function MessagesContent() {
                 <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800", fontSize: "18px" }}>{selectedTarget?.full_name?.charAt(0) ?? "?"}</div>
                 <div>
                   <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#fff", margin: 0 }}>{selectedTarget?.full_name || "Pengguna"}</h3>
-                  {!selectedContact && (
-                    <button onClick={handleAddToContacts} style={{ background: "transparent", border: "none", color: "var(--cyan)", fontSize: "12px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
-                      <UserPlus size={12} /> Tambah ke Kontak
-                    </button>
-                  )}
                 </div>
               </div>
 

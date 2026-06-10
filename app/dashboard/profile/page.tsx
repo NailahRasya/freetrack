@@ -1,11 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Shield, Camera, Save, Loader2, ChevronDown, Check, Building2, Briefcase, Target, Sparkles, X, Plus, Star, MessageSquare } from "lucide-react";
+import { User, Mail, Shield, Camera, Save, Loader2, ChevronDown, Check, Building2, Briefcase, Target, Sparkles, X, Plus, Star, MessageSquare, MapPin } from "lucide-react";
 import { useUser } from "../layout";
 import { supabase } from "@/lib/supabase";
 import { ONBOARDING_CATEGORIES, COMMON_TOOLS, TOOLS_BY_CATEGORY, getLabelById, getCategoryIdBySkillId } from "@/app/constants/onboarding-categories";
 import Swal from "sweetalert2";
+import { COUNTRIES, CITIES } from "@/app/constants/locations";
+import LocationSelector from "@/app/components/onboarding/LocationSelector";
 
 function SuggestionBox({ onSelect }: { onSelect: (val: string) => void }) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -101,6 +103,7 @@ const STORAGE_KEY = "freetrack_onboarding";
 export default function ProfilePage() {
   const { user, role, loading: userLoading } = useUser();
   const [fullName, setFullName] = useState("");
+  const [bio, setBio] = useState("");
   const [updating, setUpdating] = useState(false);
 
   // Client Specific States
@@ -125,6 +128,18 @@ export default function ProfilePage() {
   const [expandedCats, setExpandedCats] = useState<string[]>([]);
   const [hasLocalData, setHasLocalData] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Freelancer Profiling Fields
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [billingRate, setBillingRate] = useState(0);
+  const [billingType, setBillingType] = useState("hourly");
+
+  // Freelancer Availability & Response Time
+  const [availability, setAvailability] = useState("Tersedia Sekarang");
+  const [responseTime, setResponseTime] = useState("< 1 Jam");
+  const [openAvailability, setOpenAvailability] = useState(false);
+  const [openResponseTime, setOpenResponseTime] = useState(false);
 
   // Reviews State (Freelancer only)
   const [reviews, setReviews] = useState<any[]>([]);
@@ -164,6 +179,11 @@ export default function ProfilePage() {
       
       if (user.profile) {
         setFullName(user.profile.full_name || "");
+        setBio(user.profile.bio || "");
+        setAvailability(user.profile.availability || "Tersedia Sekarang");
+        setResponseTime(user.profile.response_time || "< 1 Jam");
+        setCity(user.profile.city || "");
+        setCountry(user.profile.country || "");
       }
 
       const localRaw = localStorage.getItem(STORAGE_KEY);
@@ -194,7 +214,11 @@ export default function ProfilePage() {
               portfolio_url: obData.portfolioUrl || "",
               tools: obData.tools || [],
               preferred_client_scales: obData.preferredClientScales || [],
-              work_type_preference: obData.workTypePreference || []
+              work_type_preference: obData.workTypePreference || [],
+              city: obData.city || "",
+              country: obData.country || "",
+              billing_rate: obData.billingRate || 0,
+              billing_type: obData.billingType || "hourly"
             };
 
             // CEK EKSISTENSI (Manual Upsert)
@@ -220,11 +244,19 @@ export default function ProfilePage() {
             setTools(obData.tools || []);
             setPreferredScales(obData.preferredClientScales || []);
             setWorkTypePrefs(obData.workTypePreference || []);
+            setCity(obData.city || "");
+            setCountry(obData.country || "");
+            setBillingRate(obData.billingRate || 0);
+            setBillingType(obData.billingType || "hourly");
 
             await supabase.from("profiles").update({
               skills: Array.from(new Set([...derivedCats, ...rawSkills])),
               experience_level: obData.experienceLevel || "mid",
               years_of_experience: obData.yearsOfExperience || 1,
+              city: obData.city || "",
+              country: obData.country || "",
+              billing_rate: obData.billingRate || 0,
+              billing_type: obData.billingType || "hourly",
               onboarding_completed: true
             }).eq("id", user.id);
 
@@ -259,8 +291,16 @@ export default function ProfilePage() {
             setExpPreference(obData.experiencePreference || "mid");
             setSelectedCats(derivedCats);
             setSelectedSubSkills(rawSkills);
+            setCity(obData.city || "");
+            setCountry(obData.country || "");
 
             await supabase.from("profiles").update({
+              business_scale: obData.businessScale || "UMKM",
+              work_type: obData.workType || "one-time",
+              experience_preference: obData.experiencePreference || "mid",
+              skills: Array.from(new Set([...derivedCats, ...rawSkills])),
+              city: obData.city || "",
+              country: obData.country || "",
               onboarding_completed: true
             }).eq("id", user.id);
           }
@@ -319,6 +359,10 @@ export default function ProfilePage() {
           setTools(data.tools || []);
           setPreferredScales(data.preferred_client_scales || []);
           setWorkTypePrefs(data.work_type_preference || []);
+          setCity(data.city || "");
+          setCountry(data.country || "");
+          setBillingRate(Number(data.billing_rate) || 0);
+          setBillingType(data.billing_type || "hourly");
         } else {
           console.warn("⚠️ [CASE B] No freelancer data found in DB for this user.");
         }
@@ -376,7 +420,11 @@ export default function ProfilePage() {
             portfolio_url: obData.portfolioUrl || "",
             tools: obData.tools || [],
             preferred_client_scales: obData.preferredClientScales || [],
-            work_type_preference: obData.workTypePreference || []
+            work_type_preference: obData.workTypePreference || [],
+            city: obData.city || "",
+            country: obData.country || "",
+            billing_rate: obData.billingRate || 0,
+            billing_type: obData.billingType || "hourly"
           };
 
           // Manual Upsert
@@ -390,6 +438,10 @@ export default function ProfilePage() {
 
           await supabase.from("profiles").update({
             skills: Array.from(new Set([...derivedCats, ...rawSkills])),
+            city: obData.city || "",
+            country: obData.country || "",
+            billing_rate: obData.billingRate || 0,
+            billing_type: obData.billingType || "hourly",
             onboarding_completed: true
           }).eq("id", user.id);
 
@@ -403,6 +455,10 @@ export default function ProfilePage() {
           setTools(obData.tools || []);
           setPreferredScales(obData.preferredClientScales || []);
           setWorkTypePrefs(obData.workTypePreference || []);
+          setCity(obData.city || "");
+          setCountry(obData.country || "");
+          setBillingRate(obData.billingRate || 0);
+          setBillingType(obData.billingType || "hourly");
           
         } else {
           // Logic Client
@@ -429,6 +485,18 @@ export default function ProfilePage() {
           setExpPreference(obData.experiencePreference || "mid");
           setSelectedCats(derivedCats);
           setSelectedSubSkills(rawSkills);
+          setCity(obData.city || "");
+          setCountry(obData.country || "");
+
+          await supabase.from("profiles").update({
+            business_scale: obData.businessScale || "UMKM",
+            work_type: obData.workType || "one-time",
+            experience_preference: obData.experiencePreference || "mid",
+            skills: Array.from(new Set([...derivedCats, ...rawSkills])),
+            city: obData.city || "",
+            country: obData.country || "",
+            onboarding_completed: true
+          }).eq("id", user.id);
         }
 
         localStorage.removeItem(STORAGE_KEY);
@@ -461,13 +529,47 @@ export default function ProfilePage() {
     setUpdating(true);
     try {
       // 1. Update Profile Dasar
-      const { error: profileError } = await supabase
+      const profileUpdateData: any = { 
+        full_name: fullName.trim(),
+        bio: bio.trim(),
+        skills: Array.from(new Set([...selectedCats, ...selectedSubSkills])),
+        city: city.trim(),
+        country: country.trim()
+      };
+
+      if (role === "freelancer") {
+        profileUpdateData.billing_rate = billingRate;
+        profileUpdateData.billing_type = billingType;
+        profileUpdateData.experience_level = expLevel;
+        profileUpdateData.years_of_experience = yearsOfExp;
+        profileUpdateData.tools = tools;
+        profileUpdateData.portfolio_url = portfolioUrl;
+        profileUpdateData.availability = availability;
+        profileUpdateData.response_time = responseTime;
+      } else if (role === "client") {
+        profileUpdateData.business_scale = businessScale;
+        profileUpdateData.work_type = workType;
+        profileUpdateData.experience_preference = expPreference;
+      }
+
+      let profileError = null;
+      const firstProfileUpdate = await supabase
         .from("profiles")
-        .update({ 
-          full_name: fullName.trim(),
-          skills: Array.from(new Set([...selectedCats, ...selectedSubSkills]))
-        })
+        .update(profileUpdateData)
         .eq("id", user.id);
+      
+      profileError = firstProfileUpdate.error;
+
+      if (profileError) {
+        console.warn("First profile update failed, attempting fallback:", profileError);
+        const { availability, response_time, ...fallbackUpdateData } = profileUpdateData;
+        const fallbackProfileUpdate = await supabase
+          .from("profiles")
+          .update(fallbackUpdateData)
+          .eq("id", user.id);
+        
+        profileError = fallbackProfileUpdate.error;
+      }
 
       if (profileError) throw profileError;
 
@@ -501,7 +603,11 @@ export default function ProfilePage() {
           preferred_client_scales: preferredScales,
           work_type_preference: workTypePrefs,
           tools: tools,
-          skill_categories: selectedSubSkills
+          skill_categories: selectedSubSkills,
+          city: city,
+          country: country,
+          billing_rate: billingRate,
+          billing_type: billingType
         };
 
         const { error: freelancerError } = existing
@@ -628,6 +734,56 @@ export default function ProfilePage() {
                   <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>Nama Lengkap</label>
                   <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
                     style={{ ...inputStyle, paddingLeft: "48px", backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='rgba(226, 232, 240, 0.2)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "16px center" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "rgba(226, 232, 240, 0.4)", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>Bio / Deskripsi Singkat</label>
+                  <textarea 
+                    value={bio} 
+                    onChange={e => {
+                      if (e.target.value.length <= 500) {
+                        setBio(e.target.value);
+                      }
+                    }}
+                    maxLength={500}
+                    placeholder="Ceritakan singkat tentang diri Anda, latar belakang, dan keahlian profesional Anda (maksimal 500 karakter)..."
+                    style={{ 
+                      width: "100%", 
+                      background: "rgba(255,255,255,0.03)", 
+                      border: "1px solid rgba(255,255,255,0.08)", 
+                      borderRadius: "14px", 
+                      padding: "12px 16px", 
+                      color: "#fff", 
+                      fontSize: "15px", 
+                      outline: "none", 
+                      boxSizing: "border-box", 
+                      minHeight: "100px", 
+                      resize: "vertical", 
+                      fontFamily: "inherit", 
+                      lineHeight: "1.5" 
+                    }} 
+                  />
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "4px", fontSize: "12px", color: bio.length >= 480 ? "#EF4444" : "rgba(226, 232, 240, 0.4)" }}>
+                    {bio.length} / 500 karakter
+                  </div>
+                </div>
+                {/* Lokasi (Kota & Negara) - Untuk Klien & Freelancer */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                  <LocationSelector
+                    label="Kota"
+                    value={city}
+                    onChange={(val) => setCity(val)}
+                    options={CITIES}
+                    placeholder="Pilih Kota"
+                    icon={<MapPin size={16} />}
+                  />
+                  <LocationSelector
+                    label="Negara"
+                    value={country}
+                    onChange={(val) => setCountry(val)}
+                    options={COUNTRIES}
+                    placeholder="Pilih Negara"
+                    icon={<MapPin size={16} />}
+                  />
                 </div>
               </div>
             </div>
@@ -949,6 +1105,79 @@ export default function ProfilePage() {
                             {[{ id: 'junior', label: 'Junior' }, { id: 'mid', label: 'Intermediate' }, { id: 'senior', label: 'Senior' }].map(opt => (
                               <div key={opt.id} onClick={() => { setExpLevel(opt.id); setOpenExpLevel(false); }} style={{ padding: "12px 16px", fontSize: "14px", color: expLevel === opt.id ? "#10B981" : "rgba(226,232,240,0.8)", cursor: "pointer", background: expLevel === opt.id ? "rgba(16,185,129,0.1)" : "transparent" }}>
                                 {opt.label}
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+
+
+                  {/* Tarif Profesional */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                    <div style={{ position: "relative" }}>
+                      <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", marginBottom: "8px" }}>Tipe Tarif</label>
+                      <select 
+                        value={billingType} 
+                        onChange={e => setBillingType(e.target.value)} 
+                        style={{ ...inputStyle, cursor: "pointer" }}
+                      >
+                        <option value="hourly">Tarif / Jam</option>
+                        <option value="fixed">Fixed Price</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", marginBottom: "12px" }}>
+                        Tarif ({billingType === 'fixed' ? 'Total' : 'Per Jam'}) (Rp)
+                      </label>
+                      <input 
+                        type="text" 
+                        value={billingRate ? billingRate.toLocaleString("id-ID") : ""} 
+                        onChange={e => {
+                          const raw = e.target.value.replace(/\D/g, "");
+                          setBillingRate(Number(raw) || 0);
+                        }} 
+                        style={inputStyle} 
+                        placeholder="350.000" 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Ketersediaan Kerja & Waktu Respons */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                    <div style={{ position: "relative" }}>
+                      <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", marginBottom: "8px" }}>Ketersediaan Kerja</label>
+                      <div onClick={() => setOpenAvailability(!openAvailability)} style={{ ...inputStyle, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>{availability}</span>
+                        <ChevronDown size={16} style={{ transform: openAvailability ? "rotate(180deg)" : "none", transition: "0.2s" }} />
+                      </div>
+                      <AnimatePresence>
+                        {openAvailability && (
+                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={dropdownStyle}>
+                            {['Tersedia Sekarang', 'Tersedia Part-Time', 'Sibuk'].map(opt => (
+                              <div key={opt} onClick={() => { setAvailability(opt); setOpenAvailability(false); }} style={{ padding: "12px 16px", fontSize: "14px", color: availability === opt ? "#10B981" : "rgba(226,232,240,0.8)", cursor: "pointer", background: availability === opt ? "rgba(16,185,129,0.1)" : "transparent" }}>
+                                {opt}
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div style={{ position: "relative" }}>
+                      <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "rgba(226,232,240,0.4)", textTransform: "uppercase", marginBottom: "8px" }}>Waktu Respons Rata-rata</label>
+                      <div onClick={() => setOpenResponseTime(!openResponseTime)} style={{ ...inputStyle, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>{responseTime}</span>
+                        <ChevronDown size={16} style={{ transform: openResponseTime ? "rotate(180deg)" : "none", transition: "0.2s" }} />
+                      </div>
+                      <AnimatePresence>
+                        {openResponseTime && (
+                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={dropdownStyle}>
+                            {['< 1 Jam', '1-2 Jam', 'Dalam 24 Jam'].map(opt => (
+                              <div key={opt} onClick={() => { setResponseTime(opt); setOpenResponseTime(false); }} style={{ padding: "12px 16px", fontSize: "14px", color: responseTime === opt ? "#06B6D4" : "rgba(226,232,240,0.8)", cursor: "pointer", background: responseTime === opt ? "rgba(6,182,212,0.1)" : "transparent" }}>
+                                {opt}
                               </div>
                             ))}
                           </motion.div>

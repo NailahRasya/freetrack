@@ -83,23 +83,50 @@ export async function POST(request: NextRequest) {
     client_id = user.id;
   }
 
-  const { data, error } = await supabase
+  // check if contact already exists
+  const { data: existingContact } = await supabase
     .from("contacts")
-    .insert({
-      freelancer_id,
-      client_id,
-      invited_by: user.id,
-      invited_email: targetProfile.email,
-      status: bodyStatus || "pending",
-    })
-    .select()
-    .single();
+    .select("id, status")
+    .eq("freelancer_id", freelancer_id)
+    .eq("client_id", client_id)
+    .maybeSingle();
+
+  let data, error;
+  if (existingContact) {
+    const nextStatus = bodyStatus || "pending";
+    if (existingContact.status === nextStatus || (existingContact.status === "accepted" && nextStatus === "pending")) {
+      return NextResponse.json({ error: "Kontak ini sudah ada atau sudah diundang" }, { status: 409 });
+    } else {
+      const { data: updated, error: updateErr } = await supabase
+        .from("contacts")
+        .update({ 
+          status: nextStatus,
+          invited_by: user.id,
+          invited_email: targetProfile.email
+        })
+        .eq("id", existingContact.id)
+        .select()
+        .single();
+      data = updated;
+      error = updateErr;
+    }
+  } else {
+    const { data: inserted, error: insertErr } = await supabase
+      .from("contacts")
+      .insert({
+        freelancer_id,
+        client_id,
+        invited_by: user.id,
+        invited_email: targetProfile.email,
+        status: bodyStatus || "pending",
+      })
+      .select()
+      .single();
+    data = inserted;
+    error = insertErr;
+  }
 
   if (error) {
-    if (error.code === "23505") {
-      // Jika sudah ada, tapi statusnya mungkin berbeda, kita biarkan saja atau update
-      return NextResponse.json({ error: "Kontak ini sudah ada atau sudah diundang" }, { status: 409 });
-    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

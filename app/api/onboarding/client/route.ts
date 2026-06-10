@@ -1,5 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId");
+
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId parameter" }, { status: 400 });
+  }
+
+  try {
+    // Gunakan service role key untuk bypass RLS
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data, error } = await supabaseAdmin
+      .from("onboarding_client")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return NextResponse.json({ data });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -16,7 +46,9 @@ export async function POST(request: NextRequest) {
     businessScale,
     workType,
     experiencePreference,
-    requiredSkills, 
+    requiredSkills,
+    city,
+    country,
   } = body;
 
   try {
@@ -34,12 +66,14 @@ export async function POST(request: NextRequest) {
 
     if (onboardingError) throw onboardingError;
 
-    // 2. Update profile with interest categories for matching
+    // 2. Update profile with interest categories for matching and location
     const { error: profileError } = await supabase
       .from("profiles")
       .update({ 
         onboarding_completed: true,
         skills: projectCategories, // Use categories as skills for matching
+        city: city || null,
+        country: country || null,
       })
       .eq("id", user.id);
 

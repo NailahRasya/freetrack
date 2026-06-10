@@ -1,5 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId");
+
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId parameter" }, { status: 400 });
+  }
+
+  try {
+    // Gunakan service role key untuk bypass RLS
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data, error } = await supabaseAdmin
+      .from("onboarding_freelancer")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return NextResponse.json({ data });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -17,7 +47,11 @@ export async function POST(request: NextRequest) {
     yearsOfExperience, 
     portfolioUrl,
     preferredClientScales,
-    workTypePreference
+    workTypePreference,
+    city,
+    country,
+    billingRate,
+    billingType
   } = body;
 
   try {
@@ -32,7 +66,11 @@ export async function POST(request: NextRequest) {
         years_of_experience: yearsOfExperience,
         portfolio_url: portfolioUrl,
         preferred_client_scales: preferredClientScales,
-        work_type_preference: workTypePreference
+        work_type_preference: workTypePreference,
+        city: city,
+        country: country,
+        billing_rate: billingRate,
+        billing_type: billingType
       });
 
     if (onboardingError) throw onboardingError;
@@ -46,7 +84,11 @@ export async function POST(request: NextRequest) {
         tools: tools,
         experience_level: experienceLevel,
         years_of_experience: yearsOfExperience,
-        portfolio_url: portfolioUrl
+        portfolio_url: portfolioUrl,
+        city: city,
+        country: country,
+        billing_rate: billingRate,
+        billing_type: billingType
       })
       .eq("id", user.id);
 

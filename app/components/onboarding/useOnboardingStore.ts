@@ -17,6 +17,8 @@ export interface ClientOnboardingData {
   businessScale: "personal" | "startup" | "umkm" | "enterprise" | "";
   workType: "one-time" | "ongoing" | "";
   experiencePreference: "junior" | "mid" | "senior" | "";
+  city: string;
+  country: string;
   // Project fields (optional now)
   projectTitle: string;
   projectDescription: string;
@@ -37,6 +39,10 @@ export interface FreelancerOnboardingData {
   experienceLevel: "junior" | "mid" | "senior" | "expert" | "";
   yearsOfExperience: number;
   portfolioUrl: string;
+  city: string;
+  country: string;
+  billingRate: number;
+  billingType: "hourly" | "fixed" | "";
 }
 
 export type OnboardingData = ClientOnboardingData | FreelancerOnboardingData;
@@ -51,6 +57,8 @@ export const defaultClientData: ClientOnboardingData = {
   businessScale: "",
   workType: "",
   experiencePreference: "",
+  city: "",
+  country: "",
   projectTitle: "",
   projectDescription: "",
   budgetMin: 500000,
@@ -69,6 +77,10 @@ export const defaultFreelancerData: FreelancerOnboardingData = {
   experienceLevel: "",
   yearsOfExperience: 1,
   portfolioUrl: "",
+  city: "",
+  country: "",
+  billingRate: 0,
+  billingType: "hourly",
 };
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

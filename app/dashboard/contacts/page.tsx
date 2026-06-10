@@ -108,8 +108,8 @@ export default function ContactsPage() {
                         <div style={{ color: "#fff", fontWeight: "700", fontSize: "14px" }}>{other?.full_name || c.invited_email}</div>
                       </div>
                       <div style={{ display: "flex", gap: "6px" }}>
-                        <button onClick={() => handleRespond(c.id, "accepted")} style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(0,255,163,0.1)", border: "none", color: "#00FFA3", cursor: "pointer" }}><Check size={14} /></button>
-                        <button onClick={() => handleRespond(c.id, "rejected")} style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,77,106,0.1)", border: "none", color: "#FF4D6A", cursor: "pointer" }}><X size={14} /></button>
+                        <button onClick={() => handleRespond(c.id, "accepted")} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", background: "rgba(0,255,163,0.1)", border: "none", color: "#00FFA3", cursor: "pointer" }}><Check size={14} /></button>
+                        <button onClick={() => handleRespond(c.id, "rejected")} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,77,106,0.1)", border: "none", color: "#FF4D6A", cursor: "pointer" }}><X size={14} /></button>
                       </div>
                     </div>
                   );

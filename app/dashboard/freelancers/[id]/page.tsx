@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { getLabelById } from "@/app/constants/onboarding-categories";
 import { 
   ArrowLeft, 
   Star, 
@@ -15,7 +16,12 @@ import {
   ShieldCheck,
   CheckCircle,
   FileText,
-  Loader2
+  Loader2,
+  Building2,
+  Mail,
+  Sparkles,
+  User,
+  DollarSign
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "../../layout";
@@ -36,6 +42,7 @@ export default function FreelancerDetailPage() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
+  const [showFreelancerModal, setShowFreelancerModal] = useState(false);
 
   // Load Saved list from localStorage
   useEffect(() => {
@@ -92,24 +99,46 @@ export default function FreelancerDetailPage() {
     try {
       setLoading(true);
 
-      // 1. Get profile
-      const { data: profile, error: profileError } = await supabase
+      // 1. Get profile (gracefully query availability & response_time columns)
+      let profile = null;
+      let profileError = null;
+      
+      const firstQuery = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, availability, response_time")
         .eq("id", freelancerId)
         .eq("role", "freelancer")
         .maybeSingle();
+
+      if (firstQuery.error) {
+        const fallbackQuery = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", freelancerId)
+          .eq("role", "freelancer")
+          .maybeSingle();
+        profile = fallbackQuery.data;
+        profileError = fallbackQuery.error;
+      } else {
+        profile = firstQuery.data;
+        profileError = firstQuery.error;
+      }
 
       if (profileError || !profile) {
         throw new Error(profileError?.message || "Freelancer tidak ditemukan.");
       }
 
       // 2. Get onboarding data
-      const { data: obDataList } = await supabase
-        .from("onboarding_freelancer")
-        .select("*")
-        .eq("user_id", freelancerId);
-      const ob = obDataList && obDataList.length > 0 ? obDataList[0] : {};
+      let ob: any = {};
+      try {
+        const res = await fetch(`/api/onboarding/freelancer?userId=${freelancerId}`);
+        const json = await res.json();
+        if (json.data) {
+          ob = json.data;
+        }
+      } catch (e) {
+        console.error("Failed to fetch freelancer onboarding details:", e);
+      }
 
       // Seed properties
       const seeded = seedFreelancerProps(freelancerId, ob.experience_level || "mid", ob.years_of_experience || 1);
@@ -137,7 +166,9 @@ export default function FreelancerDetailPage() {
         ? ratingSum / (reviewsData || []).length 
         : (profile.average_rating || 0);
       const totalReviews = (reviewsData || []).length || (profile.total_reviews || 0);
-      const totalCompleted = completedCount || 0;
+      const totalCompleted = profile.completed_projects_count !== null && profile.completed_projects_count !== undefined 
+        ? profile.completed_projects_count 
+        : (completedCount || 0);
 
       // Headline
       let headline = "Professional Freelancer";
@@ -152,10 +183,18 @@ export default function FreelancerDetailPage() {
         headline = "Content Writer & Copywriter Expert";
       }
 
+      // Realtime availability and response time override if present in DB
+      const availability = profile.availability || seeded.availability;
+      const responseTime = profile.response_time || seeded.responseTime;
+
       setFreelancer({
         ...profile,
         ob,
-        seeded,
+        seeded: {
+          ...seeded,
+          availability,
+          responseTime
+        },
         headline,
         average_rating: averageRating,
         total_reviews: totalReviews,
@@ -334,7 +373,7 @@ export default function FreelancerDetailPage() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                     <MapPin size={14} />
-                    {freelancer.seeded?.location}
+                    {freelancer.city && freelancer.country ? `${freelancer.city}, ${freelancer.country}` : freelancer.seeded?.location}
                   </div>
                 </div>
               </div>
@@ -499,13 +538,17 @@ export default function FreelancerDetailPage() {
           {/* Metrics Card */}
           <div className="glass-card" style={{ padding: "28px", display: "flex", flexDirection: "column", gap: "20px", background: "rgba(13,25,48,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
             
-            {/* Hourly Rate */}
-            <div>
-              <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>Tarif Per Jam</div>
-              <div style={{ fontSize: "28px", fontWeight: "950", color: "#00FFA3", marginTop: "4px" }}>
-                {freelancer.seeded?.hourlyRate}
-              </div>
-            </div>
+             {/* Hourly Rate */}
+             <div>
+               <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>
+                 {freelancer.billing_type === 'fixed' ? 'Fixed Price' : 'Tarif Per Jam'}
+               </div>
+               <div style={{ fontSize: "28px", fontWeight: "950", color: "#00FFA3", marginTop: "4px" }}>
+                 {freelancer.billing_rate 
+                   ? `Rp ${Number(freelancer.billing_rate).toLocaleString("id-ID")}` 
+                   : freelancer.seeded?.hourlyRate}
+               </div>
+             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "20px" }}>
               {/* Availability */}
@@ -576,8 +619,171 @@ export default function FreelancerDetailPage() {
               <Bookmark size={15} fill={isSaved ? "#FFBF00" : "none"} /> 
               {isSaved ? "Freelancer Tersimpan" : "Simpan Freelancer"}
             </button>
+
+            {/* Tentang Freelancer Card */}
+            <div className="glass-card" style={{
+              padding: "20px", background: "rgba(10, 20, 45, 0.2)", borderRadius: "16px",
+              border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", gap: "12px",
+              marginTop: "8px"
+            }}>
+              <h4 style={{ fontSize: "13px", fontWeight: "800", color: "#fff", margin: 0 }}>Tentang Freelancer</h4>
+              <div 
+                onClick={() => setShowFreelancerModal(true)}
+                style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", transition: "opacity 0.2s" }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.85"}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+              >
+                <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800", fontSize: "14px" }}>
+                  {freelancer.full_name?.[0].toUpperCase() ?? "?"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {freelancer.full_name}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "rgba(226, 232, 240, 0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {freelancer.email}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </aside>
+
+    {/* Freelancer Profile Info Modal */}
+    <AnimatePresence>
+      {showFreelancerModal && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(3, 7, 18, 0.8)", backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
+          padding: "20px"
+        }}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="glass-card"
+            style={{
+              width: "100%", maxWidth: "500px", background: "#0D1B2E", borderRadius: "24px",
+              border: "1px solid rgba(255, 255, 255, 0.08)", padding: "32px", display: "flex",
+              flexDirection: "column", gap: "24px", maxHeight: "90vh", overflowY: "auto"
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "16px" }}>
+              <div>
+                <h2 style={{ fontSize: "20px", fontWeight: "850", color: "#fff", margin: 0 }}>Profil Freelancer</h2>
+                <p style={{ fontSize: "13px", color: "rgba(226,232,240,0.45)", margin: "4px 0 0 0" }}>Informasi detail dan preferensi profesional freelancer</p>
+              </div>
+              <button 
+                onClick={() => setShowFreelancerModal(false)}
+                style={{
+                  background: "transparent", border: "none", color: "rgba(226,232,240,0.4)",
+                  fontSize: "24px", cursor: "pointer", lineHeight: "1"
+                }}
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Freelancer Info Body */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {/* Avatar & Name */}
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <div style={{ width: "54px", height: "54px", borderRadius: "50%", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "900", fontSize: "20px" }}>
+                  {freelancer.full_name?.[0].toUpperCase() ?? "?"}
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "800", color: "#fff", margin: 0 }}>{freelancer.full_name}</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "rgba(226, 232, 240, 0.4)", fontSize: "13px", marginTop: "4px" }}>
+                    <Mail size={13} />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{freelancer.email}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Details list */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* Headline & Bio */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", padding: "12px 16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", fontWeight: "700" }}>Spesialisasi & Bio</div>
+                  <div style={{ fontSize: "14px", fontWeight: "700", color: "var(--cyan-light)" }}>{freelancer.headline}</div>
+                  <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.6)", lineHeight: "1.5", maxHeight: "100px", overflowY: "auto", marginTop: "4px" }}>
+                    {freelancer.bio || "Tidak ada deskripsi bio khusus."}
+                  </div>
+                </div>
+
+                {/* Lokasi */}
+                <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                  <MapPin size={18} style={{ color: "var(--cyan)", flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>Lokasi</div>
+                    <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
+                      {freelancer.city && freelancer.country ? `${freelancer.city}, ${freelancer.country}` : freelancer.seeded?.location || "Indonesia"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarif */}
+                <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                  <DollarSign size={18} style={{ color: "#10B981", flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>
+                      {freelancer.billing_type === 'fixed' ? 'Fixed Price' : 'Tarif Rata-rata'}
+                    </div>
+                    <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
+                      {freelancer.billing_rate 
+                        ? `Rp ${Number(freelancer.billing_rate).toLocaleString("id-ID")}` 
+                        : freelancer.seeded?.hourlyRate || "Rp 0"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pengalaman */}
+                <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                  <Briefcase size={18} style={{ color: "#F59E0B", flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>Tingkat Pengalaman</div>
+                    <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
+                      {freelancer.ob?.experience_level === 'expert' || freelancer.ob?.experience_level === 'senior' ? 'Expert (Senior)' : (freelancer.ob?.experience_level === 'mid' ? 'Intermediate (Mid)' : 'Junior')} ({freelancer.ob?.years_of_experience || 1} Tahun)
+                    </div>
+                  </div>
+                </div>
+
+                {/* Keahlian & Spesialisasi */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.5px" }}>Keahlian &amp; Tools</div>
+                  {((freelancer.ob?.tools || freelancer.skills || []).length > 0) ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
+                      {(freelancer.ob?.tools || freelancer.skills || []).map((skill: string) => (
+                        <span key={skill} style={{ fontSize: "11px", fontWeight: "700", color: "#06B6D4", background: "rgba(6, 182, 212, 0.05)", padding: "5px 10px", borderRadius: "8px", border: "1px solid rgba(6, 182, 212, 0.1)" }}>
+                          {getLabelById(skill)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.4)" }}>Tidak ada detail keahlian khusus</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "20px" }}>
+              <button
+                onClick={() => setShowFreelancerModal(false)}
+                style={{
+                  padding: "10px 24px", borderRadius: "12px", background: "linear-gradient(135deg, #4D63FF, #06B6D4)",
+                  border: "none", color: "#fff", fontSize: "13px", fontWeight: "800", cursor: "pointer"
+                }}
+              >
+                Tutup
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
       </div>
     </div>
   );

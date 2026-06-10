@@ -18,10 +18,11 @@ import {
   AlertCircle, 
   ExternalLink,
   ChevronRight,
-  UserCheck,
-  UserPlus,
   Sparkles,
-  DollarSign
+  DollarSign,
+  Building2,
+  Mail,
+  MapPin
 } from "lucide-react";
 import { useUser } from "../../layout";
 import { useContacts } from "@/lib/hooks/useContacts";
@@ -75,16 +76,42 @@ export default function ProjectDetailPage() {
   const [isSaved, setIsSaved] = useState(false);
   
   // Contacts states
-  const { contacts, invitations, loading: contactsLoading, ensureContact, refetch: refetchContacts } = useContacts();
-  const [connectionStatus, setConnectionStatus] = useState<"connected" | "pending_sent" | "pending_received" | "unconnected">("unconnected");
-  const [activeInvitationId, setActiveInvitationId] = useState<string | null>(null);
+  const { ensureContact } = useContacts();
 
   // Proposal modal state
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showClientModal, setShowClientModal] = useState(false);
   const [submittingProposal, setSubmittingProposal] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [expectedTimeline, setExpectedTimeline] = useState("");
   const [expectedBudget, setExpectedBudget] = useState("");
+  
+  const getBusinessScaleLabel = (scale: string) => {
+    if (!scale) return "Individu";
+    const norm = scale.toLowerCase();
+    if (norm === "personal" || norm === "individu") return "Individu";
+    if (norm === "startup") return "Startup";
+    if (norm === "umkm") return "UMKM";
+    if (norm === "korporasi") return "Korporasi";
+    return scale;
+  };
+
+  const getWorkTypeLabel = (type: string) => {
+    if (!type) return "Satu Kali (One-Time Project)";
+    const norm = type.toLowerCase();
+    if (norm === "one-time" || norm === "one_time" || norm === "satu kali") return "Satu Kali (One-Time Project)";
+    if (norm === "ongoing" || norm === "berkelanjutan") return "Berkelanjutan (Ongoing)";
+    return type;
+  };
+
+  const getExperiencePreferenceLabel = (pref: string) => {
+    if (!pref) return "Junior";
+    const norm = pref.toLowerCase();
+    if (norm === "junior") return "Junior";
+    if (norm === "mid" || norm === "intermediate") return "Intermediate (Menengah)";
+    if (norm === "senior") return "Senior (Ahli)";
+    return pref;
+  };
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [matchPercent, setMatchPercent] = useState(60);
 
@@ -107,7 +134,7 @@ export default function ProjectDetailPage() {
           .from("projects")
           .select(`
             *,
-            client:profiles!projects_client_id_fkey(id, full_name, email, avatar_url, role)
+            client:profiles!projects_client_id_fkey(id, full_name, email, avatar_url, role, city, country)
           `)
           .eq("id", projectId)
           .single();
@@ -121,13 +148,16 @@ export default function ProjectDetailPage() {
         // Fetch client onboarding stats
         let clientObData = null;
         if (data.client_id) {
-          const { data: obData } = await supabase
-            .from("onboarding_client")
-            .select("*")
-            .eq("user_id", data.client_id)
-            .maybeSingle();
-          setClientOb(obData);
-          clientObData = obData;
+          try {
+            const res = await fetch(`/api/onboarding/client?userId=${data.client_id}`);
+            const json = await res.json();
+            if (json.data) {
+              setClientOb(json.data);
+              clientObData = json.data;
+            }
+          } catch (e) {
+            console.error("Failed to fetch client onboarding preferences:", e);
+          }
         }
 
         // Fetch freelancer onboarding and calculate match score
@@ -224,40 +254,6 @@ export default function ProjectDetailPage() {
     fetchProjectDetails();
   }, [projectId, user?.id, role]);
 
-  // Determine connection status
-  useEffect(() => {
-    if (!project?.client_id || !user?.id) return;
-
-    // Check if accepted contact exists
-    const acceptedContact = contacts.find((c: any) => 
-      (c.freelancer_id === user.id && c.client_id === project.client_id) ||
-      (c.freelancer_id === project.client_id && c.client_id === user.id)
-    );
-
-    if (acceptedContact) {
-      setConnectionStatus("connected");
-      return;
-    }
-
-    // Check if pending invitation exists
-    const pendingInvitation = invitations.find((i: any) => 
-      (i.freelancer_id === user.id && i.client_id === project.client_id) ||
-      (i.freelancer_id === project.client_id && i.client_id === user.id)
-    );
-
-    if (pendingInvitation) {
-      setActiveInvitationId(pendingInvitation.id);
-      if (pendingInvitation.invited_by === user.id) {
-        setConnectionStatus("pending_sent");
-      } else {
-        setConnectionStatus("pending_received");
-      }
-    } else {
-      setConnectionStatus("unconnected");
-      setActiveInvitationId(null);
-    }
-  }, [contacts, invitations, project?.client_id, user?.id]);
-
   const toggleSave = () => {
     if (!projectId) return;
     const saved = localStorage.getItem("freetrack_saved_projects");
@@ -293,70 +289,6 @@ export default function ProjectDetailPage() {
       });
     }
     localStorage.setItem("freetrack_saved_projects", JSON.stringify(nextSaved));
-  };
-
-  const handleSendConnectionRequest = async () => {
-    if (!project?.client_id) return;
-    try {
-      const res = await fetch("/api/contacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_id: project.client_id, status: "pending" })
-      });
-      const json = await res.json();
-      if (json.error) throw new Error(json.error);
-      
-      Swal.fire({
-        title: "Terkirim!",
-        text: "Permintaan koneksi berhasil dikirim ke klien.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-        background: "#0F1B2E",
-        color: "#fff"
-      });
-      refetchContacts();
-    } catch (err: any) {
-      Swal.fire({
-        title: "Gagal",
-        text: err.message || "Gagal mengirim permintaan koneksi.",
-        icon: "error",
-        background: "#0F1B2E",
-        color: "#fff"
-      });
-    }
-  };
-
-  const handleAcceptConnection = async () => {
-    if (!activeInvitationId) return;
-    try {
-      const res = await fetch("/api/contacts", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: activeInvitationId, status: "accepted" })
-      });
-      const json = await res.json();
-      if (json.error) throw new Error(json.error);
-
-      Swal.fire({
-        title: "Terhubung!",
-        text: "Anda kini terhubung dengan klien ini.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-        background: "#0F1B2E",
-        color: "#fff"
-      });
-      refetchContacts();
-    } catch (err: any) {
-      Swal.fire({
-        title: "Gagal",
-        text: err.message || "Gagal menerima permintaan koneksi.",
-        icon: "error",
-        background: "#0F1B2E",
-        color: "#fff"
-      });
-    }
   };
 
   const handleApplyProposal = async (e: React.FormEvent) => {
@@ -736,7 +668,12 @@ Estimasi Waktu: ${expectedTimeline.trim()}`;
             border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", gap: "16px"
           }}>
             <h4 style={{ fontSize: "14px", fontWeight: "800", color: "#fff", margin: 0 }}>Tentang Klien</h4>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div 
+              onClick={() => setShowClientModal(true)}
+              style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", transition: "opacity 0.2s" }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.85"}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+            >
               <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800" }}>
                 {project.client?.full_name?.charAt(0) ?? "?"}
               </div>
@@ -758,66 +695,6 @@ Estimasi Waktu: ${expectedTimeline.trim()}`;
               </div>
             )}
 
-            {/* Contact Connection Widget */}
-            {role === "freelancer" && user?.id && project.client_id !== user.id && (
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.4)" }}>Status Kontak:</div>
-                
-                {contactsLoading ? (
-                  <div style={{ fontSize: "12px", color: "rgba(226,232,240,0.3)" }}>Memeriksa hubungan...</div>
-                ) : (
-                  <>
-                    {connectionStatus === "connected" && (
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: "8px", background: "rgba(16, 185, 129, 0.08)",
-                        padding: "8px 12px", borderRadius: "10px", color: "#10B981", fontSize: "12px", fontWeight: "700"
-                      }}>
-                        <UserCheck size={14} /> Terhubung (Kontak Anda)
-                      </div>
-                    )}
-
-                    {connectionStatus === "pending_sent" && (
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: "8px", background: "rgba(245, 158, 11, 0.08)",
-                        padding: "8px 12px", borderRadius: "10px", color: "#F59E0B", fontSize: "12px", fontWeight: "700"
-                      }}>
-                        <Clock size={14} /> Permintaan Terkirim
-                      </div>
-                    )}
-
-                    {connectionStatus === "pending_received" && (
-                      <button
-                        onClick={handleAcceptConnection}
-                        style={{
-                          display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                          background: "#F59E0B", color: "#000", border: "none", borderRadius: "10px",
-                          padding: "8px 12px", fontSize: "12px", fontWeight: "800", cursor: "pointer",
-                          transition: "all 0.2s"
-                        }}
-                      >
-                        <UserCheck size={14} /> Terima Koneksi
-                      </button>
-                    )}
-
-                    {connectionStatus === "unconnected" && (
-                      <button
-                        onClick={handleSendConnectionRequest}
-                        style={{
-                          display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: "10px", padding: "8px 12px", color: "#fff", fontSize: "12px",
-                          fontWeight: "800", cursor: "pointer", transition: "all 0.2s"
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
-                        onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
-                      >
-                        <UserPlus size={14} /> Tambahkan ke Kontak
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Action CTAs */}
@@ -1054,6 +931,142 @@ Estimasi Waktu: ${expectedTimeline.trim()}`;
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Client Profile Info Modal */}
+      <AnimatePresence>
+        {showClientModal && (
+          <div style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(3, 7, 18, 0.8)", backdropFilter: "blur(8px)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
+            padding: "20px"
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="glass-card"
+              style={{
+                width: "100%", maxWidth: "500px", background: "#0D1B2E", borderRadius: "24px",
+                border: "1px solid rgba(255, 255, 255, 0.08)", padding: "32px", display: "flex",
+                flexDirection: "column", gap: "24px", maxHeight: "90vh", overflowY: "auto"
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "16px" }}>
+                <div>
+                  <h2 style={{ fontSize: "20px", fontWeight: "850", color: "#fff", margin: 0 }}>Profil Klien</h2>
+                  <p style={{ fontSize: "13px", color: "rgba(226,232,240,0.45)", margin: "4px 0 0 0" }}>Informasi detail dan preferensi bisnis pemilik proyek</p>
+                </div>
+                <button 
+                  onClick={() => setShowClientModal(false)}
+                  style={{
+                    background: "transparent", border: "none", color: "rgba(226,232,240,0.4)",
+                    fontSize: "24px", cursor: "pointer", lineHeight: "1"
+                  }}
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Client Info Body */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                {/* Avatar & Name */}
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ width: "54px", height: "54px", borderRadius: "50%", background: "linear-gradient(135deg, #4D63FF, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "900", fontSize: "20px" }}>
+                    {project.client?.full_name?.charAt(0) ?? "?"}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h3 style={{ fontSize: "16px", fontWeight: "800", color: "#fff", margin: 0 }}>{project.client?.full_name || "Klien FreeTrack"}</h3>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "rgba(226, 232, 240, 0.4)", fontSize: "13px", marginTop: "4px" }}>
+                      <Mail size={13} />
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{project.client?.email}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details list */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {/* Business Scale */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                    <Building2 size={18} style={{ color: "var(--cyan)", flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>Skala Bisnis</div>
+                      <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>{getBusinessScaleLabel(clientOb?.business_scale)}</div>
+                    </div>
+                  </div>
+
+                  {/* Lokasi Klien */}
+                  {(project.client?.city || project.client?.country) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                      <MapPin size={18} style={{ color: "#E11D48", flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>Lokasi</div>
+                        <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
+                          {project.client.city && project.client.country 
+                            ? `${project.client.city}, ${project.client.country}` 
+                            : project.client.city || project.client.country}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Work Type */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                    <Briefcase size={18} style={{ color: "#10B981", flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>Tipe Kerjasama Utama</div>
+                      <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
+                        {getWorkTypeLabel(clientOb?.work_type)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Experience Preference */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                    <Sparkles size={18} style={{ color: "#F59E0B", flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)" }}>Ekspektasi Pengalaman Freelancer</div>
+                      <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
+                        {getExperiencePreferenceLabel(clientOb?.experience_preference)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Kategori Kebutuhan */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }}>
+                    <div style={{ fontSize: "11px", color: "rgba(226,232,240,0.3)", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.5px" }}>Kategori Kebutuhan & Spesialisasi</div>
+                    {clientOb?.project_categories && clientOb.project_categories.length > 0 ? (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
+                        {clientOb.project_categories.map((catId: string) => (
+                          <span key={catId} style={{ fontSize: "11px", fontWeight: "700", color: "#06B6D4", background: "rgba(6, 182, 212, 0.05)", padding: "5px 10px", borderRadius: "8px", border: "1px solid rgba(6, 182, 212, 0.1)" }}>
+                            {getLabelById(catId)}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "13px", color: "rgba(226, 232, 240, 0.4)" }}>Tidak ada kategori preferensi khusus</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "20px" }}>
+                <button
+                  onClick={() => setShowClientModal(false)}
+                  style={{
+                    padding: "10px 24px", borderRadius: "12px", background: "linear-gradient(135deg, #4D63FF, #06B6D4)",
+                    border: "none", color: "#fff", fontSize: "13px", fontWeight: "800", cursor: "pointer"
+                  }}
+                >
+                  Tutup
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
